@@ -8,8 +8,9 @@ const path = require('path');
 const repo = path.join(__dirname, '..');
 const out = path.resolve(process.argv[2] || path.join(repo, 'dist'));
 const core = fs.readFileSync(repo + '/src/antler-core.js', 'utf8');
+const headScan = fs.readFileSync(repo + '/src/head-scan.js', 'utf8');
 const src = fs.readFileSync(repo + '/src/designer.src.html', 'utf8');
-const page = src.replace('/*__CORE__*/', () => core);
+const page = src.replace('/*__CORE__*/', () => core).replace('/*__HEADSCAN__*/', () => headScan);
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(out + '/antler-forge.html', page);
 const full = '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'

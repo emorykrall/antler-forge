@@ -10,6 +10,7 @@
  *   node tools/build-antlers.js --preset elk --scale 0.7     # no design file needed
  *   node tools/build-antlers.js design.json --side right --out ./stl
  *   node tools/build-antlers.js --preset elk --style crown --ringBase openBack --headCirc 571.5
+ *   node tools/build-antlers.js --preset stag --style crown --scan my-head.obj   # crown fitted to a head scan
  *   node tools/build-antlers.js --list-presets
  *
  * Any parameter can be overridden: --beamLength 260 --mount clip --hbWidth 15
@@ -19,6 +20,7 @@
 const fs = require('fs');
 const path = require('path');
 const Core = require('../src/antler-core.js');
+const HeadScan = require('../src/head-scan.js');
 
 function parseArgs(argv) {
   const a = { _: [] };
@@ -50,6 +52,15 @@ function main() {
     params = raw.params || raw;
   }
   if (args.preset) params = Core.presetParams(args.preset, params.mount ? params : null);
+  if (args.scan) {   // a head scan (STL/OBJ/PLY, or a scan saved from the page as .json) for a crown to fit
+    const f = String(args.scan), buf = fs.readFileSync(f);
+    let scan;
+    if (/\.json$/i.test(f)) scan = HeadScan.unpack(JSON.parse(buf.toString('utf8')));
+    else { const mesh = HeadScan.parse(buf, f); scan = HeadScan.build(mesh, HeadScan.guessOrientation(mesh, f)); }
+    Core.registerHeadScan('cli-scan', scan);
+    Object.assign(params, { style: 'crown', headSource: 'scan', headScan: 'cli-scan' });
+    console.log(`scan       ${path.basename(f)}: ${(scan.circ / 25.4).toFixed(1)} in round at the tape line, ${(2 * scan.seat[0] / 25.4).toFixed(1)} × ${(2 * scan.seat[1] / 25.4).toFixed(1)} in`);
+  }
   const known = new Set(Object.keys(Core.DEFAULTS));
   for (const [k, v] of Object.entries(args)) {
     if (!known.has(k) || k === 'preset') continue;
@@ -78,7 +89,7 @@ function main() {
 
   const f1 = (x) => x.toFixed(1);
   const fit = skel.fit;
-  console.log(`design     ${(Core.PRESETS[P.preset] || {}).label || 'Custom'} · scale ${fit.scale.toFixed(2)}${fit.shrunk ? ` (shrunk from ${P.scale} to fit)` : ''} · ${crown ? `crown ${P.ringBase}, head ${P.headCirc} mm` : `base ${P.mount}`} · voxel ${res} mm`);
+  console.log(`design     ${(Core.PRESETS[P.preset] || {}).label || 'Custom'} · scale ${fit.scale.toFixed(2)}${fit.shrunk ? ` (shrunk from ${P.scale} to fit)` : ''} · ${crown ? `crown ${P.ringBase}, ${P.headSource === 'scan' ? 'fitted to the head scan' : `head ${P.headCirc} mm`}` : `base ${P.mount}`} · voxel ${res} mm`);
   console.log(`filament   ${fil.name}`);
   console.log(`size       ${f1(rep.size[0])} × ${f1(rep.size[1])} × ${f1(rep.size[2])} mm`);
   console.log(`mesh       ${rep.triangles.toLocaleString()} triangles, ${rep.vertices.toLocaleString()} vertices (${dt}s)`);

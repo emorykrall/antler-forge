@@ -71,6 +71,8 @@
     { group: 'Essentials', tier: 'essentials', items: [
       { k: 'style', label: 'Style', type: 'select', options: [['headband', 'Headband antlers'], ['crown', 'Crown']] },
       { k: 'scale', label: 'Size', min: 0.2, max: 1.6, step: 0.01, u: '×', hint: 'Scales the antlers; the headband channel and crown band keep their size' },
+      { k: 'headSource', label: 'Head size from', type: 'select', only: 'crown', options: [['tape', 'Tape measurements'], ['scan', 'A 3D head scan']] },
+      { k: 'headScan', label: 'Head scan', type: 'text', only: 'crown' },
       { k: 'headCirc', label: 'Head circumference', min: 457.2, max: 660.4, step: 3.175, u: 'mm', only: 'crown', hint: 'Measure around your forehead with a tape measure' },
       { k: 'headMeasured', label: 'Use over-the-top measurements', type: 'bool', only: 'crown', hint: 'Two more tape measurements give a closer fit to your head\'s shape' },
       { k: 'headArcFB', label: 'Front to back, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'With the tape still round your head: from its line at the middle of the forehead, over the top, to its line at the back' },
@@ -196,7 +198,7 @@
     mount: 'tunnel', baseFlare: 1.65, baseHeight: 15, padLength: 44, hbWidth: 12, hbThick: 3, hbRadius: 85, clearance: 0.4, wall: 2.2,
     bandAngle: 34, splay: 0, rake: 0,
     filament: 'bone', autoFit: true, scale: 0.62, resolution: '0.5', bedX: 256, bedY: 256, bedZ: 256,
-    style: 'headband', headCirc: 571.5, headMeasured: false, headArcFB: 285.75, headArcEE: 254, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
+    style: 'headband', headSource: 'tape', headScan: '', headCirc: 571.5, headMeasured: false, headArcFB: 285.75, headArcEE: 254, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
     ringRise: 9, ringDrop: 7, ringSweepLift: 20, ringSweepReach: 55, ringLoopDepth: 14, ringTaper: 0.45, ringTineLean: 0.6, ringWander: 0.3, ringAsym: 0,
     ringThick: 9, ringStrands: 3, ringWeave: 2, ringDip: 18, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 26, ringFront: 'point',
   };
@@ -216,7 +218,8 @@
   function resolveParams(p) {
     const P = Object.assign({}, DEFAULTS, p || {});
     for (const g of PARAM_SPEC) for (const it of g.items) {
-      if (it.type === 'bool') P[it.k] = !!P[it.k];
+      if (it.type === 'text') P[it.k] = String(P[it.k] == null ? DEFAULTS[it.k] : P[it.k]).slice(0, 80);
+      else if (it.type === 'bool') P[it.k] = !!P[it.k];
       else if (it.type === 'select') { P[it.k] = String(P[it.k]); if (!it.options.some((o) => o[0] === P[it.k])) P[it.k] = String(DEFAULTS[it.k]); }
       else { const x = Number(P[it.k]); P[it.k] = clamp(isFinite(x) ? x : DEFAULTS[it.k], it.min, it.max); }
     }
@@ -228,7 +231,7 @@
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
     if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
-      'style', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
+      'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
 
@@ -490,10 +493,43 @@
     return out;
   }
 
+  // Head scans. A scan is stored as the head's radius in every direction from its centre (the origin
+  // of the head frame): r[j * nt + i] at azimuth -π + 2πi/nt and polar angle πj/(np-1) from +Z.
+  // `fit` is the matching ellipsoid (same conventions as the tape model), `seat` the half-width and
+  // half-length at the tape line. Scans are registered by id; designs refer to them by headScan.
+  const SCANS = new Map();
+  function registerHeadScan(id, scan) {
+    const r = scan.r instanceof Float32Array ? scan.r : Float32Array.from(scan.r);
+    SCANS.set(String(id), Object.assign({}, scan, { r }));
+  }
+  function scanHead(scan, d) {
+    const nt = scan.nt, np = scan.np, rr = scan.r;
+    const R = (x, y, z) => {   // the head's radius (plus comfort allowance d) toward direction (x, y, z)
+      const len = Math.hypot(x, y, z) || 1e-9;
+      const ft = ((Math.atan2(y, x) + Math.PI) / (2 * Math.PI)) * nt, fp = (Math.acos(clamp(z / len, -1, 1)) / Math.PI) * (np - 1);
+      const i0 = Math.floor(ft), ti = ft - i0, j0 = Math.min(np - 2, Math.floor(fp)), tj = fp - j0;
+      const a = ((i0 % nt) + nt) % nt, b = (a + 1) % nt, r0 = j0 * nt, r1 = r0 + nt;
+      return (rr[r0 + a] * (1 - ti) + rr[r0 + b] * ti) * (1 - tj) + (rr[r1 + a] * (1 - ti) + rr[r1 + b] * ti) * tj + d;
+    };
+    const f = (p) => Math.hypot(p[0], p[1], p[2]) - R(p[0], p[1], p[2]);   // > 0 outside the head
+    return {
+      kind: 'scan', c: [0, 0, 0], r: scan.fit.map((x) => x + d), R,
+      exit(C, u) { let lo = 0, hi = 400; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (f(add(C, mul(u, m))) < 0) lo = m; else hi = m; } return add(C, mul(u, lo)); },
+      normal(Q) { const e = 0.6; return norm([f([Q[0] + e, Q[1], Q[2]]) - f([Q[0] - e, Q[1], Q[2]]), f([Q[0], Q[1] + e, Q[2]]) - f([Q[0], Q[1] - e, Q[2]]), f([Q[0], Q[1], Q[2] + e]) - f([Q[0], Q[1], Q[2] - e])]); },
+      project(p) { return mul(p, R(p[0], p[1], p[2]) / (Math.hypot(p[0], p[1], p[2]) || 1e-9)); },
+    };
+  }
+
   function ringSpec(P) {
     const cs = Math.sqrt(1 - RING_SEAT * RING_SEAT);
     let inner, ia, ib, head, shape = null;
-    if (P.headMeasured) {   // measured shape, with the comfort allowance added evenly all round
+    const scan = P.headSource === 'scan' ? SCANS.get(P.headScan) : null;
+    if (scan) {   // fitted to a head scan, with the comfort allowance added evenly all round
+      const d = P.ringFit / (2 * Math.PI);
+      head = scanHead(scan, d);
+      ib = scan.seat[0] + d; ia = scan.seat[1] + d; inner = perimeter(ia, ib);
+      shape = { width: 2 * scan.seat[0], length: 2 * scan.seat[1], dome: scan.dome, circ: scan.circ, scan: true };
+    } else if (P.headMeasured) {   // measured shape, with the comfort allowance added evenly all round
       const h = headFromTape(P.headCirc, P.headArcFB, P.headArcEE), d = P.ringFit / (2 * Math.PI);
       inner = P.headCirc + P.ringFit; ia = h.ia + d; ib = h.ib + d;
       head = { c: [0, 0, 0], r: [h.r[0] + d, h.r[1] + d, h.r[2] + d] };
@@ -515,6 +551,12 @@
   // Where the liner touches the head at ring angle t (0 = front): the point, its outward normal N,
   // the direction along the band T and 'up the head' W.
   function ringFrame(g, t) {
+    if (g.head.kind === 'scan') {
+      const hs = (tt) => g.head.exit(g.C, add(mul(g.ex, Math.sin(tt)), mul(g.ey, Math.cos(tt))));
+      const Q = hs(t), N = g.head.normal(Q), T = norm(sub(hs(t + 1e-3), hs(t - 1e-3)));
+      let W = norm(cross(N, T)); if (W[2] < 0) W = mul(W, -1);
+      return { Q, N, T, W };
+    }
     const hit = (tt) => {
       const u = add(mul(g.ex, Math.sin(tt)), mul(g.ey, Math.cos(tt))), r = g.head.r;
       let A = 0, B = 0, K = -1;
@@ -540,12 +582,13 @@
     + P.ringRise * Math.exp(-(((t - g.tr) / 0.55) ** 2)) - P.ringDrop * sstep((t - g.tr) / (Math.PI - g.tr));
   function onHead(g, t, h) {   // the head-surface point at ring angle t, moved h up the head
     const f = ringFrame(g, t), p = add(f.Q, mul(f.W, h)), c = g.head.c, r = g.head.r;
+    if (g.head.kind === 'scan') return g.head.project(p);
     const k = Math.hypot((p[0] - c[0]) / r[0], (p[1] - c[1]) / r[1], (p[2] - c[2]) / r[2]);
     return [c[0] + (p[0] - c[0]) / k, c[1] + (p[1] - c[1]) / k, c[2] + (p[2] - c[2]) / k];
   }
   function pathFrame(g, t, hf) {   // a path on the head (height hf(t)): point, outward normal, along, up the head
     const Q = onHead(g, t, hf(t)), r = g.head.r;
-    const N = norm([Q[0] / (r[0] * r[0]), Q[1] / (r[1] * r[1]), Q[2] / (r[2] * r[2])]);
+    const N = g.head.kind === 'scan' ? g.head.normal(Q) : norm([Q[0] / (r[0] * r[0]), Q[1] / (r[1] * r[1]), Q[2] / (r[2] * r[2])]);
     const T = norm(sub(onHead(g, t + 1e-3, hf(t + 1e-3)), onHead(g, t - 1e-3, hf(t - 1e-3))));
     let W = norm(cross(N, T)); if (W[2] < 0) W = mul(W, -1);
     return { Q, N, T, W };
@@ -641,7 +684,7 @@
       const sp = sampleAt(host, Math.min(0.92, s0 + jit(0.03)));
       const ang = Math.atan2(sp.p[0], sp.p[1]);
       if (Math.abs(ang - g.tr) < 14 * DEG) continue;   // clear of the antler's base
-      const O = norm([sp.p[0] / g.head.r[0] ** 2, sp.p[1] / g.head.r[1] ** 2, (sp.p[2] - g.head.c[2]) / g.head.r[2] ** 2]);
+      const O = g.head.kind === 'scan' ? g.head.normal(sp.p) : norm([sp.p[0] / g.head.r[0] ** 2, sp.p[1] / g.head.r[1] ** 2, (sp.p[2] - g.head.c[2]) / g.head.r[2] ** 2]);
       const K = sp.t[1] < 0 ? sp.t : mul(sp.t, -1);   // with the beam's flow, toward the back
       const base = add(sp.p, mul(U, sp.r * 0.5));
       const dir = (o, k, u) => norm(add(add(mul(O, o), mul(K, k)), mul(U, u)));
@@ -724,7 +767,7 @@
     g.shift = dz;
     return {
       params: P, scale: S, branches, burr: null, burrs, palm: null, palms, ring: g, roots: [tr, -tr],
-      head: { c: lift(g.head.c), r: g.head.r },   // cut away from the crown: nothing reaches inside the head
+      head: g.head.kind === 'scan' ? { kind: 'scan', c: lift(g.head.c), r: g.head.r, R: g.head.R } : { c: lift(g.head.c), r: g.head.r },   // cut away: nothing reaches inside the head
       mount: { type: 'crown', h: 0, rf: 0, ex: 1, baseZ: 0, tunnelCZ: 0 }, r0: rS,
       texture: { groove: P.grooveDepth, grooves: P.grooveCount, pearl: P.pearling }, fillet: P.fillet,
     };
@@ -1040,7 +1083,19 @@
           }
         }
       }
-      if (hd) {   // crown: remove anything inside the head surface, with a softly rounded edge
+      if (hd && hd.kind === 'scan') {   // crown fitted to a scan: remove anything inside the scanned head
+        const [cx, cy, cz] = hd.c, kc = 2, dz = z - cz;
+        for (let iy = 0; iy < ny; iy++) {
+          const dy = oy + iy * v - cy, row = iy * nx;
+          for (let ix = 0; ix < nx; ix++) {
+            const o = row + ix, a = out[o];
+            if (a > kc + 2) continue;
+            const dx = ox + ix * v - cx, b = hd.R(dx, dy, dz) - Math.hypot(dx, dy, dz);   // > 0 inside the head
+            const h = Math.max(kc - Math.abs(a - b), 0) / kc;
+            out[o] = Math.max(a, b) + h * h * kc * 0.25;
+          }
+        }
+      } else if (hd) {   // crown: remove anything inside the head surface, with a softly rounded edge
         const [cx, cy, cz] = hd.c, [rx, ry, rz] = hd.r, qz = (z - cz) / rz, kc = 2;
         for (let iy = 0; iy < ny; iy++) {
           const qy = (oy + iy * v - cy) / ry, row = iy * nx;
@@ -1384,7 +1439,8 @@
       '',
       crown ? 'The crown is one complete part, upright as worn, resting on a small flat foot at Z = 0. Supports carry the rest.' : 'Each antler is one complete part, already standing on its flat base at Z = 0.',
       crown ? 'Print it on its own plate.' : 'Print the right and the left on separate plates, or together if both footprints fit.',
-      crown ? `Sized for a head ${len(P.headCirc)} around${P.headMeasured ? `, ${len(P.headArcFB)} front to back and ${len(P.headArcEE)} ear to ear over the top` : ''}, plus ${len(P.ringFit)} comfort allowance.`
+      crown && P.headSource === 'scan' && SCANS.has(P.headScan) ? `Fitted to your head scan (${len(SCANS.get(P.headScan).circ)} round at the tape line), plus ${len(P.ringFit)} comfort allowance.`
+      : crown ? `Sized for a head ${len(P.headCirc)} around${P.headMeasured ? `, ${len(P.headArcFB)} front to back and ${len(P.headArcEE)} ear to ear over the top` : ''}, plus ${len(P.ringFit)} comfort allowance.`
       : P.mount === 'tunnel' || P.mount === 'clip'
         ? `Headband channel: ${len(P.hbWidth + P.clearance)} wide × ${len(P.hbThick + P.clearance)} tall, plus curve allowance for a ${inches ? len(P.hbRadius) : P.hbRadius + ' mm'} band radius.`
         : 'The base is flat for gluing to a headband or hair clip (E6000 or CA glue).',
@@ -1407,7 +1463,7 @@
   }
 
   return {
-    PARAM_SPEC, DEFAULTS, PRESETS, resolveParams, presetParams, ringSpec, headFromTape, capArc,
+    PARAM_SPEC, DEFAULTS, PRESETS, resolveParams, presetParams, ringSpec, headFromTape, capArc, registerHeadScan, hasHeadScan: (id) => SCANS.has(String(id)),
     FILAMENTS, buildSkeleton, meshAntler, meshBounds, plateSize, validateMesh, toSTL, makeZip, printNotes,
     _util: { add, sub, mul, dot, cross, norm, rotate },
   };
