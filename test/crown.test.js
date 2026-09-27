@@ -93,3 +93,17 @@ test('asymmetry 0 mirrors the band exactly; higher values let the sides differ',
   assert.ok(sides(0) < 1e-9, 'mirrored');
   assert.ok(sides(1) > 1, 'asymmetric');
 });
+
+test('tape measurements: the head shape is recovered exactly, and measured crowns are sound', () => {
+  const s = 0.38, cs = Math.sqrt(1 - s * s), per = (a, b) => Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));
+  for (const [L, W, H] of [[195, 152, 90], [205, 140, 100], [185, 165, 80]]) {
+    const ia = L / 2, ib = W / 2, Rz = H / (1 - s);
+    const h = Core.headFromTape(per(ia, ib), Core.capArc(ia / cs, Rz), Core.capArc(ib / cs, Rz));
+    assert.ok(Math.abs(2 * h.ia - L) < 0.5 && Math.abs(2 * h.ib - W) < 0.5 && Math.abs(h.dome - H) < 0.5, `${L}x${W} dome ${H}`);
+  }
+  for (const [fb, ee] of [[250, 230], [320, 290]]) {   // a flatter, narrower head and a taller, rounder one
+    const P = crown('whitetail', 'openBack', { headMeasured: true, headArcFB: fb, headArcEE: ee });
+    const sk = Core.buildSkeleton(P), r = Core.validateMesh(Core.meshAntler(sk, 1.5));
+    assert.ok(r.watertight && r.shells === 1 && sk.fit.fits, `arcs ${fb}/${ee}`);
+  }
+});

@@ -72,6 +72,9 @@
       { k: 'style', label: 'Style', type: 'select', options: [['headband', 'Headband antlers'], ['crown', 'Crown']] },
       { k: 'scale', label: 'Size', min: 0.2, max: 1.6, step: 0.01, u: '×', hint: 'Scales the antlers; the headband channel and crown band keep their size' },
       { k: 'headCirc', label: 'Head circumference', min: 457.2, max: 660.4, step: 3.175, u: 'mm', only: 'crown', hint: 'Measure around your forehead with a tape measure' },
+      { k: 'headMeasured', label: 'Use over-the-top measurements', type: 'bool', only: 'crown', hint: 'Two more tape measurements give a closer fit to your head\'s shape' },
+      { k: 'headArcFB', label: 'Front to back, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'With the tape still round your head: from its line at the middle of the forehead, over the top, to its line at the back' },
+      { k: 'headArcEE', label: 'Ear to ear, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'From the tape line just above one ear, over the top, to the line above the other ear' },
       { k: 'ringBase', label: 'Crown base', type: 'select', only: 'crown', options: [['closed', 'Closed ring'], ['openBack', 'Open at the back'], ['openFront', 'Open at the front']] },
       { k: 'ringGap', label: 'Opening', min: 30, max: 140, step: 1, u: '°', only: 'crown' },
       { k: 'ringPos', label: 'Antler position', min: 20, max: 85, step: 1, u: '°', only: 'crown', hint: 'Degrees round from the centre of the forehead' },
@@ -193,7 +196,7 @@
     mount: 'tunnel', baseFlare: 1.65, baseHeight: 15, padLength: 44, hbWidth: 12, hbThick: 3, hbRadius: 85, clearance: 0.4, wall: 2.2,
     bandAngle: 34, splay: 0, rake: 0,
     filament: 'bone', autoFit: true, scale: 0.62, resolution: '0.5', bedX: 256, bedY: 256, bedZ: 256,
-    style: 'headband', headCirc: 571.5, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
+    style: 'headband', headCirc: 571.5, headMeasured: false, headArcFB: 285.75, headArcEE: 254, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
     ringRise: 9, ringDrop: 7, ringSweepLift: 20, ringSweepReach: 55, ringLoopDepth: 14, ringTaper: 0.45, ringTineLean: 0.6, ringWander: 0.3, ringAsym: 0,
     ringThick: 9, ringStrands: 3, ringWeave: 2, ringDip: 18, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 26, ringFront: 'point',
   };
@@ -225,7 +228,7 @@
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
     if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
-      'style', 'headCirc', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
+      'style', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
 
@@ -452,18 +455,61 @@
   // Built in the head frame (+Y front, +X the wearer's right, +Z up, origin at the head's centre),
   // tilted so the front sits higher, then lowered onto the bed. It prints upright, on supports.
   const RING_ASPECT = 0.8, RING_SEAT = 0.38, LINER_R = 2.8, LINER_H = 4;
+  const perimeter = (a, b) => Math.PI * (3 * (a + b) - Math.sqrt((3 * a + b) * (a + 3 * b)));   // Ramanujan
+
+  // Head shape from tape measurements. The head is an ellipsoid; the tape line round the forehead
+  // cuts it at RING_SEAT of its height. The circumference and two arcs over the top (front to back
+  // and ear to ear, each between the tape line's two sides) fix its length, width and dome height.
+  function capArc(A, B) {   // over the top of a half-ellipse (half-width A, height B) above RING_SEAT·B
+    const a0 = Math.asin(RING_SEAT), n = 96;
+    let L = 0, px = A * Math.cos(a0), pz = B * RING_SEAT;
+    for (let i = 1; i <= n; i++) {
+      const a = a0 + ((Math.PI - 2 * a0) * i) / n, x = A * Math.cos(a), z = B * Math.sin(a);
+      L += Math.hypot(x - px, z - pz); px = x; pz = z;
+    }
+    return L;
+  }
+  const tapeCache = new Map();
+  function headFromTape(C, fb, ee) {
+    const key = C + '|' + fb + '|' + ee;
+    if (tapeCache.has(key)) return tapeCache.get(key);
+    const s = RING_SEAT, cs = Math.sqrt(1 - s * s);
+    const domeFor = (ia) => {   // the dome height that makes the front-to-back arc come out right
+      let lo = 5, hi = 400;
+      for (let i = 0; i < 48; i++) { const H = (lo + hi) / 2; if (capArc(ia / cs, H / (1 - s)) < fb) lo = H; else hi = H; }
+      return (lo + hi) / 2;
+    };
+    let klo = 0.55, khi = 1.1, res = null;   // width : length, found so the ear-to-ear arc comes out right
+    for (let i = 0; i < 40; i++) {
+      const k = (klo + khi) / 2, ia = C / perimeter(1, k), ib = k * ia, H = domeFor(ia);
+      res = { ia, ib, H, k };
+      if (capArc(ib / cs, H / (1 - s)) < ee) klo = k; else khi = k;
+    }
+    const out = { ia: res.ia, ib: res.ib, dome: res.H, aspect: res.k, r: [res.ib / cs, res.ia / cs, res.H / (1 - s)] };
+    tapeCache.set(key, out);
+    return out;
+  }
+
   function ringSpec(P) {
-    const inner = P.headCirc + P.ringFit;
-    const k = RING_ASPECT, per = Math.PI * (3 * (1 + k) - Math.sqrt((3 + k) * (1 + 3 * k)));   // Ramanujan
-    const ia = inner / per, ib = k * ia;          // inner half-length (front–back) and half-width at the seat
     const cs = Math.sqrt(1 - RING_SEAT * RING_SEAT);
-    const head = { c: [0, 0, 0], r: [ib / cs, ia / cs, ia / cs] };
+    let inner, ia, ib, head, shape = null;
+    if (P.headMeasured) {   // measured shape, with the comfort allowance added evenly all round
+      const h = headFromTape(P.headCirc, P.headArcFB, P.headArcEE), d = P.ringFit / (2 * Math.PI);
+      inner = P.headCirc + P.ringFit; ia = h.ia + d; ib = h.ib + d;
+      head = { c: [0, 0, 0], r: [h.r[0] + d, h.r[1] + d, h.r[2] + d] };
+      shape = { length: 2 * h.ia, width: 2 * h.ib, dome: h.dome };
+    } else {   // typical proportions from the circumference alone
+      inner = P.headCirc + P.ringFit;
+      const k = RING_ASPECT;
+      ia = inner / perimeter(1, k); ib = k * ia;   // inner half-length (front–back) and half-width at the seat
+      head = { c: [0, 0, 0], r: [ib / cs, ia / cs, ia / cs] };
+    }
     const n = Math.round(P.ringStrands), rs = (P.ringThick / 2) * (n === 1 ? 1 : n === 2 ? 0.7 : 0.58);
     const gap = P.ringBase === 'closed' ? 0 : P.ringGap * DEG;
     const t0 = P.ringBase === 'openFront' ? gap / 2 : P.ringBase === 'openBack' ? -(Math.PI - gap / 2) : 0;
     const t1 = P.ringBase === 'openFront' ? 2 * Math.PI - gap / 2 : P.ringBase === 'openBack' ? Math.PI - gap / 2 : 2 * Math.PI;
     const tilt = P.ringTilt * DEG, h0 = RING_SEAT * head.r[2];
-    return { inner, ia, ib, head, n, rs, closed: !gap, t0, t1, tilt,
+    return { inner, ia, ib, head, shape, n, rs, closed: !gap, t0, t1, tilt,
       C: [0, -h0 * Math.sin(tilt), h0 * Math.cos(tilt)], ex: [1, 0, 0], ey: [0, Math.cos(tilt), Math.sin(tilt)] };
   }
   // Where the liner touches the head at ring angle t (0 = front): the point, its outward normal N,
@@ -1338,7 +1384,7 @@
       '',
       crown ? 'The crown is one complete part, upright as worn, resting on a small flat foot at Z = 0. Supports carry the rest.' : 'Each antler is one complete part, already standing on its flat base at Z = 0.',
       crown ? 'Print it on its own plate.' : 'Print the right and the left on separate plates, or together if both footprints fit.',
-      crown ? `Sized for a head ${len(P.headCirc)} around, plus ${len(P.ringFit)} comfort allowance (${len(ringSpec(P).inner)} around the inside).`
+      crown ? `Sized for a head ${len(P.headCirc)} around${P.headMeasured ? `, ${len(P.headArcFB)} front to back and ${len(P.headArcEE)} ear to ear over the top` : ''}, plus ${len(P.ringFit)} comfort allowance.`
       : P.mount === 'tunnel' || P.mount === 'clip'
         ? `Headband channel: ${len(P.hbWidth + P.clearance)} wide × ${len(P.hbThick + P.clearance)} tall, plus curve allowance for a ${inches ? len(P.hbRadius) : P.hbRadius + ' mm'} band radius.`
         : 'The base is flat for gluing to a headband or hair clip (E6000 or CA glue).',
@@ -1361,7 +1407,7 @@
   }
 
   return {
-    PARAM_SPEC, DEFAULTS, PRESETS, resolveParams, presetParams, ringSpec,
+    PARAM_SPEC, DEFAULTS, PRESETS, resolveParams, presetParams, ringSpec, headFromTape, capArc,
     FILAMENTS, buildSkeleton, meshAntler, meshBounds, plateSize, validateMesh, toSTL, makeZip, printNotes,
     _util: { add, sub, mul, dot, cross, norm, rotate },
   };

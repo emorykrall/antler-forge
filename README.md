@@ -43,7 +43,7 @@ The panel runs in the order you work: pick a species (or **Surprise me** for a n
 
 ## Crown style
 
-Switch **Style** to **Crown** for a one-piece antler crown: a band shaped to your head with two antlers rising at the temples, closed or open at the back or front. Enter your head circumference (a tape measure round your forehead). The band dips to a point on the forehead and rises over the temples, built from branching beams that the species shape. For comfort, a smooth liner rests on the head and everything decorative sits outside it; nothing reaches inside the head surface. Crowns print upright, as worn, on supports, and always fit the P2S as one part (only the antlers shrink). The download is a single STL.
+Switch **Style** to **Crown** for a one-piece antler crown: a band shaped to your head with two antlers rising at the temples, closed or open at the back or front. Enter your head circumference (a tape measure round your forehead); for a closer fit, switch on **Use over-the-top measurements** and add the front-to-back and ear-to-ear arcs over the top of your head, which give the crown your head's proportions. The band dips to a point on the forehead and rises over the temples, built from branching beams that the species shape. For comfort, a smooth liner rests on the head and everything decorative sits outside it; nothing reaches inside the head surface. Crowns print upright, as worn, on supports, and always fit the P2S as one part (only the antlers shrink). The download is a single STL.
 
 ## Try on (camera)
 

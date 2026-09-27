@@ -471,7 +471,19 @@ function applyStyle() {
   $('v-wear').textContent = P.style === 'crown' ? 'On head' : 'On headband';
   for (const k in inputs) {
     const { it, wrap } = inputs[k];
-    wrap.hidden = !!(it.only && it.only !== P.style) || (k === 'ringGap' && P.ringBase === 'closed');
+    wrap.hidden = !!(it.only && it.only !== P.style) || (k === 'ringGap' && P.ringBase === 'closed')
+      || ((k === 'headArcFB' || k === 'headArcEE') && !P.headMeasured);
+  }
+  // what the tape measurements add up to, so a mis-measurement is easy to spot
+  const ee = inputs.headArcEE && inputs.headArcEE.wrap;
+  if (ee) {
+    let line = ee.querySelector('.shape');
+    if (!line) { line = document.createElement('div'); line.className = 'hint shape'; ee.appendChild(line); }
+    const sh = P.style === 'crown' && P.headMeasured ? C.ringSpec(P).shape : null;
+    const odd = sh && (sh.width / sh.length < 0.66 || sh.width / sh.length > 0.98 || sh.dome < 60 || sh.dome > 130);   // outside usual adult ranges
+    line.textContent = sh ? `Your head at the tape line: ${inch(sh.width, 1)} in wide × ${inch(sh.length, 1)} in long, dome ${inch(sh.dome, 1)} in above it.`
+      + (odd ? ' That’s an unusual shape: worth measuring again.' : '') : '';
+    line.style.color = odd ? 'var(--warn)' : '';
   }
   for (const d of document.querySelectorAll('details[data-only]')) d.hidden = d.dataset.only !== P.style;
 }
@@ -549,7 +561,7 @@ function wearObject() {
   const g = new THREE.Group();
   if (!faunGroup) faunGroup = buildFaun();
   const crown = P.style === 'crown';
-  faunGroup.scale.setScalar(crown ? crownFit(P).f : 1);   // the faun's head is sized to the crown
+  if (crown) faunGroup.scale.set(...crownFit(P).f); else faunGroup.scale.setScalar(1);   // the faun takes the crown's head shape
   g.add(faunGroup);
   if (!crown) {
     const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
@@ -563,8 +575,9 @@ function wearObject() {
 // Where a crown sits: it is built around a head ellipsoid sized from the head circumference, which
 // is the faun's skull scaled by f. Its print-frame mesh was lowered by ring.shift onto the bed.
 function crownFit(p, sk) {
-  const g = sk ? sk.ring : C.ringSpec(p), f = g.head.r[1] / 92;
-  const M = new THREE.Matrix4().makeTranslation(0, -6 * f, sk ? -sk.ring.shift : 0);
+  const g = sk ? sk.ring : C.ringSpec(p), r = g.head.r;
+  const f = [r[0] / 74, r[1] / 92, r[2] / 92];   // the faun's skull (74 × 92 × 92) stretched to this head
+  const M = new THREE.Matrix4().makeTranslation(0, -6 * f[1], sk ? -sk.ring.shift : 0);
   return { f, M };
 }
 // The pair as worn: each antler seated on the band at the chosen angle, left mirrored.
@@ -803,7 +816,7 @@ function rebuildScene() {
   while (root.children.length) root.remove(root.children[0]);
   if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
   else root.add(wearObject());
-  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
+  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + (P.headMeasured ? P.headArcFB + '|' + P.headArcEE : '') + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
   if (fitKey !== lastFitKey && shown) { fitCamera(); lastFitKey = fitKey; }
 }
 function fitCamera() {
@@ -1099,8 +1112,8 @@ function arSetup() {
 function arRefreshPair() {
   if (!AR.root || !shown) return;
   if (AR.pair) AR.root.remove(AR.pair);
-  const f = P.style === 'crown' ? crownFit(P).f : 1;   // the head that hides the back of a crown is sized to it
-  AR.occ.scale.set(72 * f, 90 * f, 90 * f); AR.occ.position.set(0, -6 * f, 0);
+  const f = P.style === 'crown' ? crownFit(P).f : [1, 1, 1];   // the head that hides the back of a crown takes its shape
+  AR.occ.scale.set(72 * f[0], 90 * f[1], 90 * f[2]); AR.occ.position.set(0, -6 * f[1], 0);
   AR.pair = antlerPair(C.buildSkeleton(P));
   AR.root.add(AR.pair);
   arRender();

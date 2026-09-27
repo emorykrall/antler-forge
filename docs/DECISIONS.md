@@ -61,8 +61,13 @@ Newest first within each section. Change one only when the owner asks.
 - **A crown is one printed piece**: a band sized to the head plus two mirrored antlers rising at the
   temples (Antler position, default 50° from the front). Bases: closed, open at the back, open at
   the front (Opening sets the gap). The band never scales; only the antlers shrink to fit the P2S.
-- **Sized from head circumference** (tape measure round the forehead, default 22.5 in) plus a
-  comfort allowance. Better sizing from photos or 3D scans is wanted later (see backlog).
+- **Sized from tape measurements.** Circumference (round the forehead, default 22.5 in) alone gives
+  typical proportions. Switching on "Use over-the-top measurements" adds front-to-back and ear-to-ear
+  arcs over the top (between the tape line's two sides); the head ellipsoid's length, width and dome
+  height are then solved from all three (exact round trip, tested), and the comfort allowance is
+  added evenly. The page shows the solved head and flags unusual shapes. The faun and the try-on
+  occluder take the measured shape. Next for fit: 3D head-scan import (photos alone were rejected:
+  hair and the unseen back of the head make them unreliable).
 - **Comfort first.** The head is modelled as an ellipsoid (the faun's skull shape, scaled from the
   circumference). A smooth liner rests on it all the way round, with no texture; beams, tines and
   antlers sit outside it; anything inside the head surface is cut away with a soft edge; open ends
@@ -95,4 +100,4 @@ Newest first within each section. Change one only when the owner asks.
 
 - Optional "Switch camera" (front/back) button for trying antlers on someone else.
 - Cross-device library sync with sign-in (see above), only if the owner asks.
-- Crown sizing from photos or a 3D head scan instead of a tape measure.
+- 3D head-scan import for crowns (phone scanning apps → OBJ/STL), fitting the liner to the real head.
