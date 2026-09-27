@@ -23,6 +23,20 @@ vendor/selfie_segmentation/
   selfie_segmentation.tflite.wasm, selfie_segmentation_landscape.tflite.wasm) so that every static
   host serves them; their contents are unchanged. Used only by the built-in head scan.
 
+vendor/flame/flame_head.bin.wasm
+  Derived from FLAME 2023 Open, Max Planck Institute for Intelligent Systems
+  (https://flame.is.tue.mpg.de), licensed under Creative Commons Attribution 4.0 International
+  (https://creativecommons.org/licenses/by/4.0/; model licence:
+  https://flame.is.tue.mpg.de/modellicense.html).
+  FLAME: T. Li, T. Bolkart, M. J. Black, H. Li and J. Romero, "Learning a model of facial shape
+  and expression from 4D scans", ACM Transactions on Graphics (Proc. SIGGRAPH Asia), 2017.
+  Changes made: only the head template, triangles and the first 50 identity shape components are
+  kept (no expression, pose or joint data); axes are turned and metres converted to millimetres;
+  the components are quantised to 16 bits. Made with tools/convert-flame.py. The .wasm suffix
+  makes every static host serve the file; it is not WebAssembly. Used only by the built-in head
+  scan. The FLAME licence doesn't permit pornographic use or creating fake, defamatory or
+  misleading content with the model.
+
 Loaded at runtime from public CDNs (not included in this repository):
   three.js r128 and OrbitControls (MIT License)
   Google Fonts: IM Fell English, Alegreya Sans, IBM Plex Mono (SIL Open Font License 1.1)

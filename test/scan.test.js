@@ -106,3 +106,22 @@ test('a head turn needs enough views', () => {
   const T = require('./fixtures/make-turn.js');
   assert.throws(() => HeadScan.fromHeadTurn(T.frames().slice(0, 3), []), /not enough of the head turn/i);
 });
+
+test('the bundled FLAME head model loads the right way round and responds to its shape components', () => {
+  const m = HeadScan.flameModel(require('fs').readFileSync(require('path').join(__dirname, '../vendor/flame/flame_head.bin.wasm')));
+  assert.equal(m.V, 5023); assert.equal(m.K, 50);
+  const t = m.tpl, ext = (a) => { let lo = Infinity, hi = -Infinity; for (let i = a; i < t.length; i += 3) { lo = Math.min(lo, t[i]); hi = Math.max(hi, t[i]); } return [lo, hi]; };
+  const [x0, x1] = ext(0), [, y1] = ext(1), [, z1] = ext(2);
+  assert.ok(Math.abs(x0 + x1) < 10 && x1 - x0 > 180 && x1 - x0 < 260, 'symmetric across, head-sized (mm)');
+  let nose = 0; for (let i = 1; i < m.V; i++) if (t[3 * i + 1] > t[3 * nose + 1]) nose = i;
+  assert.ok(Math.abs(t[3 * nose]) < 5 && t[3 * nose + 2] < z1 - 80, 'the most forward point is the nose, on the midline, well below the top');
+  let vol = 0;
+  for (let f = 0; f < m.F; f++) {
+    const [a, b, c] = [0, 1, 2].map((k) => 3 * m.tri[3 * f + k]);
+    vol += (t[a] * (t[b + 1] * t[c + 2] - t[b + 2] * t[c + 1]) - t[a + 1] * (t[b] * t[c + 2] - t[b + 2] * t[c]) + t[a + 2] * (t[b] * t[c + 1] - t[b + 1] * t[c])) / 6;
+  }
+  assert.ok(vol > 0, 'triangles face outward');
+  const p = HeadScan.flameShape(m, [2]);
+  let moved = 0; for (let i = 0; i < p.length; i++) moved = Math.max(moved, Math.abs(p[i] - t[i]));
+  assert.ok(moved > 3, 'the first shape component moves the surface');
+});

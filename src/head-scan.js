@@ -421,5 +421,33 @@
     return Object.assign(scan, { source: 'head-turn', frames: pfs.length, mismatch: best.v, model: p.slice(0, 7), hair: Math.round(p[7] * 10) / 10 });
   }
 
-  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, NT, NP };
+  /* ------------------------------------------------ FLAME head model */
+  // FLAME 2023 Open (Max Planck Institute for Intelligent Systems, CC BY 4.0; see NOTICE), trimmed by
+  // tools/convert-flame.py to its template and first K identity components, in mm, x side, y forward,
+  // z up. A head is template + Σ beta[k] · component[k], beta in standard deviations.
+  function flameModel(buf) {
+    const b = buf instanceof ArrayBuffer ? buf : buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    const h = new Uint32Array(b, 0, 4);
+    if (h[0] !== 0x314d4c46) throw new Error('Not a head model file.');   // 'FLM1'
+    const V = h[1], F = h[2], K = h[3];
+    let o = 16;
+    const scales = new Float32Array(b, o, K); o += 4 * K;
+    const tpl = new Float32Array(b, o, 3 * V); o += 12 * V;
+    const tri = new Uint16Array(b, o, 3 * F); o += 6 * F; o += o % 4;
+    const dirs = new Int16Array(b, o, K * 3 * V);
+    return { V, F, K, scales, tpl, tri, dirs };
+  }
+  function flameShape(m, beta, out) {   // vertex positions (mm) for shape coefficients beta
+    const n = 3 * m.V, pos = out || new Float32Array(n);
+    pos.set(m.tpl);
+    for (let k = 0; k < Math.min(m.K, beta.length); k++) {
+      const w = beta[k] * m.scales[k];
+      if (!w) continue;
+      const d = m.dirs, o = k * n;
+      for (let i = 0; i < n; i++) pos[i] += w * d[o + i];
+    }
+    return pos;
+  }
+
+  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, flameModel, flameShape, NT, NP };
 });
