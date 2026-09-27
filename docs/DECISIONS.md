@@ -191,9 +191,20 @@ Newest first within each section. Change one only when the owner asks.
   off the beams and sweep back and up, off the head. Round antler section with a faint bone grain
   (plain smooth white read as icing), normal fillets (crisp joins looked assembled). Rejected: ribbon
   and keel sections, strands that only follow the head surface, reduced fillets.
-- **Crowns must survive printing and handling** (owner): crown strands are at least 4.6 mm thick
-  (radius 2.3) except where a free end fines to its tip; band tines and brow pieces at least 4.4 mm at
-  the base and no longer than 14× their base radius. Tested for every pattern, grown and sculpted.
+- **Character replaces Sculpted** (owner, 2026-09-27: "I don't really understand the sculpted slider";
+  it should run from H.R. Giger-like naturalistic horror to highly refined elvish fantasy). `ringCharacter`
+  0–1: 0 biomechanical horror (vertebra-like ribs along the beams, rib-cage struts between the upper beam
+  and the band, stubby hooked spines, claw-hooked tines, deeper gnarled grain, restless lines); 0.5
+  natural antler; 1 refined elven (smooth, calm, flame tines, faint grain). The UI doesn't name the
+  artist. Patterns apply at every Character. Species: whitetail and stag 0.9, mule and elk 0.85, fawn 0.7,
+  reindeer 0.65, moose 0.55, forest spirit 0.3 (eerie). Designs saved before crowns had these keep
+  0.5 / Band (their old look); designs saved with Sculpted s load as Character 0.5 + s/2.
+- **Crowns are bold, not wispy** (owner): the crown's beams start at 75% of the antler's own base
+  radius, so they visibly grow out of it, and taper less; sturdiness minimums raised to 6 mm strands
+  and 6 mm tine bases, tines at most 12× their base radius.
+- **Crowns must survive printing and handling** (owner): crown strands are at least 6 mm thick
+  (radius 3) except where a free end fines to its tip; band tines and brow pieces at least 6 mm at
+  the base and no longer than 12× their base radius. Tested for every pattern, grown and sculpted.
 
 ## Faun bust (wear view)
 

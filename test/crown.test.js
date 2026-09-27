@@ -108,16 +108,16 @@ test('tape measurements: the head shape is recovered exactly, and measured crown
   }
 });
 
-test('every crown pattern, grown or sculpted, is one sturdy watertight solid that fits', () => {
-  for (const ringPattern of ['band', 'lattice', 'loops', 'weave']) for (const ringSculpt of [0, 1]) for (const ringBase of ['closed', 'openBack']) {
-    const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, ringSculpt, ringBase });
+test('every crown pattern, horror, natural or elven, is one sturdy watertight solid that fits', () => {
+  for (const ringPattern of ['band', 'lattice', 'loops', 'weave']) for (const ringCharacter of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
+    const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, ringCharacter, ringBase });
     const sk = Core.buildSkeleton(P), r = Core.validateMesh(Core.meshAntler(sk, 1.6));
-    const tag = `${ringPattern} ${ringSculpt} ${ringBase}`;
+    const tag = `${ringPattern} ${ringCharacter} ${ringBase}`;
     assert.ok(r.watertight && r.shells === 1 && r.volume > 0, `${tag}: one watertight solid`);
     assert.ok(sk.fit.fits, `${tag}: fits the P2S`);
     for (const br of sk.branches) {   // printed and worn: no thin strands, no spindly tines
-      if (br.kind === 'ring') br.rad.forEach((rr, i) => { if (br.ss[i] < 0.8 || br.ss[i] === 0.2) assert.ok(rr >= 2.3 - 1e-9, `${tag}: strand radius ${rr.toFixed(2)} mm`); });
-      if (br.kind === 'tine' && br.sculpt != null) assert.ok(br.rad[0] >= 2.2 - 1e-9, `${tag}: tine base ${br.rad[0].toFixed(2)} mm`);   // band tines and brow pieces
+      if (br.kind === 'ring') br.rad.forEach((rr, i) => { if (br.ss[i] < 0.8 || br.ss[i] === 0.2) assert.ok(rr >= 3 - 1e-9, `${tag}: strand radius ${rr.toFixed(2)} mm`); });
+      if (br.kind === 'tine' && br.sculpt != null) assert.ok(br.rad[0] >= 3 - 1e-9, `${tag}: tine base ${br.rad[0].toFixed(2)} mm`);   // band tines and brow pieces
     }
   }
 });
