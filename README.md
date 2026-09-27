@@ -37,7 +37,9 @@ Any parameter can be overridden with `--name value`. The exit code is 1 if the m
 
 **Save to library** keeps the current design in a library inside the browser, with a snapshot, its printed size and every setting. Nothing is downloaded. The **Library** view shows the saved designs as cards: **Open** loads one back into the editor, **Make STLs** builds and downloads its STLs, and each can be renamed or deleted. The library lives in this browser on this device (localStorage), so it isn't shared between devices and is lost if the site's data is cleared.
 
-The 3D view normally shows a coarse preview mesh. **Build final mesh** builds the exact mesh that will print at the chosen resolution and checks it; the status pill says which one you're looking at.
+The 3D view normally shows a coarse preview mesh. **Build final mesh** builds the exact mesh that will print at the chosen resolution and checks it; the status bar says which one you're looking at, and the button then becomes **Download STLs**.
+
+The panel runs in the order you work: pick a species (or **Surprise me** for a new variation of it) and a filament, set the **Essentials** (size, beam, tines, base style and headband width), then open **Shape details** for fine sculpting or **Advanced** for headband fit and printer settings.
 
 ## Try on (camera or photo)
 

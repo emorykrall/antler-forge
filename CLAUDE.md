@@ -86,8 +86,17 @@ The tests in `test/` cover the first five. If a change needs one of them to move
 ## Working here
 
 - **Run `npm test` before every commit.** Add or extend a test when you touch the engine.
-- A new parameter goes in `PARAM_SPEC` (UI and CLI pick it up) and `DEFAULTS`. If it should
+- A new parameter goes in `PARAM_SPEC` (UI and CLI pick it up) and `DEFAULTS`. Put it in the group
+  and tier where people will look for it: `essentials` (always shown, keep it to ~9 controls),
+  `details` (collapsed sculpting groups) or `advanced` (headband fit and printer). If it should
   survive a species change, add it to the keep-list in `presetParams`.
+- Page hierarchy: header = title, Save to library + Library, view switch; panel = Start (species,
+  Surprise me, filament) → Essentials (open) → Shape details → Advanced (collapsed); footer = one
+  status line + one primary button that reads Build final mesh, then Download STLs. Don't add a
+  second place for an action that already exists.
+- The faun (`buildFaun`) is one blended-SDF head shrink-wrapped from a sphere, leaf ears and a lathe
+  body. Its markings are painted per pixel by `painter()` (toon material + `onBeforeCompile`), not
+  vertex colours. Keep the skull ellipsoid (74 × 92 × 92 at (0,−6,0)): the headband is fitted to it.
 - Keep page, CLI and engine behaviour identical: the page and the CLI must build the same mesh from
   the same `design.json`.
 - Repo: https://github.com/emorykrall/antler-forge (`main` blocks force pushes and deletion). Live site:

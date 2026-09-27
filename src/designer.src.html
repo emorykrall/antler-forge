@@ -49,10 +49,6 @@ button,input,select{font:inherit;color:inherit}
 .frame .tl{top:-5px;left:-5px}.frame .tr{top:-5px;right:-5px;transform:scaleX(-1)}
 .frame .bl{bottom:-5px;left:-5px;transform:scaleY(-1)}.frame .br{bottom:-5px;right:-5px;transform:scale(-1,-1)}
 .swash{display:block;width:170px;height:12px;color:var(--vp-active);opacity:.7;margin:-2px 0 2px}
-.ornament{display:flex;align-items:center;gap:10px;color:var(--gold);margin:22px 18px 0}
-.ornament::before,.ornament::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line))}
-.ornament::after{background:linear-gradient(90deg,var(--line),transparent)}
-.ornament svg{width:46px;height:14px;flex:none}
 #motes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #vp{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
 .hud{position:absolute;left:16px;right:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none}
@@ -70,8 +66,9 @@ button,input,select{font:inherit;color:inherit}
 .seg button:focus-visible{outline:2px solid var(--vp-active);outline-offset:1px}
 .top-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
 .seg.small button{padding:5px 11px;font-size:12.5px}
-.readout{background:var(--vp-chip);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:10px;padding:8px 11px;font:500 12px/1.55 var(--f-mono);font-variant-numeric:tabular-nums;backdrop-filter:blur(6px)}
-.readout b{font-weight:500;color:var(--vp-active)}
+.statusbar{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;background:var(--vp-chip);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:14px;padding:4px 12px 4px 4px;font:500 12px/1.5 var(--f-mono);font-variant-numeric:tabular-nums;backdrop-filter:blur(6px)}
+.statusbar .pill{border:0;background:rgba(255,255,255,.08)}
+.statusbar .over{color:#E3A24A}
 .pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 11px;font:500 11.5px/1 var(--f-mono);letter-spacing:.02em;background:var(--vp-chip);color:var(--vp-ink);border:1px solid var(--vp-edge)}
 .pill i{width:7px;height:7px;border-radius:50%;background:#A3AD9A;display:inline-block}
 .pill.ok i{background:#9FD79A;box-shadow:0 0 8px #9FD79A}.pill.warn i{background:#E3A24A}.pill.busy i{background:#E8D38A;box-shadow:0 0 8px #E8D38A;animation:pulse 1.1s infinite}
@@ -79,13 +76,12 @@ button,input,select{font:inherit;color:inherit}
 .progress{position:absolute;left:0;right:0;bottom:0;height:3px}
 .progress div{height:100%;width:0;background:linear-gradient(90deg,#8FB88A,var(--vp-active));transition:width .15s}
 .stage.ar-on #vp,.stage.ar-on #motes,.stage.ar-on .hud.bot,.stage.ar-on [aria-label="Camera"]{visibility:hidden}
-.bot-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .pill.preview i{background:transparent;box-shadow:inset 0 0 0 1.5px #E8D38A}
 /* ---------- the library (saved designs) */
 .stage.lib-on #vp,.stage.lib-on .hud.bot,.stage.lib-on .progress,.stage.lib-on [aria-label="Camera"]{visibility:hidden}
-.seg .count{display:inline-block;min-width:18px;margin-left:6px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.14);font:500 11px/1.4 var(--f-mono);text-align:center}
-.seg button[aria-pressed="true"] .count{background:rgba(29,26,18,.16)}
-.lib{position:absolute;inset:0;overflow:auto;padding:118px 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent 78px,#000 112px);mask-image:linear-gradient(to bottom,transparent 78px,#000 112px)}
+.count{display:inline-block;min-width:18px;margin-left:6px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.14);font:500 11px/1.4 var(--f-mono);text-align:center}
+.seg button[aria-pressed="true"] .count,.chipbtn[aria-pressed="true"] .count{background:rgba(29,26,18,.16)}
+.lib{--lib-top:124px;position:absolute;inset:0;overflow:auto;padding:var(--lib-top) 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent calc(var(--lib-top) - 30px),#000 calc(var(--lib-top) - 4px));mask-image:linear-gradient(to bottom,transparent calc(var(--lib-top) - 30px),#000 calc(var(--lib-top) - 4px))}
 .lib-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;color:var(--vp-ink);margin:0 0 14px}
 .lib-head h2{margin:0;font:400 26px/1.1 var(--f-display);letter-spacing:.01em}
 .lib-head p{margin:0;font:italic 400 15px/1.3 var(--f-fell);opacity:.75}
@@ -131,6 +127,11 @@ button,input,select{font:inherit;color:inherit}
 .chipbtn:hover{background:rgba(255,255,255,.1)}
 .chipbtn.snap{background:var(--vp-active);color:#1D1A12;border-color:transparent;font-weight:700}
 .chipbtn:focus-visible{outline:2px solid var(--vp-active);outline-offset:2px}
+.chipbtn[aria-pressed="true"]{background:var(--vp-active);color:#1D1A12;border-color:transparent;font-weight:700}
+.brand-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.libbtn{display:inline-flex;align-items:center;gap:7px;background:var(--vp-chip);backdrop-filter:blur(6px)}
+.libbtn[disabled]{opacity:.6;cursor:default}
+.libbtn svg{width:14px;height:14px;flex:none}
 .ar-note{position:absolute;left:50%;top:92px;transform:translateX(-50%);margin:0;background:rgba(12,18,14,.8);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:12px;padding:8px 14px;font:italic 400 15px/1.3 var(--f-fell);max-width:calc(100% - 32px);text-align:center}
 .err{position:absolute;inset:auto 16px 60px 16px;color:var(--vp-ink);font-size:13px}
 
@@ -164,6 +165,13 @@ button,input,select{font:inherit;color:inherit}
 .btn.primary:hover{filter:brightness(1.07)}
 .btn[disabled]{opacity:.5;cursor:default}
 details{border-top:1px solid var(--line);margin-top:18px}
+.tier{margin-top:26px}
+.tier>.label{padding-inline:18px}
+.tier-note{margin:-4px 18px 10px;font-size:13px;color:var(--muted);font-style:italic}
+.tier details{margin-top:0}
+.tier details:last-child{border-bottom:1px solid var(--line)}
+#tier-essentials{margin-top:20px}
+#tier-essentials summary{font-size:19px}
 summary{list-style:none;cursor:pointer;display:flex;gap:10px;align-items:center;padding:14px 18px;font:400 18px/1.1 var(--f-display);letter-spacing:.02em}
 summary::-webkit-details-marker{display:none}
 summary .sprig{width:16px;height:16px;color:var(--gold);flex:none}
@@ -183,15 +191,10 @@ details[open] summary::after{transform:rotate(-135deg)}
 .switch input:checked::after{transform:translateX(16px)}
 .switch input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .foot{border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));background:var(--panel);display:grid;gap:10px}
-.foot .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.foot .btns{display:grid;gap:8px}
 .foot .btn{justify-content:center;padding:11px 12px}
-.checks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font:500 11px/1.25 var(--f-mono);font-variant-numeric:tabular-nums}
-.checks div{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:6px 7px}
-.checks span{display:block;color:var(--muted);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
-.checks.empty{display:none}
-.checks .good{color:var(--ok)}.checks .bad{color:var(--bad)}
 .msg{font-size:13.5px;color:var(--muted);min-height:1.3em}
-.msg.warn{color:var(--warn)}.msg.bad{color:var(--bad)}
+.msg.warn{color:var(--warn)}.msg.bad{color:var(--bad)}.msg.ok{color:var(--ok)}
 .notes{padding:4px 18px 18px;color:var(--muted);font-size:14px;display:grid;gap:8px}
 .notes p{margin:0;max-width:62ch}
 .notes code{font:12px var(--f-mono);background:var(--raise);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--ink);word-break:break-all}
@@ -208,16 +211,21 @@ details[open] summary::after{transform:rotate(-135deg)}
   .hud.top{top:10px}
   .hud.bot{bottom:10px}
   .brand h1{font-size:23px}
+  .brand{width:100%;grid-template-columns:minmax(0,1fr) auto;column-gap:10px}
+  .brand>*{grid-column:1}
+  .brand .brand-actions{grid-column:2;grid-row:1 / span 3;align-self:start;margin-top:0;flex-direction:column;align-items:stretch}
+  .libbtn{padding:5px 10px;font-size:12.5px}
+  .top-right{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px}
   .swash{width:130px}
   .frame svg{width:34px;height:34px}
   .plate{font-size:13.5px}
   .plate small{display:none}
-  .readout{font-size:11px;padding:6px 9px}
+  .statusbar{font-size:11px}
   .seg button{padding:5px 9px;font-size:12.5px}
   .ar-note{top:96px;font-size:13.5px}
   .ar-bar{bottom:10px;padding:7px 8px;gap:6px}
   .stage.ar-on,.stage.lib-on{height:74vh}
-  .lib{padding:112px 12px 16px}
+  .lib{padding-inline:12px;padding-bottom:16px}
   .lib-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .card-body{padding:10px 11px 12px}
   .card-name{font-size:17px}
@@ -290,13 +298,18 @@ details[open] summary::after{transform:rotate(-135deg)}
       <div class="lib-grid" id="lib-grid" role="list"></div>
     </div>
     <div class="hud top">
-      <div class="brand"><h1>Antler Forge</h1><svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg><div class="plate" id="plate" aria-live="polite"></div></div>
+      <div class="brand">
+        <h1>Antler Forge</h1><svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg><div class="plate" id="plate" aria-live="polite"></div>
+        <div class="brand-actions">
+          <button class="chipbtn libbtn" id="save-design" title="Keep this design in your library"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12l-4-3-4 3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 5v4M6 7h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Save to library</button>
+          <button class="chipbtn libbtn" id="v-lib" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12l-4-3-4 3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Library<span class="count" id="lib-count" hidden></span></button>
+        </div>
+      </div>
       <div class="top-right">
         <div class="seg" role="group" aria-label="View">
           <button id="v-print" aria-pressed="false">Print bed</button>
           <button id="v-wear" aria-pressed="true">On headband</button>
           <button id="v-ar" aria-pressed="false">Try on</button>
-          <button id="v-lib" aria-pressed="false">Library<span class="count" id="lib-count" hidden></span></button>
         </div>
         <div class="seg small" role="group" aria-label="Camera">
           <button id="cam-34" aria-pressed="true">¾</button>
@@ -306,11 +319,7 @@ details[open] summary::after{transform:rotate(-135deg)}
       </div>
     </div>
     <div class="hud bot">
-      <div class="readout" id="dims">—</div>
-      <div class="bot-right">
-        <button class="chipbtn snap" id="build-inline" hidden>Build final mesh</button>
-        <div class="pill preview" id="status"><i></i><span>Preview</span></div>
-      </div>
+      <div class="statusbar"><span class="pill preview" id="status"><i></i><span>Preview</span></span><span id="dims">—</span></div>
     </div>
     <div class="progress"><div id="prog"></div></div>
     <div class="err" id="gl-err" hidden>3D preview needs WebGL. The controls and STL export still work.</div>
@@ -323,42 +332,30 @@ details[open] summary::after{transform:rotate(-135deg)}
         <div class="presets" id="presets"></div>
         <p class="lore" id="lore"></p>
         <div class="row-actions">
-          <button class="btn wander" id="wander" title="Find a new, balanced variation">
+          <button class="btn wander" id="surprise" title="A new, balanced variation of this species">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.4 3.6 3.6 1.4-3.6 1.4L8 11.5 6.6 7.9 3 6.5l3.6-1.4z" fill="currentColor"/><circle cx="13" cy="12.5" r="1.2" fill="currentColor"/><circle cx="3.2" cy="12" r=".9" fill="currentColor"/></svg>
-            Wander the woods
+            Surprise me
           </button>
-          <button class="btn" id="reroll" title="Same species, new natural variation">New seed</button>
         </div>
         <p class="label" style="margin-top:20px">Filament</p>
         <div class="swatches" id="swatches"></div>
-        <div class="row-actions">
-          <button class="btn" id="save-design">Save to library</button>
-          <button class="btn" id="load-design">Load design file</button>
-          <input type="file" id="file-in" accept=".json,application/json" hidden>
-        </div>
       </div>
-      <div class="ornament" aria-hidden="true"><svg viewBox="0 0 46 14"><use href="#orn"/></svg></div>
-      <div id="groups"></div>
+      <div class="tier" id="tier-essentials"></div>
+      <div class="tier"><p class="label">Shape details</p><div id="tier-details"></div></div>
+      <div class="tier"><p class="label">Advanced</p><p class="tier-note">Headband fit and printer. The defaults suit a Bambu P2S.</p><div id="tier-advanced"></div></div>
       <details>
         <summary><svg class="sprig"><use href="#sprig"/></svg>About the files</summary>
         <div class="notes">
           <p>The download is a zip with a right and a mirrored left antler, the design file, and print notes. Both STLs are single closed solids, checked for open and non-manifold edges before you get them.</p>
           <p>Each antler is one complete part, standing on its flat base and turned on the plate if that's what it takes to fit the P2S. The print notes list Bambu Studio settings for your filament: tree supports, a 5 mm brim, and the right nozzle for PLA Wood.</p>
-          <p>Save to library keeps designs in this browser, on this device. The STL zip also holds a design file: Load design file brings it back, and <code>node tools/build-antlers.js &lt;name&gt;-design.json --res 0.35</code> builds it at higher resolution offline.</p>
+          <p>Save to library keeps designs in this browser, on this device. The STL zip also holds a design file; <code>node tools/build-antlers.js &lt;name&gt;-design.json --res 0.35</code> builds it at higher resolution offline.</p>
         </div>
       </details>
     </div>
     <div class="foot">
-      <div class="checks" id="checks">
-        <div><span>Triangles</span><b id="c-tri">—</b></div>
-        <div><span>Open edges</span><b id="c-open">—</b></div>
-        <div><span>Solids</span><b id="c-shell">—</b></div>
-        <div><span>PLA solid</span><b id="c-g">—</b></div>
-      </div>
-      <div class="msg" id="msg">You’re looking at a coarse preview. Build the final mesh when the shape looks right.</div>
+      <div class="msg" id="msg">Preview only. Build the final mesh to check it and download the STLs.</div>
       <div class="btns">
-        <button class="btn primary" id="build">Build final mesh</button>
-        <button class="btn" id="download">Download STLs</button>
+        <button class="btn primary" id="primary">Build final mesh</button>
       </div>
     </div>
   </aside>
@@ -399,14 +396,16 @@ const fmt = (it, v) => {
   return Number(v).toFixed(dec) + (it.u && it.u.length <= 3 ? ' ' + it.u : '');
 };
 const inputs = {};
-const groupsEl = $('groups');
-C.PARAM_SPEC.forEach((g, gi) => {
+// Every group is a collapsible section in its tier; only Essentials starts open.
+C.PARAM_SPEC.forEach((g) => {
   const d = document.createElement('details');
-  if (gi < 2) d.open = true;
+  d.open = g.tier === 'essentials';
   const sm = document.createElement('summary');
   sm.innerHTML = '<svg class="sprig" aria-hidden="true"><use href="#sprig"/></svg>';
   sm.appendChild(document.createTextNode(g.group)); d.appendChild(sm);
   const list = document.createElement('div'); list.className = 'ctl-list';
+  d.appendChild(list);
+  $({ essentials: 'tier-essentials', details: 'tier-details' }[g.tier] || 'tier-advanced').appendChild(d);
   for (const it of g.items) {
     if (it.k === 'filament') continue;   // shown as swatches at the top
     const w = document.createElement('div'); w.className = 'ctl';
@@ -434,7 +433,6 @@ C.PARAM_SPEC.forEach((g, gi) => {
     inputs[it.k] = { it, inp, out };
     list.appendChild(w);
   }
-  d.appendChild(list); groupsEl.appendChild(d);
 });
 const swatchEl = $('swatches');
 for (const [k, f] of Object.entries(C.FILAMENTS)) {
@@ -563,88 +561,202 @@ function buildFaun() {
   const grad = toonGradient();
   const lin = (h) => new THREE.Color(h).convertSRGBToLinear();
   const toon = (h, extra) => new THREE.MeshToonMaterial(Object.assign({ color: lin(h), gradientMap: grad }, extra || {}));
-  const M = {
-    fur: toon('#A5744B'), furDark: toon('#6E4A2F'), cream: toon('#EBDCC0'), ring: toon('#D7B48C'),
-    eye: toon('#1E1510'), shine: new THREE.MeshBasicMaterial({ color: 0xffffff }),
-    nose: toon('#2B1D16'), dark: new THREE.MeshBasicMaterial({ color: lin('#2A1D15') }),
-    blush: new THREE.MeshBasicMaterial({ color: lin('#D98C78'), transparent: true, opacity: 0.4, depthWrite: false }),
-    cloak: toon('#34503A'), collar: toon('#4F7048'), clasp: toon('#C9A75A'),
-  };
   const line = new THREE.MeshBasicMaterial({ color: lin('#1A130E'), side: THREE.BackSide });
-  const sphere = new THREE.SphereGeometry(1, 40, 28);
+  const COL = { fur: lin('#A5744B'), furDark: lin('#5E3F28'), cream: lin('#F0E3C9'), blush: lin('#D98C78'), earIn: lin('#E9C8AE'),
+    cloak: lin('#34503A'), collar: lin('#4F7048') };
   const g = new THREE.Group();
-  const OL = 1.6;
-  function blob(mat, s, p, r, outline, nofit, parent) {
-    const host = parent || g;
-    const m = new THREE.Mesh(sphere, mat); m.scale.set(...s); m.position.set(...p); if (r) m.rotation.set(...r);
-    m.castShadow = true; m.receiveShadow = true;
-    if (nofit) m.userData.nofit = true;
-    if (outline) {
-      const o = new THREE.Mesh(sphere, line); o.scale.set(s[0] + OL, s[1] + OL, s[2] + OL); o.position.copy(m.position); o.rotation.copy(m.rotation);
-      if (nofit) o.userData.nofit = true;
-      host.add(o);
+  const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
+  const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const ell = (x, y, z, c, r) => {   // approximate distance to an ellipsoid (iq)
+    const qx = (x - c[0]) / r[0], qy = (y - c[1]) / r[1], qz = (z - c[2]) / r[2];
+    const k0 = Math.hypot(qx, qy, qz), k1 = Math.hypot(qx / r[0], qy / r[1], qz / r[2]);
+    return k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -Math.min(r[0], r[1], r[2]);
+  };
+  const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
+  // Markings are painted per pixel in the toon shader, from each fragment's model-space position
+  // (or a mapped coordinate, aP), so their edges stay crisp at any zoom instead of following triangles.
+  const PAINT_LIB = `
+    varying vec3 vP;
+    float sdE(vec3 p, vec3 c, vec3 r) { vec3 q = (p - c) / r; float k0 = length(q), k1 = length(q / r); return k0 * (k0 - 1.0) / max(k1, 1e-6); }
+    float fill(float d) { float w = max(fwidth(d), 1e-4); return 1.0 - smoothstep(-w, w, d); }   // 1 where d < 0, antialiased
+  `;
+  let painters = 0;
+  function painter(uniforms, decl, body, mapped) {
+    const m = new THREE.MeshToonMaterial({ gradientMap: grad });
+    m.extensions = { derivatives: true };
+    const key = 'faun-paint-' + painters++;
+    m.customProgramCacheKey = () => key;   // each painter compiles its own program
+    m.onBeforeCompile = (sh) => {
+      for (const k in uniforms) sh.uniforms[k] = { value: uniforms[k] };
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying vec3 vP;' + (mapped ? '\nattribute vec3 aP;' : ''))
+        .replace('#include <begin_vertex>', '#include <begin_vertex>\nvP = ' + (mapped ? 'aP' : 'position') + ';');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\n' + PAINT_LIB + decl)
+        .replace('#include <color_fragment>', '#include <color_fragment>\n{\n' + body + '\ndiffuseColor.rgb = c;\n}');
+    };
+    return m;
+  }
+  // Outlines are the same surface pushed out along its normals, drawn back-facing in ink.
+  function add(geo, mat, ol, opts) {
+    const o = opts || {}, host = o.parent || g;
+    const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true;
+    if (o.nofit) m.userData.nofit = true;
+    if (ol) {
+      const og = geo.clone(), p = og.attributes.position, n = og.attributes.normal;
+      for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) + n.getX(i) * ol, p.getY(i) + n.getY(i) * ol, p.getZ(i) + n.getZ(i) * ol);
+      const om = new THREE.Mesh(og, line); if (o.nofit) om.userData.nofit = true;
+      host.add(om);
     }
     host.add(m);
     return m;
   }
-  function cone(mat, rad, h, p, r) {   // a soft fur tuft
-    const m = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 16), mat); m.position.set(...p); m.rotation.set(...r); g.add(m);
-    const o = new THREE.Mesh(new THREE.ConeGeometry(rad + 1.4, h + 2.4, 16), line); o.position.copy(m.position); o.rotation.copy(m.rotation); g.add(o);
-  }
-  function arc(r, tube, p, mat) { // downward curve facing forward
-    const m = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 8, 24, Math.PI), mat);
-    m.rotation.set(-Math.PI / 2, 0, 0); m.position.set(...p); g.add(m); return m;
-  }
-  const onHead = (x, z, inset) => { // a point on the cranium surface (back half when y < 0)
-    const k = Math.max(0, 1 - (x / 74) ** 2 - (z / 92) ** 2);
-    return (y0) => [x, -6 + Math.sign(y0) * 92 * Math.sqrt(k) * inset, z];
-  };
 
-  // cranium (the band was fitted to this), jaw, and a snout that pushes forward
-  blob(M.fur, [74, 92, 92], [0, -6, 0], null, true);
-  blob(M.fur, [56, 58, 56], [0, 30, -40], null, true);
-  blob(M.fur, [27, 32, 24], [0, 70, -36], null, true);
-  blob(M.cream, [22, 17, 19], [0, 86, -40], null, false);          // pale snout tip
-  blob(M.cream, [27, 17, 18], [0, 50, -82], null, false);          // pale chin
-  blob(M.nose, [11, 7, 8], [0, 101, -27], [0.25, 0, 0], true);
-  blob(M.shine, [3, 1.5, 1.8], [-3.5, 107, -23], null, false);    // glint on the nose
-  arc(4.4, 1.3, [-4.4, 103.3, -45], M.dark); arc(4.4, 1.3, [4.4, 103.3, -45], M.dark);   // little "w" mouth
+  /* ---- the head: skull, cheeks, muzzle and chin blended into one surface.
+     The skull keeps the old proportions (74 × 92 × 92 around (0,−6,0)): the headband is fitted to it. */
+  const PARTS = [
+    [[0, -6, 0], [74, 92, 92], 0],        // skull
+    [[0, 30, -32], [61, 54, 48], 28],     // cheeks and jaw, wide and short for a soft, round face
+    [[0, 62, -36], [40, 30, 30], 30],     // muzzle base, wide so it flows out of the cheeks
+    [[0, 90, -38], [28, 30, 23], 26],     // muzzle tip, forward enough that the profile reads as a deer
+    [[0, 50, -68], [24, 22, 15], 16],     // chin
+  ];
+  const sdf = (x, y, z) => { let d = ell(x, y, z, PARTS[0][0], PARTS[0][1]); for (let i = 1; i < PARTS.length; i++) d = smin(d, ell(x, y, z, PARTS[i][0], PARTS[i][1]), PARTS[i][2]); return d; };
+  const normalAt = (x, y, z) => { const e = 0.4; return V3(sdf(x + e, y, z) - sdf(x - e, y, z), sdf(x, y + e, z) - sdf(x, y - e, z), sdf(x, y, z + e) - sdf(x, y, z - e)).normalize(); };
+  const C0 = V3(0, 18, -18);             // inside every part, and the head is star-shaped around it
+  function hit(dir) {                    // where a ray from C0 leaves the head
+    let lo = 0, hi = 280;
+    for (let i = 0; i < 36; i++) { const m = (lo + hi) / 2; if (sdf(C0.x + dir.x * m, C0.y + dir.y * m, C0.z + dir.z * m) < 0) lo = m; else hi = m; }
+    return C0.clone().addScaledVector(dir, lo);
+  }
+  const toward = (x, y, z) => hit(V3(x, y, z).sub(C0).normalize());
+  const back = (x, z) => toward(x, -110, z);
+  const SPOTS = [[-40, 40, 7], [42, 34, 6], [-18, 62, 5.5], [22, 58, 6.5], [-50, 0, 6], [52, -8, 5.5], [0, 30, 6.5], [-28, -30, 5], [30, -40, 5.5]]
+    .map(([x, z, r]) => [back(x, z), r]);
+  const BLUSH = [-1, 1].map((sx) => toward(sx * 70, 58, -26));
+  const headMat = painter(
+    { uFur: COL.fur, uCream: COL.cream, uBlush: COL.blush, uSpots: SPOTS.map(([q, r]) => new THREE.Vector4(q.x, q.y, q.z, r)), uCheek: BLUSH },
+    'uniform vec3 uFur, uCream, uBlush; uniform vec4 uSpots[9]; uniform vec3 uCheek[2];',
+    `vec3 c = uFur;
+     // pale muzzle tip, chin and throat
+     c = mix(c, uCream, fill(min(sdE(vP, vec3(0.0, 110.0, -44.0), vec3(28.0, 24.0, 22.0)), sdE(vP, vec3(0.0, 42.0, -84.0), vec3(36.0, 42.0, 24.0)))));
+     for (int i = 0; i < 9; i++) c = mix(c, uCream, 0.9 * fill(distance(vP, uSpots[i].xyz) - uSpots[i].w));
+     for (int i = 0; i < 2; i++) c = mix(c, uBlush, 0.45 * (1.0 - smoothstep(4.0, 12.0, distance(vP, uCheek[i]))));`);
+  {
+    const geo = new THREE.SphereGeometry(1, 144, 108);
+    const pos = geo.attributes.position, nor = geo.attributes.normal, d = V3(0, 0, 0);
+    for (let i = 0; i < pos.count; i++) {
+      d.fromBufferAttribute(pos, i).normalize();
+      const q = hit(d), n = normalAt(q.x, q.y, q.z);
+      pos.setXYZ(i, q.x, q.y, q.z); nor.setXYZ(i, n.x, n.y, n.z);
+    }
+    add(geo, headMat, 1.7);
+  }
 
-  // big dark eyes in soft cream rings, each with a highlight
-  for (const sx of [-1, 1]) {
-    blob(M.ring, [15, 4, 17], [sx * 32, 73.5, 6], [0, 0, sx * 0.36], false);
-    blob(M.eye, [11.5, 5.5, 13.5], [sx * 32, 75.6, 6], [0, 0, sx * 0.36], true);
-    blob(M.shine, [3.2, 1.6, 3.4], [sx * 29, 80.4, 11], null, false);
-    blob(M.shine, [1.4, 1, 1.5], [sx * 35, 79.6, 1], null, false);
+  // Something lying on the head: a frame whose z is the surface normal and whose y points up the face.
+  function onSurface(p, spin) {
+    const n = normalAt(p.x, p.y, p.z);
+    let ty = V3(0, 0, 1).addScaledVector(n, -n.z).normalize();
+    if (spin) ty.applyAxisAngle(n, spin);
+    const tx = V3().crossVectors(ty, n).normalize();
+    return { p, n, tx, ty };
   }
-  blob(M.blush, [10, 2.5, 6], [-44, 60, -30]); blob(M.blush, [10, 2.5, 6], [44, 60, -30]);
-  // fawn spots across the crown and nape
-  for (const [x, z, sz] of [[-40, 40, 7], [42, 34, 6], [-18, 62, 5.5], [22, 58, 6.5], [-50, 0, 6], [52, -8, 5.5], [0, 30, 6.5], [-28, -30, 5], [30, -40, 5.5]]) {
-    const p = onHead(x, z, 1 - (sz * 0.8) / 92)(-1);    // sunk in, so only a soft dot shows
-    blob(M.cream, [sz, sz, sz], p, null, false);
+  function decal(f, geo, mat, size, lift, ol, dx, dy) {
+    const m = new THREE.Matrix4().makeBasis(f.tx.clone().multiplyScalar(size[0]), f.ty.clone().multiplyScalar(size[1]), f.n.clone().multiplyScalar(size[2]));
+    const at = f.p.clone().addScaledVector(f.n, lift).addScaledVector(f.tx, dx || 0).addScaledVector(f.ty, dy || 0);
+    m.setPosition(at);
+    const mesh = new THREE.Mesh(geo, mat); mesh.applyMatrix4(m); g.add(mesh);
+    if (ol) {
+      const o = new THREE.Mesh(geo, line);
+      const mo = new THREE.Matrix4().makeBasis(f.tx.clone().multiplyScalar(size[0] + ol), f.ty.clone().multiplyScalar(size[1] + ol), f.n.clone().multiplyScalar(size[2] + ol * 0.5));
+      mo.setPosition(at); o.applyMatrix4(mo); g.add(o);
+    }
+    return mesh;
   }
-  // cupped deer ears with dark tips
+  const ball = new THREE.SphereGeometry(1, 32, 24);
+  const eye = toon('#1E1510'), shine = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+  // big glossy eyes, set into the face and tilted up at the outer corner
   for (const sx of [-1, 1]) {
+    const f = onSurface(toward(sx * 34, 90, 6), -sx * 0.28);
+    decal(f, ball, eye, [10.5, 13, 4.2], 0.2, 1.3);
+    decal(f, ball, shine, [3.2, 3.6, 1.2], 3.3, 0, sx * 3.2, 4.2);
+    decal(f, ball, shine, [1.4, 1.5, 0.8], 3.1, 0, -sx * 3, -5);
+  }
+  // a soft nose, with a glint, and a small "w" mouth below it
+  {
+    const f = onSurface(toward(0, 130, -22));
+    decal(f, ball, toon('#2B1D16'), [10, 6.8, 5.5], 1.2, 1.3);
+    decal(f, ball, shine, [3, 1.6, 1.2], 6.2, 0, -3, 2);
+    const m = onSurface(toward(0, 130, -46));
+    const arcGeo = new THREE.TorusGeometry(4.2, 1.15, 8, 24, Math.PI);
+    const ink = new THREE.MeshBasicMaterial({ color: lin('#2A1D15'), side: THREE.DoubleSide });
+    for (const sx of [-1, 1]) {
+      const b = new THREE.Matrix4().makeBasis(m.tx, m.ty.clone().negate(), m.n);
+      b.setPosition(m.p.clone().addScaledVector(m.n, 0.6).addScaledVector(m.tx, sx * 4.2).addScaledVector(m.ty, 3));
+      const arc = new THREE.Mesh(arcGeo, ink); arc.applyMatrix4(b); g.add(arc);
+    }
+  }
+
+  /* ---- ears: tapered, cupped leaves with pale insides and dark tips */
+  function earGeometry(L, W, T, cup) {
+    const geo = new THREE.SphereGeometry(1, 48, 32);
+    const p = geo.attributes.position, ap = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i), u = (z + 1) / 2;       // u: 0 at the base, 1 at the tip
+      const prof = Math.pow(Math.sin(Math.PI * Math.pow(u, 0.72)), 0.85);
+      p.setXYZ(i, x * W * prof, y * T * prof - cup * prof * (1 - x * x), u * L);
+      const ring = Math.max(Math.sqrt(Math.max(0, 1 - z * z)), 1e-3);         // x, y relative to this cross-section
+      ap[i * 3] = x / ring; ap[i * 3 + 1] = y / ring; ap[i * 3 + 2] = u;
+    }
+    geo.setAttribute('aP', new THREE.BufferAttribute(ap, 3));
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const earGeo = earGeometry(70, 24, 5.5, 7);
+  // aP = (across, front/back, along): the pale inside is inset from the rim everywhere and
+  // narrows to a point before the dark tip, so it always follows the leaf's outline.
+  const earMat = painter({ uFur: COL.fur, uIn: COL.earIn, uTip: COL.furDark },
+    'uniform vec3 uFur, uIn, uTip;',
+    `vec3 c = uFur;
+     float inset = 0.58 + 0.42 * smoothstep(0.45, 0.8, vP.z) + 0.42 * (1.0 - smoothstep(0.05, 0.22, vP.z));
+     c = mix(c, uIn, fill(inset - vP.y));
+     c = mix(c, uTip, fill(0.8 + 0.06 * vP.x * vP.x - vP.z));`, true);
+  for (const sx of [-1, 1]) {
+    const base = toward(sx * 60, -12, 44);
+    const z = V3(sx, -0.3, 0.42).normalize();                   // out, a little back, a little up
+    const y = V3(0, 1, 0.25).addScaledVector(z, -V3(0, 1, 0.25).dot(z)).normalize();   // cup faces forward
+    const x = V3().crossVectors(y, z);
     const ear = new THREE.Group();
-    blob(M.fur, [17, 6.5, 44], [0, 0, 0], null, true, false, ear);
-    blob(M.cream, [11.5, 3.4, 33], [0, 3.8, -2], null, false, false, ear);
-    blob(M.furDark, [10, 5.5, 11], [0, -0.5, 36], null, false, false, ear);
-    ear.position.set(sx * 70, -10, 14);
-    ear.rotation.set(-0.3, sx * -1.1, sx * 0.12);
+    ear.applyMatrix4(new THREE.Matrix4().makeBasis(x, y, z).setPosition(base.addScaledVector(z, -10)));
+    add(earGeo, earMat, 1.3, { parent: ear });
     g.add(ear);
   }
-  // a sturdier neck leaning forward, a cream chest ruff, and a moss cloak with a brass clasp
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(38, 46, 110, 32), M.fur);
-  neck.rotation.x = Math.PI / 2 - 0.18; neck.position.set(0, -2, -112); neck.userData.nofit = true; g.add(neck);
-  const nl = new THREE.Mesh(new THREE.CylinderGeometry(39.6, 47.6, 108, 32), line);
-  nl.rotation.copy(neck.rotation); nl.position.copy(neck.position); nl.userData.nofit = true; g.add(nl);
-  blob(M.cream, [32, 20, 30], [0, 28, -126], null, true, true);
-  blob(M.cloak, [104, 62, 54], [0, -10, -196], null, true, true);
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(44, 11, 16, 48), M.collar);
-  collar.position.set(0, -4, -148); collar.userData.nofit = true; g.add(collar);
-  const cl = new THREE.Mesh(new THREE.TorusGeometry(44, 12.6, 16, 48), line);
-  cl.position.copy(collar.position); cl.userData.nofit = true; g.add(cl);
-  blob(M.clasp, [8, 4, 8], [0, 51, -148], null, true, true);
+
+  /* ---- neck and shoulders turned as one piece: fur, a cream ruff, a moss collar and cloak */
+  {
+    // bottom to top, so the lathe's normals face outward
+    const prof = [[108, -250], [106, -205], [96, -180], [74, -162], [52, -145], [42, -125], [37, -100], [34, -70], [30, -30]];
+    const geo = new THREE.LatheGeometry(prof.map(([r, h]) => new THREE.Vector2(r, h)), 72).rotateX(Math.PI / 2);
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      let y = p.getY(i); const z = p.getZ(i);
+      y *= 1 - 0.38 * sstep(-140, -190, z);                        // shoulders are broader than deep
+      y += (z + 60) * 0.16 + 4;                                     // the neck leans forward into the head
+      p.setY(i, y);
+    }
+    geo.computeVertexNormals();
+    const bodyMat = painter({ uFur: COL.fur, uCream: COL.cream, uCollar: COL.collar, uCloak: COL.cloak },
+      'uniform vec3 uFur, uCream, uCollar, uCloak;',
+      `vec3 c = uFur;
+       c = mix(c, uCream, fill(sdE(vP, vec3(0.0, 36.0, -122.0), vec3(30.0, 16.0, 30.0))));   // cream ruff
+       float hem = -152.0 + 5.0 * cos(atan(vP.x, vP.y) * 6.0);                               // scalloped collar edge
+       c = mix(c, uCollar, fill(vP.z - hem));
+       c = mix(c, uCloak, fill(vP.z - hem + 14.0));`);
+    add(geo, bodyMat, 1.7, { nofit: true });
+    const clasp = add(new THREE.SphereGeometry(7, 24, 16), toon('#C9A75A'), 1.2, { nofit: true });
+    clasp.position.set(0, 51, -158);   // on the front of the collar (body surface is at y ≈ 48 there)
+  }
   return g;
 }
 
@@ -691,43 +803,35 @@ if (window.ResizeObserver) new ResizeObserver(resize).observe($('vp'));
 /* ------------------------------------------------------------ status + readouts */
 function updateReadout() {
   const fresh = built && built.key === keyOf(P);
-  const fit = fresh ? built.report.fit : shown ? shown.fit : null;
-  const s = fit ? [fit.w, fit.d, fit.h] : null;
+  const r = fresh ? built.report : null, ok = !!(r && r.watertight && r.shells === 1);
+  const fit = fresh ? r.fit : shown ? shown.fit : null;
   const fits = fit ? fit.fits : true;
   const f = (x) => x.toFixed(0);
-  const fil = C.FILAMENTS[P.filament] || C.FILAMENTS.bone;
-  $('dims').innerHTML = s ? `<b>${f(s[0])} × ${f(s[1])} × ${f(s[2])}</b> mm · ${fit.scale.toFixed(2)}×<br>${fits ? 'one piece on the P2S' : '<span style="color:#E3A24A">too big for the P2S</span>'} · <span style="display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1px;background:${fil.hex}"></span> ${P.filament === 'oak' ? 'White Oak' : 'Bone White'}` : 'Shaping…';
-  const st = $('status');
-  const stale = !shown || shown.key !== keyOf(P);
+  $('dims').innerHTML = fit ? `${f(fit.w)} × ${f(fit.d)} × ${f(fit.h)} mm · ${fits ? 'one piece on the P2S' : '<span class="over">too big for the P2S</span>'}` : 'Shaping…';
   // Say plainly whether the view shows the coarse preview or the final, checked mesh.
+  const st = $('status'), stale = !shown || shown.key !== keyOf(P);
   if (building) { st.className = 'pill busy'; st.lastChild.textContent = 'Building final mesh…'; }
-  else if (fresh && built.report.watertight) { st.className = 'pill ok'; st.lastChild.textContent = `Final mesh · ${P.resolution} mm · watertight`; }
+  else if (ok) { st.className = 'pill ok'; st.lastChild.textContent = `Final mesh · ${P.resolution} mm`; }
   else if (fresh) { st.className = 'pill warn'; st.lastChild.textContent = 'Final mesh failed its check'; }
   else if (stale) { st.className = 'pill busy'; st.lastChild.textContent = 'Updating preview…'; }
   else { st.className = 'pill preview'; st.lastChild.textContent = `Preview · coarse ${previewRes(P).toFixed(1)} mm`; }
-  $('build-inline').hidden = building || fresh || !glOK;
   updatePlate();
-  const r = fresh ? built.report : null;
-  $('checks').classList.toggle('empty', !r && window.innerWidth < 820);
-  $('c-tri').textContent = r ? (r.triangles / 1000).toFixed(0) + 'k' : '—';
-  $('c-open').textContent = r ? String(r.openEdges + r.nonManifoldEdges) : '—';
-  $('c-open').className = r ? (r.openEdges + r.nonManifoldEdges === 0 ? 'good' : 'bad') : '';
-  $('c-shell').textContent = r ? String(r.shells) : '—';
-  $('c-shell').className = r ? (r.shells === 1 ? 'good' : 'bad') : '';
-  $('c-g').textContent = r ? (r.volume / 1000 * 1.24).toFixed(0) + ' g' : '—';
-  const msg = $('msg');
-  const warns = [];
-  if (fit && !fits) warns.push(`Too big to print in one piece. Turn on "Shrink to fit the printer" or lower the scale.`);
-  const notes = [];
-  if (fit && fit.shrunk) notes.push(`Scaled from ${fit.requested.toFixed(2)}× to ${fit.scale.toFixed(2)}× so it prints in one piece.`);
-  if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate to fit.`);
+  // Footer: one line of status, then Save to library and one primary action that moves the job on.
+  const warns = [], notes = [];
+  if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
   if (P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least 6 mm wide.');
-  if (building) { msg.className = 'msg'; msg.textContent = 'Building the printable mesh…'; }
+  if (fit && fit.shrunk) notes.push(`Shrunk from ${fit.requested.toFixed(2)}× to ${fit.scale.toFixed(2)}× to fit the printer.`);
+  if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
+  const msg = $('msg');
+  if (building) { msg.className = 'msg'; msg.textContent = 'Building the final mesh and checking it…'; }
   else if (warns.length) { msg.className = 'msg warn'; msg.textContent = warns.join(' '); }
-  else if (fresh) { msg.className = 'msg'; msg.textContent = r.watertight && r.shells === 1 ? `One closed solid, ${r.triangles.toLocaleString()} triangles. Ready to download. ${notes.join(' ')}` : 'The mesh failed its check. Try a finer resolution.'; }
-  else { msg.className = 'msg'; msg.textContent = (notes.join(' ') + ' You’re looking at a coarse preview. Press Build final mesh to see the exact mesh that will print, checked for watertightness.').trim(); }
-  $('build').disabled = building;
-  $('build').textContent = fresh ? 'Rebuild final mesh' : 'Build final mesh';
+  else if (ok) { msg.className = 'msg ok'; msg.textContent = `✓ Watertight, one solid · ${(r.triangles / 1000).toFixed(0)}k triangles · about ${(r.volume / 1000 * 1.24).toFixed(0)} g of PLA if solid. ${notes.join(' ')}`.trim(); }
+  else if (fresh) { msg.className = 'msg bad'; msg.textContent = 'The final mesh failed its check. Try a finer mesh resolution under Advanced › Printer.'; }
+  else { msg.className = 'msg'; msg.textContent = `Preview only. Build the final mesh to check it and download the STLs. ${notes.join(' ')}`.trim(); }
+  const pb = $('primary');
+  pb.disabled = building || (fresh && !ok);
+  pb.dataset.action = ok ? 'download' : 'build';
+  pb.textContent = building ? 'Building…' : ok ? `Download STLs · ${Math.max(1, Math.round((84 + r.triangles * 50) * 2 / 1e6))} MB` : fresh ? 'Mesh failed its check' : 'Build final mesh';
 }
 
 /* ------------------------------------------------------------ change pipeline */
@@ -790,7 +894,7 @@ function runInline(j) {
 function onWorker(e) {
   const d = e.data;
   if (!running || d.id !== running.id) return;
-  if (d.type === 'progress') { $('prog').style.width = (d.p * 100).toFixed(1) + '%'; return; }
+  if (d.type === 'progress') { $('prog').style.width = (d.p * 100).toFixed(1) + '%'; $('primary').textContent = `Building… ${Math.round(d.p * 100)}%`; return; }
   finishJob(running, d.mesh, d.report);
 }
 function finishJob(j, mesh, report) {
@@ -851,7 +955,6 @@ async function offerFile(name, data) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 const slug = () => 'antlers-' + (P.preset || 'custom') + '-' + (C.FILAMENTS[P.filament] || C.FILAMENTS.bone).slug;
-$('download').addEventListener('click', () => downloadSTLs());
 async function downloadSTLs() {
   let b = built && built.key === keyOf(P) ? built : await build();
   if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
@@ -865,22 +968,16 @@ async function downloadSTLs() {
   ]);
   offerFile(base + '.zip', zip);
 }
-$('build').addEventListener('click', () => build());
-$('build-inline').addEventListener('click', () => build());
+// The primary button moves the job on: build the final mesh, then download it.
+$('primary').addEventListener('click', () => ($('primary').dataset.action === 'download' ? downloadSTLs() : build()));
 $('save-design').addEventListener('click', saveToLibrary);
-$('load-design').addEventListener('click', () => $('file-in').click());
-$('file-in').addEventListener('change', async (e) => {
-  const f = e.target.files[0]; if (!f) return;
-  try { const j = JSON.parse(await f.text()); P = C.resolveParams(j.params || j); syncControls(); changed(); toast('Brought ' + f.name + ' back from the woods.'); }
-  catch (err) { toast('That file isn’t an Antler Forge design (expected .json).'); }
-  e.target.value = '';
-});
-$('reroll').addEventListener('click', () => { P.seed = 1 + Math.floor(Math.random() * 9998); if (P.jitter < 0.05) P.jitter = 0.08; syncControls(); changed(); toast(rackName(P) + ' grows in.'); });
 
 const VIEWS = [['v-print', 'print'], ['v-wear', 'wear'], ['v-ar', 'ar'], ['v-lib', 'library']];
-for (const [id, v] of VIEWS) $(id).addEventListener('click', () => setView(v));
+let backView = 'wear';   // where the Library button returns to
+for (const [id, v] of VIEWS) $(id).addEventListener('click', () => setView(v === 'library' && view === 'library' ? backView : v));
 function setView(v) {
   const was = view;
+  if (v === 'library' && was !== 'library') backView = was;
   view = v;
   for (const [id, k] of VIEWS) $(id).setAttribute('aria-pressed', String(k === v));
   if (was === v) return;
@@ -1334,7 +1431,12 @@ function libOpen(d, v) {
   setView(v);
 }
 
-function libEnter() { document.querySelector('.stage').classList.add('lib-on'); $('lib').hidden = false; libRender(); }
+function libEnter() { document.querySelector('.stage').classList.add('lib-on'); $('lib').hidden = false; libPad(); libRender(); }
+function libPad() {   // start the cards just below the header, however tall it wraps
+  const st = document.querySelector('.stage').getBoundingClientRect(), hd = document.querySelector('.hud.top').getBoundingClientRect();
+  $('lib').style.setProperty('--lib-top', Math.round(hd.bottom - st.top + 18) + 'px');
+}
+window.addEventListener('resize', () => { if (view === 'library') libPad(); });
 function libExit() { document.querySelector('.stage').classList.remove('lib-on'); $('lib').hidden = true; }
 function libMark() {   // highlight the card that matches what's in the editor
   const cur = libKey(P);
@@ -1435,15 +1537,15 @@ function updatePlate() {
   const sm = document.createElement('small'); sm.textContent = label; el.append(sm);
   $('lore').textContent = LORE[P.preset] || '';
 }
-// "Wander the woods": a new species and a new, still-balanced variation of it
+// "Surprise me": a new, still-balanced variation of the current species. It starts from the
+// species' own shape, keeps the headband, printer and Size settings, and jitters the silhouette.
 const WANDER = [
   ['beamLength', 0.1, 'rel'], ['beamCurl', 14, 'abs'], ['beamSpread', 8, 'abs'], ['beamInCurl', 14, 'abs'],
   ['tineLength', 0.14, 'rel'], ['tineAngle', 8, 'abs'], ['tineFan', 8, 'abs'], ['tineCurve', 10, 'abs'], ['crownLength', 0.15, 'rel'],
 ];
-$('wander').addEventListener('click', () => {
-  const keys = Object.keys(C.PRESETS).filter((k) => k !== 'fawn' && k !== P.preset);
-  const pick = keys[Math.floor(Math.random() * keys.length)];
-  const next = C.presetParams(pick, P);
+$('surprise').addEventListener('click', () => {
+  const next = C.presetParams(P.preset, P);
+  next.scale = P.scale;
   const r = () => Math.random() * 2 - 1;
   for (const [k, amt, mode] of WANDER) next[k] = mode === 'rel' ? next[k] * (1 + amt * r()) : next[k] + amt * r();
   if (next.tineCount > 1 && Math.random() < 0.4) next.tineCount += Math.random() < 0.5 ? -1 : 1;

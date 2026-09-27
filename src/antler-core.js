@@ -64,26 +64,33 @@
   }
 
   /* ------------------------------------------------------------- parameters */
-  // UI + CLI share this spec. `k` = key, `u` = unit.
+  // UI + CLI share this spec. `k` = key, `u` = unit. Groups and tiers only arrange the page:
+  // 'essentials' is always shown, 'details' and 'advanced' are collapsed groups. Every key appears once.
   const PARAM_SPEC = [
-    { group: 'Main beam', items: [
+    { group: 'Essentials', tier: 'essentials', items: [
+      { k: 'scale', label: 'Size', min: 0.2, max: 1.6, step: 0.01, u: '×', hint: 'Scales the antlers; the headband channel keeps its size' },
       { k: 'beamLength', label: 'Beam length', min: 40, max: 450, step: 1, u: 'mm' },
+      { k: 'beamSpread', label: 'Outward spread', min: -10, max: 95, step: 1, u: '°' },
+      { k: 'beamCurl', label: 'Forward curl', min: -60, max: 180, step: 1, u: '°' },
+      { k: 'tineCount', label: 'Tines on beam', min: 0, max: 9, step: 1, u: '' },
+      { k: 'tineLength', label: 'Longest tine', min: 10, max: 240, step: 1, u: 'mm' },
+      { k: 'browTine', label: 'Brow tine', type: 'bool' },
+      { k: 'mount', label: 'Base style', type: 'select', options: [['tunnel', 'Flared · slide-on'], ['clip', 'Flared · snap-on'], ['flat', 'Flared · glue-on'], ['none', 'Burr only, flat cut']] },
+      { k: 'hbWidth', label: 'Headband width', min: 3, max: 40, step: 0.5, u: 'mm', hint: 'Measure your band: the base is sized to fit it' },
+    ] },
+    { group: 'Beam', tier: 'details', items: [
       { k: 'baseDia', label: 'Base diameter', min: 8, max: 45, step: 0.5, u: 'mm' },
       { k: 'beamTaper', label: 'Taper along beam', min: 0, max: 0.8, step: 0.01, u: '' },
       { k: 'tipDia', label: 'Tip diameter', min: 2.5, max: 16, step: 0.5, u: 'mm', hint: '3 mm or more survives handling' },
       { k: 'beamLean', label: 'Lean (back ↔ forward)', min: -80, max: 40, step: 1, u: '°' },
-      { k: 'beamCurl', label: 'Forward curl', min: -60, max: 180, step: 1, u: '°' },
       { k: 'curlBias', label: 'Curl toward tip', min: 0.4, max: 3, step: 0.05, u: '×' },
-      { k: 'beamSpread', label: 'Outward spread', min: -10, max: 95, step: 1, u: '°' },
       { k: 'beamInCurl', label: 'Tip inward curl', min: -120, max: 40, step: 1, u: '°' },
       { k: 'wobble', label: 'Kinks & wander', min: 0, max: 1, step: 0.05, u: '', hint: 'Low values read as sculpted, high as wild' },
     ] },
-    { group: 'Tines', items: [
-      { k: 'tineCount', label: 'Tines on beam', min: 0, max: 9, step: 1, u: '' },
+    { group: 'Tines', tier: 'details', items: [
       { k: 'tineDir', label: 'Tines point', type: 'select', options: [['up', 'Up'], ['forward', 'Forward'], ['alternate', 'Alternating'], ['outward', 'In / out'], ['spiral', 'Spiral']] },
       { k: 'tineStart', label: 'First tine at', min: 0.05, max: 0.9, step: 0.01, u: 'of beam', pct: true },
       { k: 'tineEnd', label: 'Last tine at', min: 0.1, max: 0.97, step: 0.01, u: 'of beam', pct: true },
-      { k: 'tineLength', label: 'Longest tine', min: 10, max: 240, step: 1, u: 'mm' },
       { k: 'tineCrest', label: 'Longest tine at', min: 0, max: 1, step: 0.05, u: '', pct: true, hint: 'Tine tips follow a smooth arch that peaks here' },
       { k: 'tineTaper', label: 'Arch falloff', min: 0, max: 0.9, step: 0.05, u: '' },
       { k: 'tineRhythm', label: 'Spacing rhythm', min: 0.5, max: 1.6, step: 0.05, u: '', hint: 'Below 1 packs tines closer toward the tip' },
@@ -93,8 +100,7 @@
       { k: 'tineInward', label: 'Lean inward', min: -20, max: 40, step: 1, u: '°' },
       { k: 'tineThick', label: 'Tine thickness', min: 0.35, max: 1, step: 0.01, u: '× beam' },
     ] },
-    { group: 'Brow, crown & forks', items: [
-      { k: 'browTine', label: 'Brow tine', type: 'bool' },
+    { group: 'Brow, crown & forks', tier: 'details', items: [
       { k: 'browDir', label: 'Brow points', type: 'select', options: [['forward', 'Forward'], ['up', 'Up']] },
       { k: 'browLength', label: 'Brow length', min: 10, max: 180, step: 1, u: 'mm' },
       { k: 'browAngle', label: 'Brow angle', min: 20, max: 115, step: 1, u: '°' },
@@ -106,10 +112,8 @@
       { k: 'forkDepth', label: 'Fork levels', min: 0, max: 3, step: 1, u: '' },
       { k: 'forkAngle', label: 'Fork angle', min: 10, max: 70, step: 1, u: '°' },
       { k: 'forkTines', label: 'Fork the tines too', type: 'bool' },
-      { k: 'jitter', label: 'Natural variation', min: 0, max: 1, step: 0.05, u: '' },
-      { k: 'seed', label: 'Variation seed', min: 1, max: 9999, step: 1, u: '' },
     ] },
-    { group: 'Surface', items: [
+    { group: 'Surface', tier: 'details', items: [
       { k: 'ovality', label: 'Oval cross-section', min: 0, max: 0.45, step: 0.01, u: '' },
       { k: 'grooveDepth', label: 'Gutter depth', min: 0, max: 2, step: 0.05, u: 'mm' },
       { k: 'grooveCount', label: 'Gutters around', min: 3, max: 18, step: 1, u: '' },
@@ -119,12 +123,14 @@
       { k: 'fillet', label: 'Junction fillet', min: 0.5, max: 10, step: 0.25, u: 'mm' },
       { k: 'smoothing', label: 'Surface smoothing', min: 0, max: 8, step: 1, u: '' },
     ] },
-    { group: 'Base & headband', items: [
-      { k: 'mount', label: 'Base style', type: 'select', options: [['tunnel', 'Flared · slide-on'], ['clip', 'Flared · snap-on'], ['flat', 'Flared · glue-on'], ['none', 'Burr only, flat cut']] },
+    { group: 'Variation', tier: 'details', items: [
+      { k: 'jitter', label: 'Natural variation', min: 0, max: 1, step: 0.05, u: '' },
+      { k: 'seed', label: 'Variation seed', min: 1, max: 9999, step: 1, u: '' },
+    ] },
+    { group: 'Base & headband fit', tier: 'advanced', items: [
       { k: 'baseFlare', label: 'Flare', min: 1, max: 3.2, step: 0.05, u: '×' },
       { k: 'baseHeight', label: 'Pedicle height', min: 4, max: 40, step: 0.5, u: 'mm' },
       { k: 'padLength', label: 'Footprint along band', min: 14, max: 80, step: 1, u: 'mm' },
-      { k: 'hbWidth', label: 'Headband width', min: 3, max: 40, step: 0.5, u: 'mm' },
       { k: 'hbThick', label: 'Headband thickness', min: 1, max: 10, step: 0.1, u: 'mm' },
       { k: 'hbRadius', label: 'Headband curve radius', min: 50, max: 140, step: 1, u: 'mm' },
       { k: 'clearance', label: 'Fit clearance', min: 0, max: 1.5, step: 0.05, u: 'mm' },
@@ -133,10 +139,9 @@
       { k: 'splay', label: 'Extra splay', min: -30, max: 45, step: 1, u: '°' },
       { k: 'rake', label: 'Extra rake back', min: -30, max: 45, step: 1, u: '°' },
     ] },
-    { group: 'Print · Bambu P2S', items: [
+    { group: 'Printer · Bambu P2S', tier: 'advanced', items: [
       { k: 'filament', label: 'Filament', type: 'select', options: [['bone', 'PLA Matte · Bone White'], ['oak', 'PLA Wood · White Oak']] },
       { k: 'autoFit', label: 'Shrink to fit the printer', type: 'bool', hint: 'Each antler prints as one piece, turned for the smallest footprint' },
-      { k: 'scale', label: 'Antler scale', min: 0.2, max: 1.6, step: 0.01, u: '×', hint: 'Headband dimensions are not scaled' },
       { k: 'resolution', label: 'Mesh resolution', type: 'select', options: [['1.0', 'Draft · 1.0 mm'], ['0.7', 'Standard · 0.7 mm'], ['0.5', 'Fine · 0.5 mm'], ['0.35', 'Extra fine · 0.35 mm']] },
       { k: 'bedX', label: 'Bed width', min: 100, max: 500, step: 1, u: 'mm', hint: 'P2S: 256 × 256 × 256 mm' },
       { k: 'bedY', label: 'Bed depth', min: 100, max: 500, step: 1, u: 'mm' },
