@@ -28,12 +28,21 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
   autosave is `antler-forge-design-v3`. The viewport pill must say whether it shows the coarse
   preview or the final built mesh.
-- `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map). Inlined
-  after the engine in the same script tag, so the meshing worker has both.
+- `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map), and
+  `fromHeadTurn` (the built-in camera scan: a smooth head fitted to segmentation outlines from many
+  head angles, meshed and measured like an import). Inlined after the engine in the same script
+  tag, so the meshing worker and the head-turn worker have both. Frame format is documented above
+  `fromHeadTurn`; image axes are x right, y up, z toward the camera; masks are y up.
+- Head-turn capture (page, "built-in head scan" section): eye calibration first if none is saved,
+  then angle bins (level yaw −60…60 by 10°, three chin-down); each new bin runs Selfie Segmentation
+  on the same still frame the face tracker saw. Tested end to end in the browser pane with a fake
+  camera/tracker/segmenter driven by `test/fixtures/make-head.js` (the pane blocks real cameras).
 - `tools/build-page.js [outDir]`: inlines the engine and writes the three outputs, copies
-  `vendor/face_mesh` and `serve.js` into `site/`, and generates the `*.wasm.b64.js` copies.
+  every `vendor/<lib>/` and `serve.js` into `site/`, and generates the `*.wasm.b64.js` copies
+  (keyed `lib/file`; the page's file:// shim answers fetch/XHR for them).
 - `tools/build-antlers.js`: CLI builder. Exits with code 1 unless the mesh is one watertight solid.
-- `tools/build-samples.js`, `tools/serve.js`, `vendor/face_mesh/` (MediaPipe, Apache-2.0, see NOTICE).
+- `tools/build-samples.js`, `tools/serve.js`, `vendor/face_mesh/` and `vendor/selfie_segmentation/`
+  (MediaPipe, Apache-2.0, see NOTICE; binary model files renamed `*.wasm` so every host serves them).
 - `test/*.test.js`: `node:test` suites. `dist/` and `samples/` are generated and gitignored. Never edit
   `dist/`; edit `src/` and rebuild.
 

@@ -78,8 +78,17 @@ Newest first within each section. Change one only when the owner asks.
   tip / lean) confirms it. The scan is kept as its radius in every 1.5° direction (~150 KB, in the
   browser, never uploaded), travels to the mesh worker, and goes in the STL zip for the CLI
   (`--scan`). The crown's liner and head cut use the scanned surface; the On head view shows the
-  scan as a clay bust. A web page can't reach Face ID / LiDAR depth; a built-in guided head-turn
-  scan (camera + face tracker + a segmentation model) is the planned next step.
+  scan as a clay bust. A web page can't reach Face ID / LiDAR depth.
+- **Built-in head scan ("Scan my head", 2026-09-27):** eye calibration first (skipped if saved),
+  then a guided head turn: left, right, chin down, with a coverage ring and soft tones. Each new
+  angle stores the tracker's pose and scale plus a MediaPipe Selfie Segmentation outline (bundled
+  in `vendor/`). A smooth head (superellipsoid, separate front/back lengths) is fitted to every
+  outline above ear level in a worker, then kept exactly like an imported scan. Forehead landmarks
+  are only a weak tie-breaker: tracked points can sit several mm off the skin and a strong weight
+  wrecked the fit. The back of the head is inferred (tracking fails past ~60° of turn). Hair
+  counts as head, so the hint says to wear hair as it will be under the crown. On synthetic heads
+  the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
+  the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the
   back of the crown is scaled to the crown's head size.
 - **It prints upright, as worn, on supports**, resting on a small flat foot at its lowest point.
@@ -108,5 +117,4 @@ Newest first within each section. Change one only when the owner asks.
 
 - Optional "Switch camera" (front/back) button for trying antlers on someone else.
 - Cross-device library sync with sign-in (see above), only if the owner asks.
-- Built-in guided head-turn scan (camera + face tracker + segmentation), feeding the same fitting.
 - Consider a coarser default resolution for crowns (at Fine, 0.5 mm, a crown STL is ~70 MB).

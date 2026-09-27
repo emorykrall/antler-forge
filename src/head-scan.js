@@ -292,5 +292,108 @@
     return Object.assign({}, obj, { r: new Float32Array(u.buffer) });
   }
 
-  return { parse, guessOrientation, transform, build, pack, unpack, measure, NT, NP };
+  /* ------------------------------------------------ head-turn reconstruction */
+  // Frames from the built-in head-turn scan. Each gives the head frame's axes in image space (side,
+  // fwd, up: image x right, y up, z toward the camera), where the head frame's origin projects
+  // (o, px), the scale (s, px per mm) and the person's outline cropped round the head
+  // (mask: { x0, y0, k, w, h, data }, cell (ix, iy) centred at x0 + (ix+½)k, y0 + (iy+½)k, y up).
+  // A smooth head shape is fitted to every outline above Z_CUT (so the neck, face and shoulders
+  // don't count) and to forehead points, then meshed and measured exactly like an imported scan.
+  const Z_CUT = 5;   // mm above the head frame's origin (which sits a little above ear level)
+  // model: [half-width, half-length front, half-length back, height, centre y, centre z, boxiness n]
+  const LO = [55, 60, 60, 60, -40, -40, 1.6], HI = [110, 130, 140, 140, 40, 40, 3.2];
+  const FH_W = 0.001;   // forehead points' weight against the outlines' mismatch
+  function modelR(p, ux, uy, uz) {
+    const ry = uy > 0 ? p[1] : p[2], n = p[6];
+    return 1 / Math.pow(Math.pow(Math.abs(ux) / p[0], n) + Math.pow(Math.abs(uy) / ry, n) + Math.pow(Math.abs(uz) / p[3], n), 1 / n);
+  }
+  const DIRS = (() => { const o = [[0, 0, 1]]; for (let j = 1; j < 24; j++) { const ph = (Math.PI * j) / 24; for (let i = 0; i < 48; i++) { const th = (2 * Math.PI * i) / 48; o.push([Math.sin(ph) * Math.cos(th), Math.sin(ph) * Math.sin(th), Math.cos(ph)]); } } return o; })();
+  function modelPoints(p) {
+    const pts = [];
+    for (const u of DIRS) { const r = modelR(p, u[0], u[1], u[2]), q = [u[0] * r, u[1] * r + p[4], u[2] * r + p[5]]; if (q[2] > Z_CUT - 30) pts.push(q); }
+    return pts;
+  }
+  function prepFrame(f) {
+    const m = f.mask, U0 = f.up[0], U1 = f.up[1], lim = Z_CUT * f.s * (U0 * U0 + U1 * U1);
+    const clip = new Uint8Array(m.w * m.h), obs = new Uint8Array(m.w * m.h);
+    let area = 0;
+    for (let iy = 0; iy < m.h; iy++) for (let ix = 0; ix < m.w; ix++) {
+      const i = iy * m.w + ix, x = m.x0 + (ix + 0.5) * m.k - f.o[0], y = m.y0 + (iy + 0.5) * m.k - f.o[1];
+      if (x * U0 + y * U1 > lim) { clip[i] = 1; obs[i] = m.data[i] ? 1 : 0; area += obs[i]; }   // above the cut
+    }
+    return { f, clip, obs, area };
+  }
+  function frameLoss(pf, pts) {   // mismatched cells between the model's outline and the observed one, above the cut
+    const f = pf.f, m = f.mask;
+    const hull = hull2(pts.map((q) => [
+      (f.o[0] + f.s * (f.side[0] * q[0] + f.fwd[0] * q[1] + f.up[0] * q[2]) - m.x0) / m.k - 0.5,
+      (f.o[1] + f.s * (f.side[1] * q[0] + f.fwd[1] * q[1] + f.up[1] * q[2]) - m.y0) / m.k - 0.5]));
+    let diff = 0;
+    for (let iy = 0; iy < m.h; iy++) {
+      let xl = Infinity, xr = -Infinity;
+      for (let e = 0; e < hull.length; e++) {
+        const a = hull[e], b = hull[(e + 1) % hull.length];
+        if ((a[1] <= iy && b[1] > iy) || (b[1] <= iy && a[1] > iy)) { const x = a[0] + ((iy - a[1]) * (b[0] - a[0])) / (b[1] - a[1]); if (x < xl) xl = x; if (x > xr) xr = x; }
+      }
+      const row = iy * m.w;
+      for (let ix = 0; ix < m.w; ix++) { const i = row + ix; if (pf.clip[i] && (ix >= xl && ix <= xr ? 1 : 0) !== pf.obs[i]) diff++; }
+    }
+    return diff / Math.max(1, pf.area);
+  }
+  function nelderMead(fn, x0, step, iters) {
+    const n = x0.length, pts = [x0.slice()];
+    for (let i = 0; i < n; i++) { const x = x0.slice(); x[i] += step[i]; pts.push(x); }
+    let vals = pts.map(fn);
+    for (let it = 0; it < iters; it++) {
+      const ord = vals.map((v, i) => i).sort((a, b) => vals[a] - vals[b]);
+      const P = ord.map((i) => pts[i]), V = ord.map((i) => vals[i]);
+      const c = new Array(n).fill(0); for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) c[j] += P[i][j] / n;
+      const at = (t) => c.map((cj, j) => cj + t * (P[n][j] - cj));
+      const xr = at(-1), fr = fn(xr);
+      if (fr < V[0]) { const xe = at(-2), fe = fn(xe); if (fe < fr) { P[n] = xe; V[n] = fe; } else { P[n] = xr; V[n] = fr; } }
+      else if (fr < V[n - 1]) { P[n] = xr; V[n] = fr; }
+      else { const xc = at(0.5), fc = fn(xc); if (fc < V[n]) { P[n] = xc; V[n] = fc; } else for (let i = 1; i <= n; i++) { P[i] = P[i].map((x, j) => P[0][j] + 0.5 * (x - P[0][j])); V[i] = fn(P[i]); } }
+      pts.splice(0, pts.length, ...P); vals = V;
+    }
+    const b = vals.indexOf(Math.min(...vals));
+    return { x: pts[b], v: vals[b] };
+  }
+  function modelMesh(p) {   // the fitted head as a closed mesh, for build() to measure like any scan
+    const nu = 96, nv = 64, pos = [], tri = [];
+    for (let j = 0; j <= nv; j++) for (let i = 0; i < nu; i++) {
+      const ph = (Math.PI * j) / nv, th = (2 * Math.PI * i) / nu, u = [Math.sin(ph) * Math.cos(th), Math.sin(ph) * Math.sin(th), Math.cos(ph)], r = modelR(p, u[0], u[1], u[2]);
+      pos.push(u[0] * r, u[1] * r + p[4], u[2] * r + p[5]);
+    }
+    for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const a = j * nu + i, b = j * nu + ((i + 1) % nu), c = a + nu, d = b + nu; tri.push(a, c, b, b, c, d); }
+    return { pos: Float32Array.from(pos), tri: Uint32Array.from(tri) };
+  }
+  // frames: see above; forehead: points on the forehead skin in the head frame (mm).
+  function fromHeadTurn(frames, forehead) {
+    const pfs = frames.filter((f) => f.mask && f.mask.w).map(prepFrame).filter((pf) => pf.area > 20);
+    if (pfs.length < 6) throw new Error('Not enough of the head turn was seen. Try again, turning slowly.');
+    const fh = forehead || [];
+    const loss = (p) => {
+      let pen = 0; const q = p.map((x, i) => { const c = Math.min(HI[i], Math.max(LO[i], x)); pen += (x - c) ** 2; return c; });
+      let L = 0; const pts = modelPoints(q);
+      for (const pf of pfs) L += frameLoss(pf, pts);
+      L /= pfs.length;
+      for (const v of fh) {   // forehead skin lies on or just inside the surface (hair adds a little): a gentle
+        // tie-breaker only, since tracked points can sit several mm off the skin (Huber beyond 3 mm)
+        const d = [v[0], v[1] - q[4], v[2] - q[5]], len = Math.hypot(d[0], d[1], d[2]) || 1, e = len - modelR(q, d[0] / len, d[1] / len, d[2] / len);
+        const a = Math.abs(e) * (e > 0 ? 1 : 0.5), rho = a < 3 ? a * a : 6 * a - 9;
+        L += (FH_W * rho) / Math.max(1, fh.length);
+      }
+      return L + pen;
+    };
+    let best = null;
+    for (const start of [[78, 98, 105, 95, -8, 0, 2.2], [72, 92, 100, 88, -4, -6, 2.6]]) {   // two starts, keep the better
+      const r = nelderMead(loss, start, [6, 8, 8, 8, 6, 6, 0.3], 260);
+      if (!best || r.v < best.v) best = r;
+    }
+    const p = best.x.map((x, i) => Math.min(HI[i], Math.max(LO[i], x)));
+    const scan = build(modelMesh(p), { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });
+    return Object.assign(scan, { source: 'head-turn', frames: pfs.length, mismatch: best.v, model: p });
+  }
+
+  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, NT, NP };
 });

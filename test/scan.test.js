@@ -66,3 +66,23 @@ test('a crown fitted to a scan is one watertight solid, fits, and stays outside 
     assert.ok(closest < 0.6, `${base}: the liner rests on the scanned head (closest ${closest.toFixed(2)} mm)`);
   }
 });
+
+test('a guided head turn rebuilds the head from its outlines', () => {
+  const T = require('./fixtures/make-turn.js');
+  const truth = HeadScan.build({ pos: Float32Array.from(head.pos), tri: Uint32Array.from(head.tri) }, { scale: 1, base: 'z-up' });
+  const scan = HeadScan.fromHeadTurn(T.frames(), T.forehead());
+  assert.equal(scan.source, 'head-turn');
+  assert.ok(Math.abs(scan.circ - truth.circ) / truth.circ < 0.03, `circumference ${scan.circ.toFixed(1)} vs ${truth.circ.toFixed(1)}`);
+  assert.ok(Math.abs(scan.seat[1] - truth.seat[1]) < 6, `length ${scan.seat[1].toFixed(1)} vs ${truth.seat[1].toFixed(1)}`);
+  assert.ok(Math.abs(scan.dome - truth.dome) < 8, `dome ${scan.dome} vs ${truth.dome}`);
+  // and it feeds the crown fitting like any imported scan
+  Core.registerHeadScan('turn-head', scan);
+  const P = Object.assign(Core.presetParams('fawn', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { headSource: 'scan', headScan: 'turn-head' });
+  const r = Core.validateMesh(Core.meshAntler(Core.buildSkeleton(P), 1.5));
+  assert.ok(r.watertight && r.shells === 1, 'watertight single solid');
+});
+
+test('a head turn needs enough views', () => {
+  const T = require('./fixtures/make-turn.js');
+  assert.throws(() => HeadScan.fromHeadTurn(T.frames().slice(0, 3), []), /not enough of the head turn/i);
+});

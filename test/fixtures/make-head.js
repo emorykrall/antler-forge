@@ -3,13 +3,13 @@
 // above its widest point) with a nose, two ears and an open neck. Exports it the way different
 // scanning apps would: in different units, with different axes up, facing different ways.
 const RX = 78, RY = 98, RZ = 100;
-function headMesh() {
-  const pos = [], tri = [], nu = 120, nv = 70;
-  const radius = (x, y, z) => {   // star-shaped surface from the origin (the cranium's centre)
+const radius = (x, y, z) => {   // star-shaped surface from the origin (the cranium's centre)
     const e = 1 / Math.hypot(x / RX, y / RY, z / (z > 0 ? RZ : 115));
     const bump = (cx, cy, cz, w, h) => h * Math.exp(-(((x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2) / (w * w)));
     return e * (1 + bump(0, 1, -0.45, 0.28, 0.2) + bump(1, 0, -0.25, 0.2, 0.12) + bump(-1, 0, -0.25, 0.2, 0.12));   // nose, ears
-  };
+};
+function headMesh() {
+  const pos = [], tri = [], nu = 120, nv = 70;
   for (let j = 0; j <= nv; j++) {
     const ph = (Math.PI * 0.8 * j) / nv;   // stop short of the bottom: an open neck
     for (let i = 0; i < nu; i++) {
@@ -40,4 +40,4 @@ function ply(m) {
   return `ply\nformat ascii 1.0\nelement vertex ${m.pos.length / 3}\nproperty float x\nproperty float y\nproperty float z\nelement face ${m.tri.length / 3}\nproperty list uchar int vertex_indices\nend_header\n`
     + m.pos.reduce((s, _, i) => (i % 3 ? s : s + `${m.pos[i]} ${m.pos[i + 1]} ${m.pos[i + 2]}\n`), '') + m.tri.reduce((s, _, i) => (i % 3 ? s : s + `3 ${m.tri[i]} ${m.tri[i + 1]} ${m.tri[i + 2]}\n`), '');
 }
-module.exports = { RX, RY, RZ, headMesh, toFile, obj, stl, ply };
+module.exports = { RX, RY, RZ, radius, headMesh, toFile, obj, stl, ply };

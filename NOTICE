@@ -15,6 +15,14 @@ vendor/face_mesh/
   (face_mesh.binarypb.wasm, face_mesh_solution_packed_assets.data.wasm)
   so that every static host serves them; their contents are unchanged.
 
+vendor/selfie_segmentation/
+  MediaPipe Selfie Segmentation (JavaScript solution, @mediapipe/selfie_segmentation 0.1.1675465747)
+  Copyright Google LLC
+  Licensed under the Apache License, Version 2.0.
+  The graph and model files are renamed with a .wasm suffix (selfie_segmentation.binarypb.wasm,
+  selfie_segmentation.tflite.wasm, selfie_segmentation_landscape.tflite.wasm) so that every static
+  host serves them; their contents are unchanged. Used only by the built-in head scan.
+
 Loaded at runtime from public CDNs (not included in this repository):
   three.js r128 and OrbitControls (MIT License)
   Google Fonts: IM Fell English, Alegreya Sans, IBM Plex Mono (SIL Open Font License 1.1)
