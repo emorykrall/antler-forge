@@ -82,6 +82,18 @@ test('a guided head turn rebuilds the head from its outlines', () => {
   assert.ok(r.watertight && r.shells === 1, 'watertight single solid');
 });
 
+test('a head turn sees through hair: the skull under it, from the face\'s skin points', () => {
+  const T = require('./fixtures/make-turn.js');
+  const truth = HeadScan.build({ pos: Float32Array.from(head.pos), tri: Uint32Array.from(head.tri) }, { scale: 1, base: 'z-up' });
+  const scan = HeadScan.fromHeadTurn(T.frames({ hair: { t: 15 } }), T.forehead());
+  assert.ok(Math.abs(scan.circ - truth.circ) / truth.circ < 0.03, `circumference under 15 mm of hair ${scan.circ.toFixed(1)} vs ${truth.circ.toFixed(1)}`);
+  assert.ok(Math.abs(scan.hair - 15) < 4, `hair ${scan.hair} mm`);
+  // without skin points hair can't be told from head, so it's all counted as head
+  const blind = HeadScan.fromHeadTurn(T.frames({ hair: { t: 15 } }), []);
+  assert.equal(blind.hair, 0);
+  assert.ok(blind.circ > scan.circ + 40, 'hair counted as head without skin points');
+});
+
 test('a head turn needs enough views', () => {
   const T = require('./fixtures/make-turn.js');
   assert.throws(() => HeadScan.fromHeadTurn(T.frames().slice(0, 3), []), /not enough of the head turn/i);

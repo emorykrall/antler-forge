@@ -513,7 +513,7 @@
     };
     const f = (p) => Math.hypot(p[0], p[1], p[2]) - R(p[0], p[1], p[2]);   // > 0 outside the head
     return {
-      kind: 'scan', c: [0, 0, 0], r: scan.fit.map((x) => x + d), R,
+      kind: 'scan', source: scan.source || 'import', c: [0, 0, 0], r: scan.fit.map((x) => x + d), R,
       exit(C, u) { let lo = 0, hi = 400; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; if (f(add(C, mul(u, m))) < 0) lo = m; else hi = m; } return add(C, mul(u, lo)); },
       normal(Q) { const e = 0.6; return norm([f([Q[0] + e, Q[1], Q[2]]) - f([Q[0] - e, Q[1], Q[2]]), f([Q[0], Q[1] + e, Q[2]]) - f([Q[0], Q[1] - e, Q[2]]), f([Q[0], Q[1], Q[2] + e]) - f([Q[0], Q[1], Q[2] - e])]); },
       project(p) { return mul(p, R(p[0], p[1], p[2]) / (Math.hypot(p[0], p[1], p[2]) || 1e-9)); },

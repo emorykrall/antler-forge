@@ -513,7 +513,7 @@ function syncControls() {
   w.innerHTML = '<div class="hint" id="scan-status" style="font-style:normal"></div>'
     + '<div class="row-actions"><button class="btn primary" id="scan-turn">Scan my head</button><button class="btn" id="scan-import">Import head scan</button></div>'
     + '<div class="hint"><b>Scan my head</b> uses the camera: a quick size check, then turn your head slowly left and right. '
-    + 'Or import an STL, OBJ or PLY from a phone scanning app (for example Scaniverse, Polycam or Heges). Wear your hair as you will under the crown. Nothing leaves this device.</div>'
+    + 'It measures your head under your hair; keep your forehead and temples clear if you can. Or import an STL, OBJ or PLY from a phone scanning app (for example Scaniverse, Polycam or Heges). Nothing leaves this device.</div>'
     + '<input type="file" id="scan-file" accept=".stl,.obj,.ply" hidden>';
   inputs.headSource.wrap.after(w);
 }
@@ -530,7 +530,9 @@ function applyStyle() {
   $('scan-ctl').hidden = !(P.style === 'crown' && P.headSource === 'scan');
   if (!$('scan-ctl').hidden) {
     const have = ensureScan(P), sh = have ? C.ringSpec(P).shape : null;
-    $('scan-status').textContent = sh ? `Fitted to your scan: ${inch(sh.circ, 1)} in round at the tape line, ${inch(sh.width, 1)} × ${inch(sh.length, 1)} in, dome ${inch(sh.dome, 1)} in.`
+    const sc = have ? scanMeta(P.headScan) : null, hair = sc && sc.source === 'head-turn' && sc.hair >= 3
+      ? ` The camera saw about ${inch(sc.hair, 2)} in of hair, which isn’t counted: the crown fits your head, plus the Comfort allowance (under Crown fit) for hair and ease.` : '';
+    $('scan-status').textContent = sh ? `Fitted to your scan: ${inch(sh.circ, 1)} in round at the tape line, ${inch(sh.width, 1)} × ${inch(sh.length, 1)} in, dome ${inch(sh.dome, 1)} in.${hair}`
       : P.headScan ? 'This design’s scan isn’t on this device, so the tape measurements are used. Import the scan again to fit to it.'
       : 'No scan yet. Until you import one, the tape measurements are used.';
   }
@@ -620,8 +622,8 @@ function bedObject() {
 function wearObject() {
   const g = new THREE.Group();
   if (!faunGroup) faunGroup = buildFaun();
-  const crown = P.style === 'crown', scanned = crown && P.headSource === 'scan' && ensureScan(P);
-  if (scanned) g.add(scanHeadObject(P));   // a clay bust of the scanned head instead of the faun
+  const crown = P.style === 'crown', scanned = crown && P.headSource === 'scan' && ensureScan(P) && crownFit(P).scan;
+  if (scanned) g.add(scanHeadObject(P));   // a clay bust of an imported scan instead of the faun
   else {
     if (crown) faunGroup.scale.set(...crownFit(P).f); else faunGroup.scale.setScalar(1);   // the faun takes the crown's head shape
     g.add(faunGroup);
@@ -637,9 +639,11 @@ function wearObject() {
 }
 // Where a crown sits: it is built around a head ellipsoid sized from the head circumference, which
 // is the faun's skull scaled by f. Its print-frame mesh was lowered by ring.shift onto the bed.
+// An imported scan has a face, so it's shown as itself; a camera scan is only the skull's shape
+// (no face), which reads oddly on its own, so the faun takes its ellipsoid (r) like a tape head.
 function crownFit(p, sk) {
   const g = sk ? sk.ring : C.ringSpec(p), r = g.head.r;
-  if (g.head.kind === 'scan') return { f: [1, 1, 1], M: new THREE.Matrix4().makeTranslation(0, 0, sk ? -sk.ring.shift : 0), scan: true };   // the scanned head sits at the origin
+  if (g.head.kind === 'scan' && g.head.source !== 'head-turn') return { f: [1, 1, 1], M: new THREE.Matrix4().makeTranslation(0, 0, sk ? -sk.ring.shift : 0), scan: true };   // the scanned head sits at the origin
   const f = [r[0] / 74, r[1] / 92, r[2] / 92];   // the faun's skull (74 × 92 × 92) stretched to this head
   const M = new THREE.Matrix4().makeTranslation(0, -6 * f[1], sk ? -sk.ring.shift : 0);
   return { f, M };
@@ -1544,6 +1548,8 @@ const scanStore = {
   get(id) { try { const v = localStorage.getItem(SCAN_PREFIX + id); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   put(id, packed) { localStorage.setItem(SCAN_PREFIX + id, JSON.stringify(packed)); },
 };
+let scanMetaCache = { id: null, v: null };   // the stored scan's details (source, hair), read once per scan
+const scanMeta = (id) => (scanMetaCache.id === id ? scanMetaCache.v : (scanMetaCache = { id, v: scanStore.get(id) }).v);
 function ensureScan(p) {   // make sure the engine knows the design's scan; false if it isn't on this device
   if (!p.headScan) return false;
   if (C.hasHeadScan(p.headScan)) return true;
@@ -1635,7 +1641,8 @@ function scanHeadObject(p) {
 const HS_BINS = [-60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60].map((y) => ({ id: 'l' + y, yaw: y, down: false, need: Math.abs(y) <= 50 }))
   .concat([-20, 0, 20].map((y) => ({ id: 'd' + y, yaw: y, down: true, need: true })));   // chin down: all three are asked for
 const HS_TOL = { level: 4, down: 7 };   // degrees either side of a bin's angle (turning with the chin down is harder to aim)
-const HS_FOREHEAD = [10, 151, 67, 297, 109, 338, 103, 332, 108, 337];   // landmarks on the forehead skin
+// landmarks on the forehead and temple skin, which lie on the skull even where hair covers the outline
+const HS_SKIN = [10, 151, 108, 337, 69, 299, 104, 333, 109, 338, 67, 297, 103, 332, 54, 284, 21, 251, 162, 389];
 const HS_CROP_MM = 170, HS_CELLS = 112;   // outline kept this far round the head, at about this many cells across
 let hsAudio = null, hsSegReady = null;
 function hsSegmenter() {   // loaded after the face tracker: the two share a loader name while starting
@@ -1730,7 +1737,7 @@ function hsPose(q) {   // from the face tracker: pick up this view if it's an an
   if (!bin || (!h.frames.l0 && bin.id !== 'l0')) return;               // the face-on view comes first: it sets the level
   const o = mid.clone().addScaledVector(fwd, -HEAD_BACK_MM * s).addScaledVector(up, HEAD_UP_MM * s);   // the head frame's origin
   const fh = [];
-  if (!bin.down && Math.abs(bin.yaw) <= 10) for (const i of HS_FOREHEAD) { const d = p(i).sub(o); fh.push([d.dot(side) / s, d.dot(fwd) / s, d.dot(up) / s]); }
+  if (!bin.down && Math.abs(bin.yaw) <= 20) for (const i of HS_SKIN) { const d = p(i).sub(o); fh.push([d.dot(side) / s, d.dot(fwd) / s, d.dot(up) / s]); }
   h.want = { bin, side: side.toArray(), fwd: fwd.toArray(), up: up.toArray(), o: [o.x, o.y], s, pitch, fh };
 }
 function hsMask(r) {   // from the segmentation model: the person's outline round the head, in cells
@@ -1765,7 +1772,7 @@ function hsFinish() {   // from Done, or after the full ring has shown
   h.stage = 'fit'; h.msg = 'Working out your head shape…'; arStatus(h.msg); hsDraw();
   hsTone(660, 0.14); hsTone(990, 0.22, 0.13);
   const frames = Object.values(h.frames);
-  const fh = h.fh.length ? h.fh[0].map((_, j) => [0, 1, 2].map((a) => h.fh.reduce((t, f) => t + f[j][a], 0) / h.fh.length)) : [];   // averaged over the face-on views
+  const fh = h.fh.length ? h.fh[0].map((_, j) => [0, 1, 2].map((a) => h.fh.reduce((t, f) => t + f[j][a], 0) / h.fh.length)) : [];   // averaged over the near-frontal views
   hsSolve(frames, fh).then((packed) => {
     if (AR.hscan !== h) return;
     const scan = HS.unpack(packed), id = 'scan-' + Date.now().toString(36);
@@ -1773,7 +1780,7 @@ function hsFinish() {   // from Done, or after the full ring has shown
     C.registerHeadScan(id, scan);
     Object.assign(P, { style: 'crown', headSource: 'scan', headScan: id });
     hsEnd(); syncControls(); changed(); setView('wear');
-    toast(`Head scanned from ${frames.length} views: ${inch(scan.circ, 1)} in round at the tape line. The crown is fitted to it.`);
+    toast(`Head scanned from ${frames.length} views: ${inch(scan.circ, 1)} in round at the tape line${scan.hair >= 3 ? ', under your hair' : ''}. The crown is fitted to it.`);
   }, (err) => {
     if (AR.hscan !== h) return;
     h.stage = 'turn'; h.frames = {}; h.fh = []; h.s0 = 0; h.pitch0 = null;   // start the turn again

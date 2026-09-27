@@ -9,8 +9,22 @@ function body() {   // a neck and shoulders under the head, like a real outline
   for (let l = 0; l + 1 < levels.length; l++) for (let i = 0; i < 24; i++) { const a = levels[l] + i, b = levels[l] + ((i + 1) % 24), c = levels[l + 1] + i, d = levels[l + 1] + ((i + 1) % 24); tri.push(a, c, b, b, c, d); }
   return { pos, tri };
 }
+// Hair: a layer hair.t mm thick over the head, except the face (within hair.az° of the front and
+// below hair.el° of elevation), so the outline is hair while the face landmarks stay on the skin.
+const DEG = 180 / Math.PI;
+function onFace(u, hair) { return Math.abs(Math.atan2(u[0], u[1])) * DEG < hair.az && Math.asin(u[2]) * DEG < hair.el; }
+function hairy(m, hair) {
+  const pos = m.pos.slice();
+  for (let i = 0; i < pos.length; i += 3) {
+    const len = Math.hypot(pos[i], pos[i + 1], pos[i + 2]), u = [pos[i] / len, pos[i + 1] / len, pos[i + 2] / len];
+    const t = hair.t + ((hair.top == null ? hair.t : hair.top) - hair.t) * Math.max(0, u[2]);   // hair.top: thickness at the crown
+    if (u[2] > -0.35 && !onFace(u, hair)) for (let a = 0; a < 3; a++) pos[i + a] += u[a] * t;   // down to about ear level
+  }
+  return { pos, tri: m.tri };
+}
 function frames(opts) {
-  const o = Object.assign({ s: 1.4, origin: [640, 360], k: 4 }, opts || {}), head = F.headMesh(), torso = body();
+  const o = Object.assign({ s: 1.4, origin: [640, 360], k: 4, hair: null }, opts || {}), torso = body();
+  const head = o.hair ? hairy(F.headMesh(), Object.assign({ az: 70, el: 30 }, o.hair)) : F.headMesh();
   const views = [];
   for (let yaw = -60; yaw <= 60; yaw += 10) views.push([yaw, 0]);
   for (const yaw of [-30, 0, 30]) views.push([yaw, 22]);
@@ -34,9 +48,9 @@ function frames(opts) {
     return { yaw: yd, pitch: pd, side, fwd, up, o: o.origin.slice(), s: o.s, mask: { x0, y0, k: o.k, w, h, data } };
   });
 }
-function forehead() {   // skin points across the forehead, as the face tracker reports them
+function forehead() {   // skin points across the forehead and temples, as the face tracker reports them
   const pts = [];
-  for (const el of [15, 30, 45]) for (const az of [-25, 0, 25]) {
+  for (const [el, az] of [[15, -25], [15, 0], [15, 25], [26, -12], [26, 12], [28, 0], [22, -45], [22, 45], [12, -60], [12, 60], [2, -68], [2, 68]]) {
     const e = (el * Math.PI) / 180, a = (az * Math.PI) / 180, u = [Math.sin(a) * Math.cos(e), Math.cos(a) * Math.cos(e), Math.sin(e)], r = F.radius(u[0], u[1], u[2]);
     pts.push([u[0] * r, u[1] * r, u[2] * r]);
   }

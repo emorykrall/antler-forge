@@ -298,19 +298,40 @@
   // (o, px), the scale (s, px per mm) and the person's outline cropped round the head
   // (mask: { x0, y0, k, w, h, data }, cell (ix, iy) centred at x0 + (ix+½)k, y0 + (iy+½)k, y up).
   // A smooth head shape is fitted to every outline above Z_CUT (so the neck, face and shoulders
-  // don't count) and to forehead points, then meshed and measured exactly like an imported scan.
+  // don't count) and to skin points from the face tracker, then meshed and measured exactly like an
+  // imported scan. Hair: the camera can't see through it, so the outline is modelled as the skull
+  // plus a hair layer of fitted thickness everywhere except the face. The face's skin points
+  // (forehead and temples) lie on the skull itself, which is what separates skull from hair.
   const Z_CUT = 5;   // mm above the head frame's origin (which sits a little above ear level)
   // model: [half-width, half-length front, half-length back, height, centre y, centre z, boxiness n]
-  const LO = [55, 60, 60, 60, -40, -40, 1.6], HI = [110, 130, 140, 140, 40, 40, 3.2];
-  const FH_W = 0.001;   // forehead points' weight against the outlines' mismatch
+  // model: … plus hair thickness (mm) over everything but the face
+  const LO = [55, 60, 60, 60, -40, -40, 1.6, 0], HI = [110, 130, 140, 140, 40, 40, 3.2, 60];
+  const SKIN_W = 0.004;   // skin points' weight against the outlines' mismatch (Huber beyond 3 mm)
+  const DEG = 180 / Math.PI;
+  function faceArea(skin) {   // the face, as seen from the head frame's origin: skin, not hair
+    if (!skin.length) return null;
+    let az = 0, el = -90;
+    for (const v of skin) { const len = Math.hypot(v[0], v[1], v[2]) || 1; az = Math.max(az, Math.abs(Math.atan2(v[0], v[1])) * DEG); el = Math.max(el, Math.asin(v[2] / len) * DEG); }
+    return { az: az + 4, el: el + 4 };
+  }
+  function hairCover(face, q) {   // 0 on the face, rising to 1 past its sides or above its top
+    if (!face) return 1;
+    const len = Math.hypot(q[0], q[1], q[2]) || 1, az = Math.abs(Math.atan2(q[0], q[1])) * DEG, el = Math.asin(q[2] / len) * DEG;
+    return Math.min(1, Math.max(0, (az - face.az) / 10, (el - face.el) / 8));
+  }
   function modelR(p, ux, uy, uz) {
     const ry = uy > 0 ? p[1] : p[2], n = p[6];
     return 1 / Math.pow(Math.pow(Math.abs(ux) / p[0], n) + Math.pow(Math.abs(uy) / ry, n) + Math.pow(Math.abs(uz) / p[3], n), 1 / n);
   }
   const DIRS = (() => { const o = [[0, 0, 1]]; for (let j = 1; j < 24; j++) { const ph = (Math.PI * j) / 24; for (let i = 0; i < 48; i++) { const th = (2 * Math.PI * i) / 48; o.push([Math.sin(ph) * Math.cos(th), Math.sin(ph) * Math.sin(th), Math.cos(ph)]); } } return o; })();
-  function modelPoints(p) {
-    const pts = [];
-    for (const u of DIRS) { const r = modelR(p, u[0], u[1], u[2]), q = [u[0] * r, u[1] * r + p[4], u[2] * r + p[5]]; if (q[2] > Z_CUT - 30) pts.push(q); }
+  function modelPoints(p, face) {   // the outline's surface: skull, plus hair where there is hair
+    const pts = [], t = p[7] || 0;
+    for (const u of DIRS) {
+      const r = modelR(p, u[0], u[1], u[2]), q = [u[0] * r, u[1] * r + p[4], u[2] * r + p[5]];
+      if (q[2] <= Z_CUT - 30) continue;
+      const h = t * hairCover(face, q);
+      pts.push([q[0] + u[0] * h, q[1] + u[1] * h, q[2] + u[2] * h]);
+    }
     return pts;
   }
   function prepFrame(f) {
@@ -367,32 +388,33 @@
     for (let j = 0; j < nv; j++) for (let i = 0; i < nu; i++) { const a = j * nu + i, b = j * nu + ((i + 1) % nu), c = a + nu, d = b + nu; tri.push(a, c, b, b, c, d); }
     return { pos: Float32Array.from(pos), tri: Uint32Array.from(tri) };
   }
-  // frames: see above; forehead: points on the forehead skin in the head frame (mm).
-  function fromHeadTurn(frames, forehead) {
+  // frames: see above; skin: points on the forehead and temple skin in the head frame (mm).
+  function fromHeadTurn(frames, skin) {
     const pfs = frames.filter((f) => f.mask && f.mask.w).map(prepFrame).filter((pf) => pf.area > 20);
     if (pfs.length < 6) throw new Error('Not enough of the head turn was seen. Try again, turning slowly.');
-    const fh = forehead || [];
+    const fh = (skin || []).filter((v) => v[2] > -20), face = faceArea(fh);   // skin down to about ear level
     const loss = (p) => {
       let pen = 0; const q = p.map((x, i) => { const c = Math.min(HI[i], Math.max(LO[i], x)); pen += (x - c) ** 2; return c; });
-      let L = 0; const pts = modelPoints(q);
+      if (!face) q[7] = 0;   // without skin points, hair can't be told from head
+      let L = 0; const pts = modelPoints(q, face);
       for (const pf of pfs) L += frameLoss(pf, pts);
       L /= pfs.length;
-      for (const v of fh) {   // forehead skin lies on or just inside the surface (hair adds a little): a gentle
-        // tie-breaker only, since tracked points can sit several mm off the skin (Huber beyond 3 mm)
+      for (const v of fh) {   // skin lies on the skull; robust, since tracked points can sit a few mm off
         const d = [v[0], v[1] - q[4], v[2] - q[5]], len = Math.hypot(d[0], d[1], d[2]) || 1, e = len - modelR(q, d[0] / len, d[1] / len, d[2] / len);
-        const a = Math.abs(e) * (e > 0 ? 1 : 0.5), rho = a < 3 ? a * a : 6 * a - 9;
-        L += (FH_W * rho) / Math.max(1, fh.length);
+        const a = Math.abs(e), rho = a < 3 ? a * a : 6 * a - 9;
+        L += (SKIN_W * rho) / fh.length;
       }
       return L + pen;
     };
     let best = null;
-    for (const start of [[78, 98, 105, 95, -8, 0, 2.2], [72, 92, 100, 88, -4, -6, 2.6]]) {   // two starts, keep the better
-      const r = nelderMead(loss, start, [6, 8, 8, 8, 6, 6, 0.3], 260);
+    for (const start of [[78, 98, 105, 95, -8, 0, 2.2, 4], [72, 92, 100, 88, -4, -6, 2.6, 15]]) {   // two starts, keep the better
+      const r = nelderMead(loss, start, [6, 8, 8, 8, 6, 6, 0.3, 6], 320);
       if (!best || r.v < best.v) best = r;
     }
     const p = best.x.map((x, i) => Math.min(HI[i], Math.max(LO[i], x)));
+    if (!face) p[7] = 0;
     const scan = build(modelMesh(p), { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });
-    return Object.assign(scan, { source: 'head-turn', frames: pfs.length, mismatch: best.v, model: p });
+    return Object.assign(scan, { source: 'head-turn', frames: pfs.length, mismatch: best.v, model: p.slice(0, 7), hair: Math.round(p[7] * 10) / 10 });
   }
 
   return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, NT, NP };

@@ -87,10 +87,18 @@ Newest first within each section. Change one only when the owner asks.
   (tracking often drops there). Coverage ring and soft tones. Each new
   angle stores the tracker's pose and scale plus a MediaPipe Selfie Segmentation outline (bundled
   in `vendor/`). A smooth head (superellipsoid, separate front/back lengths) is fitted to every
-  outline above ear level in a worker, then kept exactly like an imported scan. Forehead landmarks
-  are only a weak tie-breaker: tracked points can sit several mm off the skin and a strong weight
-  wrecked the fit. The back of the head is inferred (tracking fails past ~60° of turn). Hair
-  counts as head, so the hint says to wear hair as it will be under the crown. On synthetic heads
+  outline above ear level in a worker, then kept exactly like an imported scan. The back of the
+  head is inferred (tracking fails past ~60° of turn).
+- **The camera scan measures the head under the hair** (owner, 2026-09-27: it had sized the crown
+  round the hair). The outline is modelled as skull + one hair thickness everywhere except the
+  face; the face tracker's forehead and temple skin points lie on the skull and set the size, with
+  a robust (Huber) weight. The crown then fits the skull plus the Comfort allowance (Crown fit),
+  and the scan line says how much hair the camera saw. Separate top/side thickness was tried and
+  dropped: it invented hair on bald heads and hardly helped. Known limit: hair much thicker on top
+  than at the sides reads a few % small.
+- **Camera scans show on the faun** in the On head view (shaped to the scan's ellipsoid, like tape
+  heads): the fitted skull alone has no face, and the crown's brow point read as a nose on it.
+  Imported scans still show as a clay bust. On synthetic heads
   the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
   the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the
