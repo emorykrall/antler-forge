@@ -630,10 +630,10 @@
       const o = opts || {}, len = ((tb - ta) * g.inner) / (2 * Math.PI), n = Math.max(8, Math.ceil(len / STEP));
       const pts = [], rad = [], Fp = [];
       for (let i = 0; i <= n; i++) {
-        const u = i / n, t = ta + (tb - ta) * u;
+        const u = i / n, t = o.rev ? tb - (tb - ta) * u : ta + (tb - ta) * u;   // rev: runs from tb back to ta
         const endMM = Math.min(openStart && ta <= hs + 1e-6 ? u * len : Infinity, openEnd && tb >= he - 1e-6 ? (1 - u) * len : Infinity);
         const flare = endMM < 30 ? 5 * (1 - sstep(endMM / 30)) : 0;   // open ends turn away from the head
-        const hf = (tt) => bh(tt) + vf((tt - ta) / (tb - ta), tt);
+        const hf = (tt) => { const uu = (tt - ta) / (tb - ta); return bh(tt) + vf(o.rev ? 1 - uu : uu, tt); };   // u runs the way the path does
         const f = pathFrame(g, t, hf);
         const r = rf(u), lift = (o.radial || 0) + (o.radialF ? o.radialF(u) : 0) + (kind === 'liner' ? 0 : OUTER + r) + flare;
         pts.push(add(add(f.Q, mul(f.N, lift)), mul(f.W, o.w || 0))); Fp.push(f.N);
@@ -649,7 +649,7 @@
     // liner: rests on the head along the band's line
     for (const rail of [-1, 1]) { const br = onePath(hs, he, () => 0, () => LINER_R, 'liner', { radial: LINER_R * 0.7, w: rail * LINER_H }); out.push(br, mirrorX(br)); }
     // 1. the band: heavy at the brow and temples, thinner toward the back
-    if (pat !== 'band' && SC > 0) return sculptedBand(P, g, { path, joinFade, so, hs, he, SC, pat, out });
+    if (pat !== 'band' && SC > 0) return sculptedBand(P, g, { path, so, hs, he, SC, pat, out });
     const W8 = P.ringWander * 8 * (1 - 0.7 * SC);
     const main = path(hs, he, (u, t, side) => sideNoise(P, side, Math.cos(t) * 1.7 + so, Math.sin(t) * 1.7, 1.1) * W8 * joinFade(t),
       (u) => rs * (1 - 0.12 * SC) * (1.25 - P.ringTaper * sstep((hs + span * u - tr) / (he - tr))), 'ring', { ov: 0.1 });
@@ -669,51 +669,46 @@
     return out;
   }
 
-  // The sculpted patterns (Sculpted > 0): few, bold, well-separated strands with a clear hierarchy, each
-  // modulated thick-to-thin like a calligraphic stroke, framing clean almond-shaped openings, in a carved
-  // ribbon section (flat against the head, a ridge along the outer face). No strands run side by side.
-  //  lattice: a bold band; an arch from the brow point that rejoins it at the antler base (one big almond
-  //           over each temple); a flourish on past the antler to a fine point; almonds below, behind.
-  //  loops:   the band, the arch, and a flourish ending in a curl; open loops rise above, behind.
-  //  weave:   two strands crossing in a slow wave either side of the line, a clean chain of almonds.
+  // The sculpted patterns (Sculpted > 0) grow the crown out of the antlers, the way the references read:
+  // from each antler's base, a beam runs forward to the brow (meeting the other side's in a V) and one
+  // runs back, both thickest at the antler and tapering away; an upper beam leaves the base too. Tines
+  // fork off the beams and sweep back and up, off the head, so shapes flow on from one another instead
+  // of lying along the head like piping.
+  //  lattice: the upper beam arches over the temple and rejoins the band at the brow (an almond)
+  //  loops:   the upper beam lifts off over the forehead as a tall flame
+  //  weave:   the upper beam crosses the forward beam once on its way, then lifts off
   function sculptedBand(P, g, c) {
-    const { path, joinFade, so, hs, he, SC, pat, out } = c, tr = g.tr, rs = g.rs, span = he - hs;
-    const calm = 1 - SC, W8 = P.ringWander * 8 * calm;   // no wander at all when fully sculpted
-    const bump = (t, c0, w) => Math.exp(-(((t - c0) / w) ** 2));
-    const rib = { ribbon: 0.3 * SC, keel: 0.16 * SC };
+    const { path, so, hs, he, SC, pat, out } = c, tr = g.tr, rs = g.rs;
+    const W8 = P.ringWander * 8 * (1 - SC);
     const noise = (k) => (u, t, side) => sideNoise(P, side, u * 3 + so + k, 4.4 + k, 2.2) * W8;
-    const bold = rs * 1.3;   // the main line
-    const mainR = (u) => { const t = hs + span * u; return bold * (0.82 + 0.22 * bump(t, 0, 0.3) + 0.26 * bump(t, tr, 0.35)) * (1 - P.ringTaper * 0.8 * sstep((t - tr) / (he - tr))); };
-    const almond = (u, e) => Math.pow(Math.max(0, Math.sin(Math.PI * u)), e);   // 0 at both ends, full in the middle
-    if (pat === 'weave') {   // no centre line: two strands cross back and forth, meeting at nodes on the band's line
-      const f = 0.5 + 0.5 * Math.max(1, Math.round(P.ringWeave)), A = P.ringLoopDepth * 0.75;
-      for (const sgn of [1, -1]) {
-        const br = path(hs, he, (u, t, side) => sgn * A * Math.sin(2 * Math.PI * f * u) * joinFade(t) + noise(sgn)(u, t, side),
-          (u) => bold * 0.8 * (0.85 + 0.25 * Math.abs(Math.sin(2 * Math.PI * f * u))) * (1 - P.ringTaper * 0.6 * sstep((hs + span * u - tr) / (he - tr))),
-          'ring', Object.assign({ radial: rs * 0.1 * sgn, radialF: (u) => rs * 0.35 * sgn * Math.cos(2 * Math.PI * f * u) }, rib));
-        if (sgn > 0) g.main = br; else g.lower = br;
-      }
-      g.hosts = [g.main, g.lower];
-      return out;
+    const root = rs * 1.55;   // at the antler
+    const taper = (u) => root * (1 - (0.4 + 0.2 * P.ringTaper) * Math.pow(u, 0.9));   // u: 0 at the antler, 1 at the far end
+    // forward beam: brow (t = hs) to antler (t = tr); the free end is the root, so u runs from the brow
+    g.main = path(hs, tr, (u, t, side) => noise(0)(u, t, side) * Math.sin(Math.PI * u), (u) => taper(1 - u), 'ring', { ov: 0.12 });
+    g.main.away = -1;   // away from the antler is toward the brow
+    // back beam: antler to the back (or to the open end)
+    g.back = path(tr, he, (u, t, side) => noise(1)(u, t, side) * Math.sin(Math.PI * u), (u) => taper(u) * (1 - 0.15 * u), 'ring', { ov: 0.12 });
+    g.back.away = 1;
+    if (g.n >= 2) {   // the upper beam: from the antler's base forward, above the band
+      const H = P.ringSweepLift * 1.6, lat = pat === 'lattice', wv = pat === 'weave';
+      const end = lat ? hs : Math.max(hs + 0.12, tr * 0.28);
+      // height above the band: rises from the base, then (lattice) returns to meet the band at the brow,
+      // (weave) dips once through the forward beam first; otherwise stays up and lifts off as a flame
+      const hf = (u) => lat ? H * Math.pow(Math.sin(Math.PI * Math.pow(u, 1.25)), 0.8)
+        : wv ? H * (0.5 * Math.sin(Math.PI * u * 2.2 - 0.5) + 0.55 * sstep((u - 0.45) / 0.55))
+        : H * sstep(u / 0.55);
+      g.arch = path(end, tr, (u, t, side) => hf(u) + noise(2)(u, t, side) * Math.sin(Math.PI * u),
+        (u) => root * 0.8 * (1 - 0.35 * Math.pow(u, 0.9)) * (lat ? 1 : ogive(u, 0.7)), 'ring',
+        { rev: true, free: !lat, ov: 0.12, radialF: lat ? null : (u) => 16 * sstep((u - 0.55) / 0.45) ** 1.5 });   // the free end rises off the head
+      g.arch.away = 1;   // built from the antler outward
     }
-    g.main = path(hs, he, (u, t, side) => noise(0)(u, t, side) * joinFade(t), mainR, 'ring', rib);
-    if (g.n >= 2) {   // the arch: from the brow point up and over the temple, back down onto the band at the antler base
-      // bold proportions (about 2:1, like the references), climbing fast from the brow and peaking toward the antler
-      const ta = hs, tb = tr, H = P.ringSweepLift * 1.8, skew = (u) => Math.pow(Math.max(0, Math.sin(Math.PI * Math.pow(u, 0.75))), 0.7);
-      g.arch = path(ta, tb, (u, t, side) => H * skew(u) + noise(1)(u, t, side) * almond(u, 1),
-        (u) => rs * (0.95 + 0.3 * almond(u, 1.5)), 'ring', Object.assign({ radial: rs * 0.15 }, rib));
-      // the flourish: on past the antler, climbing and sweeping back to a fine point (a curl, for loops)
-      const tf = Math.min(he - 0.12, tr + P.ringSweepReach * DEG), hi = P.ringSweepLift * 1.4;
-      g.sweep = path(tr, tf, (u, t, side) => hi * (sstep(u / 0.45) - 0.3 * sstep((u - 0.65) / 0.35)) + noise(2)(u, t, side) * u,   // up steeply, tipping back at the end
-        (u) => rs * (1.15 - 0.3 * u) * ogive(u, 0.6), 'ring', Object.assign({ free: true, radial: rs * 0.2 }, rib));
+    if (g.n >= 3) {   // a second back beam, higher, that lifts off behind the antler as a swept flame
+      const tf = Math.min(he - 0.12, tr + P.ringSweepReach * DEG), hi = P.ringSweepLift * 0.9;
+      g.sweep = path(tr, tf, (u, t, side) => hi * sstep(u / 0.5) + noise(3)(u, t, side) * u,
+        (u) => root * 0.7 * (1 - 0.3 * u) * ogive(u, 0.65), 'ring', { free: true, ov: 0.12, radialF: (u) => 14 * sstep((u - 0.5) / 0.5) ** 1.5 });
+      g.sweep.away = 1;
     }
-    if (g.n >= 3) {   // almonds behind the antler: below the band (lattice) or open loops above it (loops)
-      const m = Math.max(1, Math.round(P.ringWeave)), above = pat === 'loops';
-      const ta = Math.min(he - 0.3, tr + 0.16), tb = Math.min(he - 0.08, ta + (above ? 1.3 : 0.95)), D = P.ringLoopDepth * (above ? 1.6 : 1.7) * (above ? 1 : -1);   // shorter, deeper almonds
-      g.lower = path(ta, tb, (u, t, side) => D * almond((u * m) % 1, 0.75) + noise(3)(u, t, side) * 0.5,
-        (u) => rs * (0.95 + 0.2 * almond((u * m) % 1, 1.5)), 'ring', Object.assign({ radial: rs * 0.12 }, rib));
-    }
-    g.hosts = [g.arch, g.sweep, g.main].filter(Boolean);
+    g.hosts = [g.back, g.arch, g.main, g.sweep].filter(Boolean);
     return out;
   }
 
@@ -980,10 +975,10 @@
         let F = perp(br.Fp ? br.Fp[i] : br.F, dir); F = vlen(F) > 1e-3 ? norm(F) : br.N[i];   // Fp: a per-point direction (a crown ribbon's outward normal)
         segs.push({ a, b, ra, rb, bb, N: br.N[i], B: br.B[i], F, s0: br.ss[i], s1: br.ss[i + 1] });
       }
-      const fin = br.sculpt ? Math.max(0, 1 - 1.45 * br.sculpt) : 1;   // a sculpted crown piece is smooth, polished bone (fully by 0.7)
-      groups.push({ kind: br.kind, segs, bb: gb, ov, groove: br.smooth ? 0 : T.groove * fin, grooves: T.grooves,
-        pearl: br.smooth ? 0 : T.pearl * (br.kind === 'beam' ? 1 : 0.45) * fin, pearlEnd: br.kind === 'beam' ? 0.3 : 0.18,
-        keel: br.keel || 0, len: br.length, k: br.sculpt ? Math.max(1.5, skel.fillet * (1 - 0.6 * br.sculpt)) : skel.fillet,   // sculpted: crisper joins, so slim strands stay distinct
+      const sc = br.sculpt || 0;   // sculpted crown pieces: polished bone with a faint grain (no pearling); plain white reads as icing
+      groups.push({ kind: br.kind, segs, bb: gb, ov, groove: br.smooth ? 0 : T.groove * (1 - 0.6 * sc), grooves: T.grooves,
+        pearl: br.smooth ? 0 : T.pearl * (br.kind === 'beam' ? 1 : 0.45) * (1 - sc), pearlEnd: br.kind === 'beam' ? 0.3 : 0.18,
+        keel: br.keel || 0, len: br.length, k: skel.fillet,
         extra: extra + Math.max(br.rad[0], 1) * ov, r0: skel.r0 });
     }
     const m = skel.mount;

@@ -181,6 +181,16 @@ Newest first within each section. Change one only when the owner asks.
   modulation along each strand, a carved ribbon section (flat against the head, a ridge along the outer
   face), single flame tines instead of clusters, no wander at Sculpted 1, and no antler texture from
   Sculpted 0.7. The weave is two strands crossing in a slow wave (a chain of almonds), no centre line.
+- **Sculpted crowns, third pass: grown from the antlers** (owner: still reads as cake icing; elements
+  disjointed, unlike the references' fluid continuation and gesture). Cause: every strand was laid along
+  the head at a fixed offset, like piping on a cake, and the ridged ribbon section was literally a
+  piping-bag profile. Now the crown grows out of each antler's base: a beam runs forward to the brow
+  (meeting the other in a V) and one runs back, both thickest at the antler and tapering away; an upper
+  beam leaves the base too (lattice: arches over the temple and flows back into the brow; loops: lifts
+  off over the forehead as a flame; weave: crosses the forward beam once, then lifts off); tines fork
+  off the beams and sweep back and up, off the head. Round antler section with a faint bone grain
+  (plain smooth white read as icing), normal fillets (crisp joins looked assembled). Rejected: ribbon
+  and keel sections, strands that only follow the head surface, reduced fillets.
 - **Crowns must survive printing and handling** (owner): crown strands are at least 4.6 mm thick
   (radius 2.3) except where a free end fines to its tip; band tines and brow pieces at least 4.4 mm at
   the base and no longer than 14× their base radius. Tested for every pattern, grown and sculpted.
