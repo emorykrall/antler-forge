@@ -25,8 +25,8 @@ function hairy(m, hair) {
 // scale: stretch the synthetic head ([width, length, height] factors) to try unusual proportions
 function scaled(m, k) { return k ? { pos: m.pos.map((v, i) => v * k[i % 3]), tri: m.tri } : m; }
 function frames(opts) {
-  const o = Object.assign({ s: 1.4, origin: [640, 360], k: 4, hair: null, scale: null }, opts || {}), torso = body();
-  const skull = scaled(F.headMesh(), o.scale), head = o.hair ? hairy(skull, Object.assign({ az: 70, el: 30 }, o.hair)) : skull;
+  const o = Object.assign({ s: 1.4, origin: [640, 360], k: 4, hair: null, scale: null, mesh: null }, opts || {}), torso = body();
+  const skull = scaled(o.mesh || F.headMesh(), o.scale), head = o.hair ? hairy(skull, Object.assign({ az: 70, el: 30 }, o.hair)) : skull;
   const views = [];
   for (let yaw = -60; yaw <= 60; yaw += 10) views.push([yaw, 0]);
   for (const yaw of [-30, 0, 30]) views.push([yaw, 22]);

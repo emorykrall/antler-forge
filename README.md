@@ -12,6 +12,7 @@ Parametric 3D-printable cosplay antlers that mount on a headband.
 | `tools/build-samples.js` | Regenerates `samples/`: one right-hand STL per preset. |
 | `vendor/face_mesh/` | MediaPipe Face Mesh (Apache-2.0), used by try-on and the head scan. |
 | `vendor/selfie_segmentation/` | MediaPipe Selfie Segmentation (Apache-2.0), used by the head scan. |
+| `vendor/flame/` | FLAME 2023 Open head model, trimmed (CC BY 4.0, Max Planck Institute for Intelligent Systems), used by the head scan. |
 
 `dist/` and `samples/` are generated and not committed.
 
@@ -44,7 +45,7 @@ The panel runs in the order you work: pick a species (or **Surprise me** for a n
 
 ## Crown style
 
-Switch **Style** to **Crown** for a one-piece antler crown: a band shaped to your head with two antlers rising at the temples, closed or open at the back or front. Enter your head circumference (a tape measure round your forehead); for a closer fit, switch on **Use over-the-top measurements** and add the front-to-back and ear-to-ear arcs over the top of your head, which give the crown your head's proportions. For the closest fit, set **Head size from** to **A 3D head scan**. **Scan my head** uses the camera: a quick size check from your eyes, then you turn your head slowly left and right and tip your chin down while a ring fills in; the page fits a head shape to your outline at every angle. Or import an STL, OBJ or PLY from a phone scanning app: the page checks its orientation with you. Either way the crown's liner is fitted to your actual head. The scan stays in your browser, and goes into the download so `node tools/build-antlers.js design.json --scan head-scan.json` can rebuild the crown. The band dips to a point on the forehead and rises over the temples, built from branching beams that the species shape. For comfort, a smooth liner rests on the head and everything decorative sits outside it; nothing reaches inside the head surface. Crowns print upright, as worn, on supports, and always fit the P2S as one part (only the antlers shrink). The download is a single STL.
+Switch **Style** to **Crown** for a one-piece antler crown: a band shaped to your head with two antlers rising at the temples, closed or open at the back or front. Enter your head circumference (a tape measure round your forehead); for a closer fit, switch on **Use over-the-top measurements** and add the front-to-back and ear-to-ear arcs over the top of your head, which give the crown your head's proportions. For the closest fit, set **Head size from** to **A 3D head scan**. **Scan my head** uses the camera: a quick size check from your eyes, then you turn your head slowly left and right and tip your chin down while a ring fills in; the page fits a realistic head model (FLAME) to your outline at every angle, and works out how much of the outline is hair, so the crown fits your head under it. Or import an STL, OBJ or PLY from a phone scanning app: the page checks its orientation with you. Either way the crown's liner is fitted to your actual head. The scan stays in your browser, and goes into the download so `node tools/build-antlers.js design.json --scan head-scan.json` can rebuild the crown. The band dips to a point on the forehead and rises over the temples, built from branching beams that the species shape. For comfort, a smooth liner rests on the head and everything decorative sits outside it; nothing reaches inside the head surface. Crowns print upright, as worn, on supports, and always fit the P2S as one part (only the antlers shrink). The download is a single STL.
 
 ## Try on (camera)
 
@@ -102,4 +103,4 @@ The antler is a single signed distance field. Every part is smooth-unioned, the 
 
 ## License
 
-MIT for Antler Forge's own code (see `LICENSE`). `vendor/face_mesh` and `vendor/selfie_segmentation` are MediaPipe under Apache-2.0 (see `NOTICE`).
+MIT for Antler Forge's own code (see `LICENSE`). `vendor/face_mesh` and `vendor/selfie_segmentation` are MediaPipe under Apache-2.0; `vendor/flame` is derived from FLAME 2023 Open under CC BY 4.0 (see `NOTICE`).

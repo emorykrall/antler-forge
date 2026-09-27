@@ -7,7 +7,7 @@ plain JavaScript, no framework and no runtime or dev dependencies.
 ## Commands
 
 ```bash
-npm test                                   # run before every commit (~11 s)
+npm test                                   # run before every commit (~35 s)
 npm run build                              # dist/antler-forge.html, dist/antler-forge-standalone.html, dist/site/
 npm run serve                              # build, then serve dist/site on http://localhost:8080
 npm run build:stl -- --preset elk --scale 0.7 --mount clip   # right + left STL + print notes
@@ -32,7 +32,12 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   `fromHeadTurn` (the built-in camera scan: a smooth head fitted to segmentation outlines from many
   head angles, meshed and measured like an import). Inlined after the engine in the same script
   tag, so the meshing worker and the head-turn worker have both. Frame format is documented above
-  `fromHeadTurn`; image axes are x right, y up, z toward the camera; masks are y up.
+  `fromHeadTurn`; image axes are x right, y up, z toward the camera; masks are y up. Camera scans use
+  `fromHeadTurnFlame` (via `headTurnScan`) with the bundled FLAME 2023 Open model
+  (`vendor/flame/flame_head.bin.wasm`, CC BY 4.0, regenerate with `tools/convert-flame.py`); the
+  smooth-head `fromHeadTurn` is the fallback. Only FLAME 2023 **Open** may be bundled.
+  Test fixtures: `make-turn.js` (renders head turns, optional hair) and `make-flame.js` (random
+  realistic FLAME heads in the page's head frame).
 - Head-turn capture (page, "built-in head scan" section): eye calibration first if none is saved,
   then angle bins (level yaw −60…60 by 10°, ±60 optional; chin-down at 0 and ±20°, all required); each new bin runs Selfie Segmentation
   on the same still frame the face tracker saw. Tested end to end in the browser pane with a fake
@@ -42,7 +47,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   (keyed `lib/file`; the page's file:// shim answers fetch/XHR for them).
 - `tools/build-antlers.js`: CLI builder. Exits with code 1 unless the mesh is one watertight solid.
 - `tools/build-samples.js`, `tools/serve.js`, `vendor/face_mesh/` and `vendor/selfie_segmentation/`
-  (MediaPipe, Apache-2.0, see NOTICE; binary model files renamed `*.wasm` so every host serves them).
+  (MediaPipe, Apache-2.0, see NOTICE; binary model files renamed `*.wasm` so every host serves them),
+  `vendor/flame/` (FLAME 2023 Open, CC BY 4.0, see NOTICE).
 - `test/*.test.js`: `node:test` suites. `dist/` and `samples/` are generated and gitignored. Never edit
   `dist/`; edit `src/` and rebuild.
 

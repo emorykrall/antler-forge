@@ -530,8 +530,9 @@ function applyStyle() {
   $('scan-ctl').hidden = !(P.style === 'crown' && P.headSource === 'scan');
   if (!$('scan-ctl').hidden) {
     const have = ensureScan(P), sh = have ? C.ringSpec(P).shape : null;
-    const sc = have ? scanMeta(P.headScan) : null, hair = sc && sc.source === 'head-turn' && sc.hair >= 3
-      ? ` The camera saw about ${inch(sc.hair, 2)} in of hair, which isn’t counted: the crown fits your head, plus the Comfort allowance (under Crown fit) for hair and ease.` : '';
+    const sc = have ? scanMeta(P.headScan) : null, hs = sc && sc.source === 'head-turn' ? Math.max(sc.hair || 0, sc.hairTop || 0) : 0;
+    const seen = sc && sc.hairTop != null && Math.abs(sc.hairTop - sc.hair) >= 4 ? `about ${inch(sc.hair, 2)} in of hair at the sides and ${inch(sc.hairTop, 2)} in on top` : `about ${inch(hs, 2)} in of hair`;
+    const hair = hs >= 3 ? ` The camera saw ${seen}, which isn’t counted: the crown fits your head, plus the Comfort allowance (under Crown fit) for hair and ease.` : '';
     $('scan-status').textContent = sh ? `Fitted to your scan: ${inch(sh.circ, 1)} in round at the tape line, ${inch(sh.width, 1)} × ${inch(sh.length, 1)} in, dome ${inch(sh.dome, 1)} in.${hair}`
       : P.headScan ? 'This design’s scan isn’t on this device, so the tape measurements are used. Import the scan again to fit to it.'
       : 'No scan yet. Until you import one, the tape measurements are used.';
@@ -1677,6 +1678,7 @@ async function hsStart() {
   if (AR.hscan !== h) return;
   if (AR.mode !== 'camera' || !AR.fm) { hsEnd(); return; }   // the camera or tracker didn't start; the note says why
   $('ar-bar').hidden = true; $('hs-bar').hidden = false;
+  hsFlameModel();
   hsSegmenter().then((seg) => { if (AR.hscan === h) { h.seg = seg; hsNext(); } },
     (e) => { console.error(e); if (AR.hscan === h) { hsEnd(); toast('The outline finder couldn’t load, so the scan can’t run here. Try reloading the page.'); } });
   if (AR.cal) hsBegin();
@@ -1780,7 +1782,7 @@ function hsFinish() {   // from Done, or after the full ring has shown
     C.registerHeadScan(id, scan);
     Object.assign(P, { style: 'crown', headSource: 'scan', headScan: id });
     hsEnd(); syncControls(); changed(); arRefreshPair();   // stay in Try on: the crown appears on the camera picture (and updates when its preview is meshed)
-    toast(`Head scanned from ${frames.length} views: ${inch(scan.circ, 1)} in round at the tape line${scan.hair >= 3 ? ', under your hair' : ''}. The crown is fitted to it.`);
+    toast(`Head scanned from ${frames.length} views: ${inch(scan.circ, 1)} in round at the tape line${Math.max(scan.hair || 0, scan.hairTop || 0) >= 3 ? ', under your hair' : ''}. The crown is fitted to it.`);
   }, (err) => {
     if (AR.hscan !== h) return;
     h.stage = 'turn'; h.frames = {}; h.fh = []; h.s0 = 0; h.pitch0 = null;   // start the turn again
@@ -1788,20 +1790,28 @@ function hsFinish() {   // from Done, or after the full ring has shown
     hsNext();
   });
 }
-function hsSolve(frames, fh) {   // fit in a worker so the page stays responsive; here if workers aren't available
+// FLAME's head model (vendor/flame, CC BY 4.0), fetched when a scan starts; the fit falls back to a
+// smooth head shape if it can't be had.
+let hsFlame = null;
+function hsFlameModel() {
+  if (!hsFlame) hsFlame = fetch('vendor/flame/flame_head.bin.wasm').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
+  return hsFlame;
+}
+async function hsSolve(frames, fh) {   // fit in a worker so the page stays responsive; here if workers aren't available
+  const model = await hsFlameModel();
   return new Promise((res, rej) => {
-    const here = () => { try { res(HS.pack(HS.fromHeadTurn(frames, fh))); } catch (e) { rej(e); } };
+    const here = () => { try { res(HS.pack(HS.headTurnScan(frames, fh, model))); } catch (e) { rej(e); } };
     let w;
     try {
       w = new Worker(URL.createObjectURL(new Blob([$('antler-core').textContent + `
         self.onmessage = function (e) {
-          try { self.postMessage({ scan: HeadScan.pack(HeadScan.fromHeadTurn(e.data.frames, e.data.fh)) }); }
+          try { self.postMessage({ scan: HeadScan.pack(HeadScan.headTurnScan(e.data.frames, e.data.fh, e.data.model)) }); }
           catch (err) { self.postMessage({ error: String((err && err.message) || err) }); }
         };`], { type: 'text/javascript' })));
     } catch (e) { setTimeout(here, 30); return; }
     w.onmessage = (e) => { w.terminate(); if (e.data.error) rej(new Error(e.data.error)); else res(e.data.scan); };
     w.onerror = () => { w.terminate(); setTimeout(here, 30); };
-    w.postMessage({ frames, fh });
+    w.postMessage({ frames, fh, model });
   });
 }
 // The coverage ring: a tick for each angle, lit once it's captured, as the person sees it (mirrored

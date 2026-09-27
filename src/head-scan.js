@@ -417,7 +417,8 @@
     }
     const p = best.x.map((x, i) => Math.min(HI[i], Math.max(LO[i], x)));
     if (!face) p[7] = 0;
-    const scan = build(modelMesh(p), { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });
+    const mm = modelMesh(p), scan = build(mm, { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });
+    Object.defineProperty(scan, 'mesh', { value: mm });   // the fitted surface, for tests (not stored)
     return Object.assign(scan, { source: 'head-turn', frames: pfs.length, mismatch: best.v, model: p.slice(0, 7), hair: Math.round(p[7] * 10) / 10 });
   }
 
@@ -449,5 +450,194 @@
     return pos;
   }
 
-  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, flameModel, flameShape, NT, NP };
+  // Fitting FLAME to a head turn: the same outlines, skin points and hair layer as fromHeadTurn, but the
+  // head is FLAME's statistical head (shape coefficients beta, in standard deviations, with FLAME's own
+  // unit-Gaussian prior), so the unseen back and the skull under the hair follow real head shapes.
+  // Iterated closest points: pair the model's outline with the observed one in every view (both ways)
+  // and each skin point with the nearest face vertex, then solve the linear least-squares problem for
+  // beta, translation T, hair thickness at the sides and on top (all linear once the pairs are fixed) and
+  // a pitch step (linearised), since FLAME's "up" can differ from the face tracker's. Pitch is solved
+  // smoothly rather than picked from a grid: a grid let one stray skin point flip the result.
+  const FL_MAIN = 3931;                 // FLAME's head vertices; the eyeballs follow
+  const FL_SIDE = [730, 2212];          // FLAME vertices at MediaPipe 234 / 454 (face sides, cheekbone level)
+  function hullIdx(xs, ys, idx) {       // convex hull (monotone chain) of the given points, counter-clockwise
+    const o = idx.slice().sort((a, b) => xs[a] - xs[b] || ys[a] - ys[b]);
+    const cr = (a, b, c) => (xs[b] - xs[a]) * (ys[c] - ys[a]) - (ys[b] - ys[a]) * (xs[c] - xs[a]);
+    const lo = [], hi = [];
+    for (const i of o) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], i) <= 0) lo.pop(); lo.push(i); }
+    for (let k = o.length - 1; k >= 0; k--) { const i = o[k]; while (hi.length >= 2 && cr(hi[hi.length - 2], hi[hi.length - 1], i) <= 0) hi.pop(); hi.push(i); }
+    lo.pop(); hi.pop();
+    return lo.concat(hi);
+  }
+  function outlineOf(pf) {   // the observed outline above the cut: points (px) and outward normals
+    const f = pf.f, m = f.mask, w = m.w, h = m.h, obs = pf.obs, clip = pf.clip, pts = [];
+    const at = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 0 : obs[y * w + x]);
+    const cl = (x, y) => (x < 0 || y < 0 || x >= w || y >= h ? 1 : clip[y * w + x]);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!at(x, y)) continue;
+      let edge = false;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!at(x + dx, y + dy) && cl(x + dx, y + dy)) edge = true;   // not the cut itself
+      if (!edge) continue;
+      const gx = at(x + 1, y - 1) + 2 * at(x + 1, y) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x - 1, y) - at(x - 1, y + 1);
+      const gy = at(x - 1, y + 1) + 2 * at(x, y + 1) + at(x + 1, y + 1) - at(x - 1, y - 1) - 2 * at(x, y - 1) - at(x + 1, y - 1);
+      const n = Math.hypot(gx, gy);
+      if (!n) continue;
+      const nx = -gx / n, ny = -gy / n;   // the true edge is about half a cell out from this edge cell's centre
+      pts.push({ x: m.x0 + (x + 0.5 + 0.5 * nx) * m.k, y: m.y0 + (y + 0.5 + 0.5 * ny) * m.k, nx, ny });
+    }
+    return pts;
+  }
+  function solveSym(A, b, n) {   // Gaussian elimination with partial pivoting (A is n×n, row-major; both copied)
+    const M = A.slice(), x = b.slice();
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r * n + c]) > Math.abs(M[p * n + c])) p = r;
+      if (p !== c) { for (let k = 0; k < n; k++) { const t = M[c * n + k]; M[c * n + k] = M[p * n + k]; M[p * n + k] = t; } const t = x[c]; x[c] = x[p]; x[p] = t; }
+      const d = M[c * n + c] || 1e-12;
+      for (let r = c + 1; r < n; r++) { const f = M[r * n + c] / d; if (!f) continue; for (let k = c; k < n; k++) M[r * n + k] -= f * M[c * n + k]; x[r] -= f * x[c]; }
+    }
+    for (let c = n - 1; c >= 0; c--) { let s = x[c]; for (let k = c + 1; k < n; k++) s -= M[c * n + k] * x[k]; x[c] = s / (M[c * n + c] || 1e-12); }
+    return x;
+  }
+  // K shape components; outline and skin-point noise (mm); outline pairs per view that count as independent;
+  // how far pitch may stray from level (°); iterations. Tuned on synthetic FLAME heads with hair and noise.
+  const FL_OPT = { K: 30, sigSil: 2, sigSkin: 1.5, nRef: 40, sigPitch: 8, iters: 22 };
+  function fromHeadTurnFlame(frames, skin, model, opt) {
+    const O = Object.assign({}, FL_OPT, opt || {}), K = Math.min(O.K, model.K), N = K + 6, iT = K, iH = K + 3, iH2 = K + 4, iP = K + 5;   // hair: at the sides (iH) and on top (iH2); iP: pitch step
+    const pfs = frames.filter((f) => f.mask && f.mask.w).map(prepFrame).filter((pf) => pf.area > 20);
+    if (pfs.length < 6) throw new Error('Not enough of the head turn was seen. Try again, turning slowly.');
+    const views = pfs.map((pf) => { const f = pf.f; return { f, lim: Z_CUT * f.s * (f.up[0] ** 2 + f.up[1] ** 2), outline: outlineOf(pf), A: [f.side[0], f.fwd[0], f.up[0], f.side[1], f.fwd[1], f.up[1]] }; });
+    const fh = (skin || []).filter((v) => v[2] > -20), face = faceArea(fh);
+    const V = FL_MAIN, n3 = 3 * model.V, dirs = model.dirs, sc = model.scales;
+    const tris = []; for (let f = 0; f < model.F; f++) { const a = model.tri[3 * f], b = model.tri[3 * f + 1], c = model.tri[3 * f + 2]; if (a < V && b < V && c < V) tris.push(a, b, c); }
+    const base = flameShape(model, []);
+    const side0 = [0, 1, 2].map((a) => (base[3 * FL_SIDE[0] + a] + base[3 * FL_SIDE[1] + a]) / 2);
+    const T0 = [-side0[0], -side0[1] + 28, -side0[2] - 22];   // the page's head-frame origin sits 28 mm behind and 22 mm above the face sides
+    function run(pitch, x, iters) {
+      let cp, sp;
+      const rot = (v) => [v[0], v[1] * cp - v[2] * sp, v[1] * sp + v[2] * cp];
+      const S0 = new Float64Array(3 * V);   // the unrotated shape, for the pitch derivative
+      const P = new Float64Array(3 * V), Nv = new Float64Array(3 * V), Wh = new Float64Array(V), Up = new Float64Array(V), D = new Float64Array(3 * V);
+      let obj = Infinity;
+      for (let it = 0; it < iters; it++) {
+        cp = Math.cos((pitch * Math.PI) / 180); sp = Math.sin((pitch * Math.PI) / 180); x[iP] = 0;
+        const shp = flameShape(model, x.slice(0, K));
+        for (let i = 0; i < V; i++) { S0[3 * i] = shp[3 * i]; S0[3 * i + 1] = shp[3 * i + 1]; S0[3 * i + 2] = shp[3 * i + 2]; const r = rot([shp[3 * i], shp[3 * i + 1], shp[3 * i + 2]]); for (let a = 0; a < 3; a++) P[3 * i + a] = r[a] + x[iT + a]; }
+        Nv.fill(0);
+        for (let k = 0; k < tris.length; k += 3) {
+          const a = 3 * tris[k], b = 3 * tris[k + 1], c = 3 * tris[k + 2];
+          const u = [P[b] - P[a], P[b + 1] - P[a + 1], P[b + 2] - P[a + 2]], w = [P[c] - P[a], P[c + 1] - P[a + 1], P[c + 2] - P[a + 2]];
+          const nn = [u[1] * w[2] - u[2] * w[1], u[2] * w[0] - u[0] * w[2], u[0] * w[1] - u[1] * w[0]];
+          for (const q of [a, b, c]) for (let e = 0; e < 3; e++) Nv[q + e] += nn[e];
+        }
+        const t = face ? Math.max(0, x[iH]) : 0, tt = face ? Math.max(0, x[iH2]) : 0;
+        for (let i = 0; i < V; i++) {
+          const l = Math.hypot(Nv[3 * i], Nv[3 * i + 1], Nv[3 * i + 2]) || 1;
+          for (let e = 0; e < 3; e++) Nv[3 * i + e] /= l;
+          Wh[i] = face ? hairCover(face, [P[3 * i], P[3 * i + 1], P[3 * i + 2]]) : 1;
+          Up[i] = Math.max(0, P[3 * i + 2] / (Math.hypot(P[3 * i], P[3 * i + 1], P[3 * i + 2]) || 1));   // 0 at the sides, 1 at the top
+          const h = Wh[i] * (t * (1 - Up[i]) + tt * Up[i]);
+          for (let e = 0; e < 3; e++) D[3 * i + e] = P[3 * i + e] + h * Nv[3 * i + e];
+        }
+        const JtJ = new Float64Array(N * N), Jtr = new Float64Array(N);
+        let E = 0;
+        const row = (terms, g, c0, wgt) => {   // residual g·(Σ c_i D_i) + c0, as a linear function of x
+          const J = new Float64Array(N);
+          const gr = [g[0], g[1] * cp + g[2] * sp, -g[1] * sp + g[2] * cp];   // Rᵀg, for the rotated shape components
+          let val = c0;
+          for (const [i, ci] of terms) {
+            for (let k = 0; k < K; k++) { const o = k * n3 + 3 * i; J[k] += ci * sc[k] * (gr[0] * dirs[o] + gr[1] * dirs[o + 1] + gr[2] * dirs[o + 2]); }
+            for (let e = 0; e < 3; e++) J[iT + e] += ci * g[e];
+            const y0 = S0[3 * i + 1], z0 = S0[3 * i + 2];   // d(rotated shape)/d(pitch), per radian
+            J[iP] += ci * (g[1] * (-y0 * sp - z0 * cp) + g[2] * (y0 * cp - z0 * sp));
+            if (face) { const gn = ci * Wh[i] * (g[0] * Nv[3 * i] + g[1] * Nv[3 * i + 1] + g[2] * Nv[3 * i + 2]); J[iH] += gn * (1 - Up[i]); J[iH2] += gn * Up[i]; }
+            val += ci * (g[0] * D[3 * i] + g[1] * D[3 * i + 1] + g[2] * D[3 * i + 2]);
+          }
+          // constant part so that J·x + c = current residual
+          let jx = 0; for (let k = 0; k < N; k++) jx += J[k] * x[k];
+          const c = val - jx;
+          E += wgt * val * val;
+          for (let a = 0; a < N; a++) { if (!J[a]) continue; Jtr[a] += wgt * J[a] * c; for (let b = 0; b < N; b++) JtJ[a * N + b] += wgt * J[a] * J[b]; }
+        };
+        for (const vw of views) {
+          const f = vw.f, A = vw.A, U0 = f.up[0], U1 = f.up[1];
+          const idx = [], X = new Float64Array(V), Y = new Float64Array(V);
+          for (let i = 0; i < V; i++) {
+            if (D[3 * i + 2] < Z_CUT - 40) continue;
+            X[i] = f.o[0] + f.s * (A[0] * D[3 * i] + A[1] * D[3 * i + 1] + A[2] * D[3 * i + 2]);
+            Y[i] = f.o[1] + f.s * (A[3] * D[3 * i] + A[4] * D[3 * i + 1] + A[5] * D[3 * i + 2]);
+            idx.push(i);
+          }
+          const hull = hullIdx(X, Y, idx), above = (x0, y0) => (x0 - f.o[0]) * U0 + (y0 - f.o[1]) * U1 > vw.lim + f.mask.k;
+          const out = vw.outline, pairs = [];
+          for (const i of hull) {   // model outline → nearest observed outline point
+            if (!above(X[i], Y[i])) continue;
+            let bd = Infinity, bq = null; for (const q of out) { const d = (q.x - X[i]) ** 2 + (q.y - Y[i]) ** 2; if (d < bd) { bd = d; bq = q; } }
+            if (bq) pairs.push([[[i, 1]], bq]);
+          }
+          for (const q of out) {   // observed outline → nearest point on the model's outline
+            let bd = Infinity, bt = null;
+            for (let e = 0; e < hull.length; e++) {
+              const i = hull[e], j = hull[(e + 1) % hull.length], ex = X[j] - X[i], ey = Y[j] - Y[i], L = ex * ex + ey * ey || 1e-9;
+              const a = Math.max(0, Math.min(1, ((q.x - X[i]) * ex + (q.y - Y[i]) * ey) / L)), d = (X[i] + a * ex - q.x) ** 2 + (Y[i] + a * ey - q.y) ** 2;
+              if (d < bd) { bd = d; bt = [[i, 1 - a], [j, a]]; }
+            }
+            if (bt) pairs.push([bt, q]);
+          }
+          const wgt = Math.min(1, O.nRef / Math.max(1, pairs.length)) / (O.sigSil * O.sigSil);
+          for (const [terms, q] of pairs) {   // along the observed normal, in mm
+            const g = [q.nx * A[0] + q.ny * A[3], q.nx * A[1] + q.ny * A[4], q.nx * A[2] + q.ny * A[5]];
+            row(terms, g, (q.nx * (f.o[0] - q.x) + q.ny * (f.o[1] - q.y)) / f.s, wgt);
+          }
+        }
+        for (const s of fh) {   // skin lies on the surface: nearest face vertex, along its normal (robust)
+          let bd = Infinity, bi = -1;
+          for (let i = 0; i < V; i++) { if (Wh[i] > 0.5) continue; const d = (P[3 * i] - s[0]) ** 2 + (P[3 * i + 1] - s[1]) ** 2 + (P[3 * i + 2] - s[2]) ** 2; if (d < bd) { bd = d; bi = i; } }
+          if (bi < 0) continue;
+          const n = [Nv[3 * bi], Nv[3 * bi + 1], Nv[3 * bi + 2]], e0 = n[0] * (P[3 * bi] - s[0]) + n[1] * (P[3 * bi + 1] - s[1]) + n[2] * (P[3 * bi + 2] - s[2]);
+          const hub = Math.abs(e0) > 3 ? 3 / Math.abs(e0) : 1;   // Huber beyond 3 mm
+          const save = Wh[bi]; Wh[bi] = 0;   // skin has no hair
+          const d0 = [D[3 * bi], D[3 * bi + 1], D[3 * bi + 2]]; for (let e = 0; e < 3; e++) D[3 * bi + e] = P[3 * bi + e];
+          row([[bi, 1]], n, -(n[0] * s[0] + n[1] * s[1] + n[2] * s[2]), hub / (O.sigSkin * O.sigSkin));
+          Wh[bi] = save; for (let e = 0; e < 3; e++) D[3 * bi + e] = d0[e];
+        }
+        for (let k = 0; k < K; k++) { JtJ[k * N + k] += 1; Jtr[k] += 0; }   // FLAME's prior: beta ~ N(0, 1)
+        const pw = 1 / ((O.sigPitch * Math.PI) / 180) ** 2, pr0 = (pitch * Math.PI) / 180;   // a gentle pull toward level
+        JtJ[iP * N + iP] += pw; Jtr[iP] += pw * pr0;
+        let pr = pw * pr0 * pr0; for (let k = 0; k < K; k++) pr += x[k] * x[k];
+        obj = E + pr;
+        for (let a = K; a < N; a++) JtJ[a * N + a] += 1e-6;
+        for (const h of face ? [] : [iH, iH2]) { for (let a = 0; a < N; a++) { JtJ[h * N + a] = JtJ[a * N + h] = 0; } JtJ[h * N + h] = 1; Jtr[h] = 0; }
+        const nx = solveSym(JtJ, Array.from(Jtr, (v) => -v), N);   // minimise |J x + c|² + |beta|²
+        for (let a = 0; a < N; a++) x[a] = nx[a];
+        for (const h of [iH, iH2]) x[h] = face ? Math.max(0, Math.min(60, x[h])) : 0;
+        pitch += Math.max(-4, Math.min(4, (x[iP] * 180) / Math.PI)); x[iP] = 0;   // pitch moves in steps of at most 4°
+      }
+      return { x, obj, pitch };
+    }
+    const x0 = () => { const x = new Array(N).fill(0); x[iT] = T0[0]; x[iT + 1] = T0[1]; x[iT + 2] = T0[2]; x[iH] = x[iH2] = face ? 6 : 0; return x; };
+    const best = run(0, x0(), O.iters);
+    best.pitch = Math.round(best.pitch * 10) / 10;
+    // the fitted head, without hair, as a mesh measured like any scan
+    const shp = flameShape(model, best.x.slice(0, K)), cp = Math.cos((best.pitch * Math.PI) / 180), sp = Math.sin((best.pitch * Math.PI) / 180);
+    const pos = new Float32Array(3 * V);
+    for (let i = 0; i < V; i++) {
+      const y = shp[3 * i + 1], z = shp[3 * i + 2];
+      pos[3 * i] = shp[3 * i] + best.x[iT]; pos[3 * i + 1] = y * cp - z * sp + best.x[iT + 1]; pos[3 * i + 2] = y * sp + z * cp + best.x[iT + 2];
+    }
+    const mesh = { pos, tri: Uint32Array.from(tris) }, scan = build(mesh, { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });
+    Object.defineProperty(scan, 'mesh', { value: mesh });   // the fitted surface, for tests (not stored)
+    const r1 = (v) => Math.round(v * 10) / 10;
+    return Object.assign(scan, {
+      source: 'head-turn', model: 'flame', frames: pfs.length, hair: r1(best.x[iH]), hairTop: r1(best.x[iH2]),
+      flame: { beta: best.x.slice(0, K).map((v) => Math.round(v * 1000) / 1000), pitch: best.pitch, T: best.x.slice(iT, iT + 3).map(r1) },   // to rebuild the head
+    });
+  }
+
+  // The camera scan: FLAME when its model file is at hand (it tests clearly better on realistic heads),
+  // otherwise the smooth-head fit.
+  function headTurnScan(frames, skin, flameBuf) {
+    return flameBuf ? fromHeadTurnFlame(frames, skin, flameModel(flameBuf)) : fromHeadTurn(frames, skin);
+  }
+
+  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, fromHeadTurnFlame, headTurnScan, flameModel, flameShape, NT, NP };
 });

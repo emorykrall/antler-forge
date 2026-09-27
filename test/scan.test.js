@@ -125,3 +125,19 @@ test('the bundled FLAME head model loads the right way round and responds to its
   let moved = 0; for (let i = 0; i < p.length; i++) moved = Math.max(moved, Math.abs(p[i] - t[i]));
   assert.ok(moved > 3, 'the first shape component moves the surface');
 });
+
+test('FLAME head-turn fit: realistic heads come back the right size, under hair, with no phantom hair', () => {
+  const T = require('./fixtures/make-turn.js'), FL = require('./fixtures/make-flame.js');
+  const buf = require('fs').readFileSync(require('path').join(__dirname, '../vendor/flame/flame_head.bin.wasm'));
+  for (const [seed, hair] of [[1, null], [4, { t: 12 }], [5, { t: 6, top: 25 }]]) {
+    const h = FL.flameHead(FL.gaussians(seed, 50));
+    const truth = HeadScan.build({ pos: Float32Array.from(h.mesh.pos), tri: Uint32Array.from(h.mesh.tri) }, { scale: 1, base: 'z-up' });
+    const scan = HeadScan.headTurnScan(T.frames({ mesh: h.mesh, hair }), h.skin, buf);
+    assert.equal(scan.model, 'flame');
+    assert.ok(Math.abs(scan.circ - truth.circ) / truth.circ < 0.035, `seed ${seed}: circumference ${scan.circ.toFixed(1)} vs ${truth.circ.toFixed(1)}`);
+    if (!hair) assert.ok(scan.hair < 2 && scan.hairTop < 2, `seed ${seed}: no hair, but ${scan.hair}/${scan.hairTop} mm found`);
+    else assert.ok(Math.abs(scan.hair - hair.t) < 5 && Math.abs(scan.hairTop - (hair.top == null ? hair.t : hair.top)) < 8, `seed ${seed}: hair ${scan.hair}/${scan.hairTop} mm`);
+    const stored = JSON.stringify(HeadScan.pack(scan));
+    assert.ok(stored.length < 250000 && !/"mesh"/.test(stored), 'the stored scan is compact (no mesh)');
+  }
+});

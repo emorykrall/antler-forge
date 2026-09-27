@@ -109,7 +109,19 @@ Newest first within each section. Change one only when the owner asks.
   or short heads toward average by 3–4%. The outlines plus skin points already set the shape.
   (A test guards unusual proportions.) Next attempt at the unseen back: FLAME 2023 Open, a
   statistical head model under CC BY 4.0 (the other FLAME releases and the Liverpool-York model
-  forbid redistribution, so they can't ship in a public site even non-commercially). On synthetic heads
+  forbid redistribution, so they can't ship in a public site even non-commercially).
+- **Camera scans fit FLAME 2023 Open** (2026-09-27; CC BY 4.0, credited in NOTICE; the owner
+  downloaded it). Trimmed to the template + 50 identity components (97% of shape variance, 1.6 MB,
+  `vendor/flame/`, made by `tools/convert-flame.py`). The fit (`fromHeadTurnFlame`) pairs model and
+  observed outlines in every view plus skin points to the face, and solves shape (30 components,
+  FLAME's own prior), position, pitch and hair (sides and top separately) by least squares; ~1 s.
+  On synthetic FLAME heads it beat the smooth-head fit clearly: crown-band surface error ~1.8 mm vs
+  ~3.5 mm, and it no longer invents hair on bald heads (the smooth fit did, because real skulls
+  aren't eggs). Separate side/top hair works here (it didn't for the smooth fit) because FLAME's
+  statistics constrain the skull. Pitch is solved smoothly, not from a grid: in the browser test one
+  stray skin landmark flipped a grid pick and made the head 4% big. The smooth-head fit remains as
+  the fallback if the model file can't load. The fitted FLAME parameters are stored with the scan
+  (`flame: { beta, pitch, T }`), so the head can be rebuilt later (e.g. as a bust). On synthetic heads
   the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
   the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the
