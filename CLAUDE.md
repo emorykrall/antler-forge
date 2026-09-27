@@ -11,7 +11,7 @@ npm test                                   # run before every commit (~11 s)
 npm run build                              # dist/antler-forge.html, dist/antler-forge-standalone.html, dist/site/
 npm run serve                              # build, then serve dist/site on http://localhost:8080
 npm run build:stl -- --preset elk --scale 0.7 --mount clip   # right + left STL + print notes
-npm run build:stl -- design.json --res 0.35                  # a design saved from the page
+npm run build:stl -- design.json --res 0.35                  # the design file from the page's STL zip
 npm run samples                            # samples/*.stl, one per preset at 0.6 mm
 ```
 
@@ -23,7 +23,11 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   `PARAM_SPEC` drives both the page controls and CLI flags; `DEFAULTS` and `PRESETS` sit next to it.
 - `src/designer.src.html`: the page. `/*__CORE__*/` is replaced by the engine at build time, and the
   meshing Web Worker is built from that same inlined script. Sections are marked with `/* ------- name */` banner comments:
-  controls, three.js scene, faun (wear-view bust), meshing worker, files, try-on (AR), lore, fireflies.
+  controls, three.js scene, faun (wear-view bust), meshing worker, files, try-on (AR), library, lore,
+  fireflies. Views: `print`, `wear`, `ar`, `library` (switch with `setView`). The library is
+  localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
+  autosave is `antler-forge-design-v3`. The viewport pill must say whether it shows the coarse
+  preview or the final built mesh.
 - `tools/build-page.js [outDir]`: inlines the engine and writes the three outputs, copies
   `vendor/face_mesh` and `serve.js` into `site/`, and generates the `*.wasm.b64.js` copies.
 - `tools/build-antlers.js`: CLI builder. Exits with code 1 unless the mesh is one watertight solid.

@@ -79,6 +79,40 @@ button,input,select{font:inherit;color:inherit}
 .progress{position:absolute;left:0;right:0;bottom:0;height:3px}
 .progress div{height:100%;width:0;background:linear-gradient(90deg,#8FB88A,var(--vp-active));transition:width .15s}
 .stage.ar-on #vp,.stage.ar-on #motes,.stage.ar-on .hud.bot,.stage.ar-on [aria-label="Camera"]{visibility:hidden}
+.bot-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.pill.preview i{background:transparent;box-shadow:inset 0 0 0 1.5px #E8D38A}
+/* ---------- the library (saved designs) */
+.stage.lib-on #vp,.stage.lib-on .hud.bot,.stage.lib-on .progress,.stage.lib-on [aria-label="Camera"]{visibility:hidden}
+.seg .count{display:inline-block;min-width:18px;margin-left:6px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.14);font:500 11px/1.4 var(--f-mono);text-align:center}
+.seg button[aria-pressed="true"] .count{background:rgba(29,26,18,.16)}
+.lib{position:absolute;inset:0;overflow:auto;padding:118px 20px 24px;-webkit-mask-image:linear-gradient(to bottom,transparent 78px,#000 112px);mask-image:linear-gradient(to bottom,transparent 78px,#000 112px)}
+.lib-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;color:var(--vp-ink);margin:0 0 14px}
+.lib-head h2{margin:0;font:400 26px/1.1 var(--f-display);letter-spacing:.01em}
+.lib-head p{margin:0;font:italic 400 15px/1.3 var(--f-fell);opacity:.75}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.card{display:flex;flex-direction:column;background:rgba(20,28,22,.86);border:1px solid var(--vp-edge);border-radius:16px;overflow:hidden;color:var(--vp-ink);backdrop-filter:blur(8px);box-shadow:0 12px 36px rgba(0,0,0,.28)}
+.card.current{border-color:var(--vp-active);box-shadow:0 0 0 1px var(--vp-active),0 12px 36px rgba(0,0,0,.28)}
+.thumb{position:relative;aspect-ratio:4/3;background:linear-gradient(180deg,#2D3F33,#0E1511);display:grid;place-items:center}
+.thumb img{display:block;width:100%;height:100%;object-fit:cover}
+.thumb .nothumb{font:italic 400 14px/1 var(--f-fell);opacity:.55}
+.thumb .tag{position:absolute;left:10px;top:10px;background:var(--vp-active);color:#1D1A12;border-radius:999px;padding:3px 9px;font:500 11px/1.4 var(--f-mono);letter-spacing:.02em}
+.card:not(.current) .thumb .tag{display:none}
+.card-body{display:grid;gap:4px;padding:12px 14px 14px}
+.card-name{margin:0;font:400 19px/1.15 var(--f-display);letter-spacing:.01em;overflow-wrap:anywhere}
+.card-rename{font:400 16px/1.2 var(--f-fell);background:rgba(255,255,255,.08);border:1px solid var(--vp-edge);border-radius:8px;padding:4px 8px;color:var(--vp-ink);width:100%}
+.card-meta{margin:0;font-size:13.5px;opacity:.85;display:flex;align-items:center;gap:7px}
+.card-meta i{width:10px;height:10px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.card-dims,.card-date{margin:0;font:500 11.5px/1.45 var(--f-mono);font-variant-numeric:tabular-nums;opacity:.7}
+.card-dims .over{color:#E3A24A;opacity:1}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.card-minor{display:flex;gap:14px;margin-top:2px}
+.linkbtn{border:0;background:none;padding:2px 0;color:var(--vp-ink);opacity:.7;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.linkbtn:hover{opacity:1}
+.linkbtn.danger{color:#EE8B7B;opacity:1}
+.linkbtn:focus-visible{outline:2px solid var(--vp-active);outline-offset:2px;border-radius:4px}
+.lib-empty{grid-column:1/-1;max-width:440px;background:rgba(20,28,22,.86);border:1px solid var(--vp-edge);border-radius:16px;padding:18px 20px;color:var(--vp-ink);backdrop-filter:blur(8px)}
+.lib-empty p{margin:0 0 6px;font-size:14.5px;opacity:.85}
+.lib-empty p:first-child{font:400 20px/1.2 var(--f-display);opacity:1}
 #ar{position:absolute;display:block;background:#0B100D}
 .ar-ui{position:absolute;inset:0;pointer-events:none}
 .ar-ui>*{pointer-events:auto}
@@ -182,7 +216,11 @@ details[open] summary::after{transform:rotate(-135deg)}
   .seg button{padding:5px 9px;font-size:12.5px}
   .ar-note{top:96px;font-size:13.5px}
   .ar-bar{bottom:10px;padding:7px 8px;gap:6px}
-  .stage.ar-on{height:74vh}
+  .stage.ar-on,.stage.lib-on{height:74vh}
+  .lib{padding:112px 12px 16px}
+  .lib-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .card-body{padding:10px 11px 12px}
+  .card-name{font-size:17px}
   .chipbtn{padding:5px 10px;font-size:12.5px}
   .ar-row label{font-size:12px}
 }
@@ -247,6 +285,10 @@ details[open] summary::after{transform:rotate(-135deg)}
       <p class="ar-note" id="ar-note" hidden></p>
       <input type="file" id="ar-file" accept="image/*" hidden>
     </div>
+    <div class="lib" id="lib" hidden>
+      <div class="lib-head"><h2>Your library</h2><p id="lib-sub"></p></div>
+      <div class="lib-grid" id="lib-grid" role="list"></div>
+    </div>
     <div class="hud top">
       <div class="brand"><h1>Antler Forge</h1><svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg><div class="plate" id="plate" aria-live="polite"></div></div>
       <div class="top-right">
@@ -254,6 +296,7 @@ details[open] summary::after{transform:rotate(-135deg)}
           <button id="v-print" aria-pressed="false">Print bed</button>
           <button id="v-wear" aria-pressed="true">On headband</button>
           <button id="v-ar" aria-pressed="false">Try on</button>
+          <button id="v-lib" aria-pressed="false">Library<span class="count" id="lib-count" hidden></span></button>
         </div>
         <div class="seg small" role="group" aria-label="Camera">
           <button id="cam-34" aria-pressed="true">¾</button>
@@ -264,7 +307,10 @@ details[open] summary::after{transform:rotate(-135deg)}
     </div>
     <div class="hud bot">
       <div class="readout" id="dims">—</div>
-      <div class="pill" id="status"><i></i><span>Preview</span></div>
+      <div class="bot-right">
+        <button class="chipbtn snap" id="build-inline" hidden>Build final mesh</button>
+        <div class="pill preview" id="status"><i></i><span>Preview</span></div>
+      </div>
     </div>
     <div class="progress"><div id="prog"></div></div>
     <div class="err" id="gl-err" hidden>3D preview needs WebGL. The controls and STL export still work.</div>
@@ -286,8 +332,8 @@ details[open] summary::after{transform:rotate(-135deg)}
         <p class="label" style="margin-top:20px">Filament</p>
         <div class="swatches" id="swatches"></div>
         <div class="row-actions">
-          <button class="btn" id="save-design">Save design</button>
-          <button class="btn" id="load-design">Load design</button>
+          <button class="btn" id="save-design">Save to library</button>
+          <button class="btn" id="load-design">Load design file</button>
           <input type="file" id="file-in" accept=".json,application/json" hidden>
         </div>
       </div>
@@ -298,7 +344,7 @@ details[open] summary::after{transform:rotate(-135deg)}
         <div class="notes">
           <p>The download is a zip with a right and a mirrored left antler, the design file, and print notes. Both STLs are single closed solids, checked for open and non-manifold edges before you get them.</p>
           <p>Each antler is one complete part, standing on its flat base and turned on the plate if that's what it takes to fit the P2S. The print notes list Bambu Studio settings for your filament: tree supports, a 5 mm brim, and the right nozzle for PLA Wood.</p>
-          <p>To build at higher resolution offline, save the design and run <code>node tools/build-antlers.js design.json --res 0.35</code>.</p>
+          <p>Save to library keeps designs in this browser, on this device. The STL zip also holds a design file: Load design file brings it back, and <code>node tools/build-antlers.js &lt;name&gt;-design.json --res 0.35</code> builds it at higher resolution offline.</p>
         </div>
       </details>
     </div>
@@ -309,9 +355,9 @@ details[open] summary::after{transform:rotate(-135deg)}
         <div><span>Solids</span><b id="c-shell">—</b></div>
         <div><span>PLA solid</span><b id="c-g">—</b></div>
       </div>
-      <div class="msg" id="msg">Preview updates live. Build the printable mesh when the shape looks right.</div>
+      <div class="msg" id="msg">You’re looking at a coarse preview. Build the final mesh when the shape looks right.</div>
       <div class="btns">
-        <button class="btn primary" id="build">Build mesh</button>
+        <button class="btn primary" id="build">Build final mesh</button>
         <button class="btn" id="download">Download STLs</button>
       </div>
     </div>
@@ -606,6 +652,7 @@ let lastFitKey = '';
 function rebuildScene() {
   if (!glOK) return;
   if (view === 'ar') { arRefreshPair(); return; }
+  if (view === 'library') return;
   while (root.children.length) root.remove(root.children[0]);
   if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
   else root.add(wearObject());
@@ -652,11 +699,13 @@ function updateReadout() {
   $('dims').innerHTML = s ? `<b>${f(s[0])} × ${f(s[1])} × ${f(s[2])}</b> mm · ${fit.scale.toFixed(2)}×<br>${fits ? 'one piece on the P2S' : '<span style="color:#E3A24A">too big for the P2S</span>'} · <span style="display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1px;background:${fil.hex}"></span> ${P.filament === 'oak' ? 'White Oak' : 'Bone White'}` : 'Shaping…';
   const st = $('status');
   const stale = !shown || shown.key !== keyOf(P);
-  if (building) { st.className = 'pill busy'; st.lastChild.textContent = 'Casting printable mesh…'; }
-  else if (fresh && built.report.watertight) { st.className = 'pill ok'; st.lastChild.textContent = 'Watertight · ready to print'; }
-  else if (fresh) { st.className = 'pill warn'; st.lastChild.textContent = 'Mesh check failed'; }
-  else if (stale) { st.className = 'pill busy'; st.lastChild.textContent = 'Growing…'; }
-  else { st.className = 'pill'; st.lastChild.textContent = 'Live preview'; }
+  // Say plainly whether the view shows the coarse preview or the final, checked mesh.
+  if (building) { st.className = 'pill busy'; st.lastChild.textContent = 'Building final mesh…'; }
+  else if (fresh && built.report.watertight) { st.className = 'pill ok'; st.lastChild.textContent = `Final mesh · ${P.resolution} mm · watertight`; }
+  else if (fresh) { st.className = 'pill warn'; st.lastChild.textContent = 'Final mesh failed its check'; }
+  else if (stale) { st.className = 'pill busy'; st.lastChild.textContent = 'Updating preview…'; }
+  else { st.className = 'pill preview'; st.lastChild.textContent = `Preview · coarse ${previewRes(P).toFixed(1)} mm`; }
+  $('build-inline').hidden = building || fresh || !glOK;
   updatePlate();
   const r = fresh ? built.report : null;
   $('checks').classList.toggle('empty', !r && window.innerWidth < 820);
@@ -676,9 +725,9 @@ function updateReadout() {
   if (building) { msg.className = 'msg'; msg.textContent = 'Building the printable mesh…'; }
   else if (warns.length) { msg.className = 'msg warn'; msg.textContent = warns.join(' '); }
   else if (fresh) { msg.className = 'msg'; msg.textContent = r.watertight && r.shells === 1 ? `One closed solid, ${r.triangles.toLocaleString()} triangles. Ready to download. ${notes.join(' ')}` : 'The mesh failed its check. Try a finer resolution.'; }
-  else { msg.className = 'msg'; msg.textContent = (notes.join(' ') + ' The preview is a coarse version of the real mesh. Build it at full resolution when the shape looks right.').trim(); }
+  else { msg.className = 'msg'; msg.textContent = (notes.join(' ') + ' You’re looking at a coarse preview. Press Build final mesh to see the exact mesh that will print, checked for watertightness.').trim(); }
   $('build').disabled = building;
-  $('build').textContent = fresh ? 'Rebuild mesh' : 'Build mesh';
+  $('build').textContent = fresh ? 'Rebuild final mesh' : 'Build final mesh';
 }
 
 /* ------------------------------------------------------------ change pipeline */
@@ -687,7 +736,7 @@ function changed() {
   try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {}
   for (const b of presetsEl.children) b.setAttribute('aria-pressed', String(b.dataset.k === P.preset));
   if (raf) return;
-  raf = requestAnimationFrame(() => { raf = 0; requestPreview(); updateReadout(); });
+  raf = requestAnimationFrame(() => { raf = 0; requestPreview(); updateReadout(); if (view === 'library') libMark(); });
 }
 
 /* ------------------------------------------------------------ meshing worker */
@@ -756,7 +805,18 @@ function finishJob(j, mesh, report) {
     setShown(mesh, j.key, 'preview'); shown.size = report.size; shown.fit = report.fit;
   }
   rebuildScene(); updateReadout();
+  if (shown) previewWaiters = previewWaiters.filter((w) => (w.key === shown.key ? (w.resolve(true), false) : true));
   pump();
+}
+// Resolves true once the preview (or a build) for `key` is on screen, false after `ms`.
+let previewWaiters = [];
+function previewReady(key, ms) {
+  if (shown && shown.key === key) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const w = { key, resolve };
+    previewWaiters.push(w);
+    setTimeout(() => { previewWaiters = previewWaiters.filter((x) => x !== w); resolve(false); }, ms);
+  });
 }
 function build() {
   if (building || (queued && queued.kind === 'build')) return Promise.resolve(null);
@@ -791,7 +851,8 @@ async function offerFile(name, data) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 const slug = () => 'antlers-' + (P.preset || 'custom') + '-' + (C.FILAMENTS[P.filament] || C.FILAMENTS.bone).slug;
-$('download').addEventListener('click', async () => {
+$('download').addEventListener('click', () => downloadSTLs());
+async function downloadSTLs() {
   let b = built && built.key === keyOf(P) ? built : await build();
   if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
   if (!b.report.watertight || b.report.shells !== 1) { toast('Mesh failed its check, so nothing was exported.'); return; }
@@ -803,9 +864,10 @@ $('download').addEventListener('click', async () => {
     { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), b.report, b.report.fit) },
   ]);
   offerFile(base + '.zip', zip);
-});
+}
 $('build').addEventListener('click', () => build());
-$('save-design').addEventListener('click', () => offerFile(slug() + '-design.json', JSON.stringify({ app: 'antler-forge', version: 1, params: P }, null, 2)));
+$('build-inline').addEventListener('click', () => build());
+$('save-design').addEventListener('click', saveToLibrary);
 $('load-design').addEventListener('click', () => $('file-in').click());
 $('file-in').addEventListener('change', async (e) => {
   const f = e.target.files[0]; if (!f) return;
@@ -815,15 +877,18 @@ $('file-in').addEventListener('change', async (e) => {
 });
 $('reroll').addEventListener('click', () => { P.seed = 1 + Math.floor(Math.random() * 9998); if (P.jitter < 0.05) P.jitter = 0.08; syncControls(); changed(); toast(rackName(P) + ' grows in.'); });
 
-for (const [id, v] of [['v-print', 'print'], ['v-wear', 'wear'], ['v-ar', 'ar']]) {
-  $(id).addEventListener('click', () => {
-    const was = view;
-    view = v;
-    for (const b of ['v-print', 'v-wear', 'v-ar']) $(b).setAttribute('aria-pressed', String(b === id));
-    if (v === 'ar') { if (was !== 'ar') arEnter(); return; }
-    if (was === 'ar') arExit();
-    rebuildScene();
-  });
+const VIEWS = [['v-print', 'print'], ['v-wear', 'wear'], ['v-ar', 'ar'], ['v-lib', 'library']];
+for (const [id, v] of VIEWS) $(id).addEventListener('click', () => setView(v));
+function setView(v) {
+  const was = view;
+  view = v;
+  for (const [id, k] of VIEWS) $(id).setAttribute('aria-pressed', String(k === v));
+  if (was === v) return;
+  if (was === 'ar') arExit();
+  if (was === 'library') libExit();
+  if (v === 'ar') arEnter();
+  else if (v === 'library') libEnter();
+  else rebuildScene();
 }
 
 for (const [id, v] of [['cam-34', '34'], ['cam-front', 'front'], ['cam-side', 'side']]) {
@@ -1175,6 +1240,168 @@ for (const [id, k] of [['ar-size', 'size'], ['ar-lift', 'lift']]) {
   });
 }
 
+/* ------------------------------------------------------------ library (saved designs) */
+// Saved designs live in this browser (localStorage), newest first. Each entry keeps the full
+// params, a ¾ headband snapshot and the printed size, so the library can be reviewed without
+// meshing anything. Opening one loads it into the editor; its STLs are built from there.
+const LIB_KEY = 'antler-forge-library-v1';
+const libKey = (p) => keyOf(p) + '|' + p.filament;   // same shape and same filament = same design
+function libLoad() {
+  try { const a = JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+}
+function libStore(all) { localStorage.setItem(LIB_KEY, JSON.stringify(all)); }   // throws when storage is full or blocked
+function libError(e) {
+  const full = e && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED' || e.code === 22);
+  toast(full ? 'The library is full in this browser. Delete a few designs to save more.'
+    : 'This browser isn’t letting the page store designs (a private window, or site data is blocked).');
+}
+function libCount() { const n = libLoad().length, el = $('lib-count'); el.textContent = String(n); el.hidden = !n; }
+let persistAsked = false;
+function askPersist() {   // ask the browser not to evict the library when space runs low
+  if (persistAsked) return; persistAsked = true;
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); } catch (e) {}
+}
+
+// A ¾ view of the pair on the headband, rendered off screen so every card is framed the same way.
+let snapR = null;
+function snapshot() {
+  if (!glOK || !shown) return null;
+  const W = 360, H = 270;
+  try {
+    if (!snapR) {
+      snapR = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+      snapR.setPixelRatio(1); snapR.setSize(W, H, false);
+      snapR.outputEncoding = THREE.sRGBEncoding;
+      snapR.toneMapping = THREE.ACESFilmicToneMapping; snapR.toneMappingExposure = 1.05;
+      snapR.shadowMap.enabled = true; snapR.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+    while (root.children.length) root.remove(root.children[0]);
+    const g = wearObject(); root.add(g); root.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    root.traverse((o) => { if (o.isMesh && !o.userData.nofit && !(o.parent && o.parent.userData.nofit)) box.expandByObject(o); });
+    const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3()), m = Math.max(s.x, s.y, s.z);
+    const cam = new THREE.PerspectiveCamera(35, W / H, 1, 5000);
+    const dist = (m * 0.62) / Math.sin((35 * Math.PI) / 360) * 1.15;
+    cam.up.set(0, 0, 1); cam.position.copy(c).addScaledVector(new THREE.Vector3(0.45, 1, 0.3).normalize(), dist);
+    cam.near = dist / 50; cam.far = dist * 20; cam.lookAt(c); cam.updateProjectionMatrix();
+    // light it the way fitCamera does, then put the key light back for the live view
+    const sc = keyLight.shadow.camera, was = [keyLight.position.clone(), keyLight.target.position.clone(), sc.left, sc.right, sc.top, sc.bottom, sc.near, sc.far];
+    const rr = m * 0.8;
+    keyLight.target.position.copy(c); keyLight.position.copy(c).add(new THREE.Vector3(260, 180, 420).setLength(rr * 3));
+    sc.left = -rr; sc.right = rr; sc.top = rr; sc.bottom = -rr; sc.near = rr * 0.5; sc.far = rr * 6; sc.updateProjectionMatrix();
+    snapR.render(scene, cam);
+    keyLight.position.copy(was[0]); keyLight.target.position.copy(was[1]);
+    [sc.left, sc.right, sc.top, sc.bottom, sc.near, sc.far] = was.slice(2); sc.updateProjectionMatrix();
+    root.remove(g);
+    const out = document.createElement('canvas'); out.width = W; out.height = H;
+    const ctx = out.getContext('2d'), bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, '#2D3F33'); bg.addColorStop(1, '#0E1511');
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); ctx.drawImage(snapR.domElement, 0, 0);
+    return out.toDataURL('image/jpeg', 0.82);
+  } catch (e) { return null; }
+  finally { if (view === 'print' || view === 'wear') rebuildScene(); }   // the snapshot borrowed the faun
+}
+
+async function saveToLibrary() {
+  const params = JSON.parse(JSON.stringify(P)), key = libKey(params);
+  const dup = libLoad().find((d) => libKey(C.resolveParams(d.params)) === key);
+  if (dup) { toast('Already in your library as ' + dup.name + '.'); return; }
+  const btn = $('save-design'); btn.disabled = true;
+  try {
+    await previewReady(keyOf(params), 10000);           // picture the shape that is being saved
+    const ready = shown && shown.key === keyOf(params) && keyOf(P) === keyOf(params);
+    const fit = C.buildSkeleton(params).fit;
+    const entry = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), name: rackName(params), savedAt: Date.now(), params,
+      size: [fit.w, fit.d, fit.h].map((x) => Math.round(x)), fits: fit.fits, scale: Number(fit.scale.toFixed(2)),
+      thumb: ready ? snapshot() : null,
+    };
+    const all = libLoad(); all.unshift(entry);
+    try { libStore(all); } catch (e) { libError(e); return; }
+    askPersist(); libCount();
+    if (view === 'library') libRender();
+    toast('Saved ' + entry.name + ' to your library.');
+  } finally { btn.disabled = false; }
+}
+function libUpdate(id, change) {
+  const all = libLoad(), d = all.find((x) => x.id === id);
+  if (!d) return false;
+  Object.assign(d, change);
+  try { libStore(all); return true; } catch (e) { libError(e); return false; }
+}
+function libOpen(d, v) {
+  P = C.resolveParams(d.params); syncControls(); changed();
+  setView(v);
+}
+
+function libEnter() { document.querySelector('.stage').classList.add('lib-on'); $('lib').hidden = false; libRender(); }
+function libExit() { document.querySelector('.stage').classList.remove('lib-on'); $('lib').hidden = true; }
+function libMark() {   // highlight the card that matches what's in the editor
+  const cur = libKey(P);
+  for (const card of $('lib-grid').children) if (card.dataset.key) card.classList.toggle('current', card.dataset.key === cur);
+}
+function libRender() {
+  const all = libLoad(), grid = $('lib-grid');
+  $('lib-sub').textContent = all.length ? `${all.length} saved in this browser. Open one to keep shaping it, or make its STLs.` : '';
+  grid.innerHTML = '';
+  if (!all.length) {
+    const e = document.createElement('div'); e.className = 'lib-empty';
+    e.innerHTML = '<p>Nothing saved yet</p><p>Shape a rack you like, then press <b>Save to library</b>. Each design keeps a picture, its printed size and every setting, here in this browser.</p>';
+    grid.appendChild(e);
+    return;
+  }
+  for (const d of all) grid.appendChild(libCard(d));
+  libMark();
+}
+const fmtDate = (t) => {
+  const d = new Date(t), same = d.getFullYear() === new Date().getFullYear();
+  return d.toLocaleDateString(undefined, same ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' });
+};
+function libCard(d) {
+  const p = C.resolveParams(d.params), fil = C.FILAMENTS[p.filament] || C.FILAMENTS.bone;
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const btn = (cls, text, fn) => { const b = el('button', cls, text); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  const card = el('article', 'card'); card.setAttribute('role', 'listitem'); card.dataset.key = libKey(p);
+  const th = el('div', 'thumb');
+  if (d.thumb) { const img = el('img'); img.src = d.thumb; img.alt = 'Antlers: ' + d.name; th.appendChild(img); }
+  else th.appendChild(el('span', 'nothumb', 'No picture'));
+  th.appendChild(el('span', 'tag', 'In the editor'));
+  const body = el('div', 'card-body');
+  const name = el('h3', 'card-name', d.name);
+  const meta = el('p', 'card-meta'); const dot = el('i'); dot.style.background = fil.hex;
+  meta.append(dot, `${(C.PRESETS[p.preset] || {}).label || 'Custom'} · ${p.filament === 'oak' ? 'White Oak' : 'Bone White'}`);
+  const dims = el('p', 'card-dims');
+  if (d.size) dims.append(`${d.size.join(' × ')} mm · `);
+  dims.append(d.fits === false ? Object.assign(el('span', 'over'), { textContent: 'too big for the P2S' }) : 'one piece on the P2S');
+  const actions = el('div', 'card-actions');
+  actions.append(
+    btn('chipbtn snap', 'Open', () => { libOpen(d, 'wear'); toast('Opened ' + d.name + '.'); }),
+    btn('chipbtn', 'Make STLs', () => { libOpen(d, 'print'); downloadSTLs(); }),
+  );
+  const minor = el('div', 'card-minor');
+  const rename = btn('linkbtn', 'Rename', () => {
+    const inp = el('input', 'card-rename'); inp.value = d.name; inp.maxLength = 60; inp.setAttribute('aria-label', 'Design name');
+    name.replaceWith(inp); inp.focus(); inp.select();
+    let done = false;
+    const finish = (keep) => { if (done) return; done = true; const v = inp.value.trim(); if (keep && v && v !== d.name) libUpdate(d.id, { name: v }); libRender(); };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') finish(true); else if (e.key === 'Escape') finish(false); });
+    inp.addEventListener('blur', () => finish(true));
+  });
+  const del = btn('linkbtn', 'Delete', () => {
+    if (!del.classList.contains('danger')) {   // two taps, since there's no undo
+      del.classList.add('danger'); del.textContent = 'Tap again to delete';
+      setTimeout(() => { if (del.isConnected) { del.classList.remove('danger'); del.textContent = 'Delete'; } }, 3000);
+      return;
+    }
+    try { libStore(libLoad().filter((x) => x.id !== d.id)); } catch (e) { libError(e); return; }
+    libCount(); libRender(); toast('Deleted ' + d.name + '.');
+  });
+  minor.append(rename, del);
+  body.append(name, meta, dims, el('p', 'card-date', 'Saved ' + fmtDate(d.savedAt)), actions, minor);
+  card.append(th, body);
+  return card;
+}
+
 /* ------------------------------------------------------------ lore, names, wandering */
 const LORE = {
   whitetail: 'The lyre of the eastern woods. Tines rise from the beam like candle flames.',
@@ -1279,7 +1506,7 @@ $('wander').addEventListener('click', () => {
 })();
 
 /* ------------------------------------------------------------ boot */
-syncControls();
+syncControls(); libCount();
 resize(); rebuildScene(); requestPreview(); updateReadout(); loop();
 })();
 </script>

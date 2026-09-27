@@ -30,8 +30,14 @@ node tools/build-antlers.js --preset elk --scale 0.7 --mount clip --hbWidth 15
 node tools/build-antlers.js --list-presets
 ```
 
-`design.json` is the file from **Save design** in the page (or inside the downloaded zip).
+`design.json` is the `*-design.json` file inside the zip from **Download STLs**.
 Any parameter can be overridden with `--name value`. The exit code is 1 if the mesh fails its check.
+
+## Library
+
+**Save to library** keeps the current design in a library inside the browser, with a snapshot, its printed size and every setting. Nothing is downloaded. The **Library** view shows the saved designs as cards: **Open** loads one back into the editor, **Make STLs** builds and downloads its STLs, and each can be renamed or deleted. The library lives in this browser on this device (localStorage), so it isn't shared between devices and is lost if the site's data is cleared.
+
+The 3D view normally shows a coarse preview mesh. **Build final mesh** builds the exact mesh that will print at the chosen resolution and checks it; the status pill says which one you're looking at.
 
 ## Try on (camera or photo)
 
