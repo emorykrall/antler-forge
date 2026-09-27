@@ -1779,7 +1779,7 @@ function hsFinish() {   // from Done, or after the full ring has shown
     try { scanStore.put(id, packed); } catch (err) { libError(err); hsEnd(); return; }
     C.registerHeadScan(id, scan);
     Object.assign(P, { style: 'crown', headSource: 'scan', headScan: id });
-    hsEnd(); syncControls(); changed(); setView('wear');
+    hsEnd(); syncControls(); changed(); arRefreshPair();   // stay in Try on: the crown appears on the camera picture (and updates when its preview is meshed)
     toast(`Head scanned from ${frames.length} views: ${inch(scan.circ, 1)} in round at the tape line${scan.hair >= 3 ? ', under your hair' : ''}. The crown is fitted to it.`);
   }, (err) => {
     if (AR.hscan !== h) return;

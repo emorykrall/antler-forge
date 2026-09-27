@@ -83,7 +83,8 @@ Newest first within each section. Change one only when the owner asks.
   then a guided head turn: left, right, then chin down facing the camera, chin down turned left,
   chin down turned right, each asked for by name (an early version finished after any two chin-down
   views with a vague prompt, and it wasn't clear the scan had worked). All three are required; the
-  full ring shows for a moment before fitting. The ±60° ticks are optional and drawn dimmer
+  full ring shows for a moment before fitting. Afterwards the page stays in Try on with the fitted crown
+  on (owner's request), rather than switching to the On head view. The ±60° ticks are optional and drawn dimmer
   (tracking often drops there). Coverage ring and soft tones. Each new
   angle stores the tracker's pose and scale plus a MediaPipe Selfie Segmentation outline (bundled
   in `vendor/`). A smooth head (superellipsoid, separate front/back lengths) is fitted to every
