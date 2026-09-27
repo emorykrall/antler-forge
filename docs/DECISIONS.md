@@ -80,7 +80,11 @@ Newest first within each section. Change one only when the owner asks.
   (`--scan`). The crown's liner and head cut use the scanned surface; the On head view shows the
   scan as a clay bust. A web page can't reach Face ID / LiDAR depth.
 - **Built-in head scan ("Scan my head", 2026-09-27):** eye calibration first (skipped if saved),
-  then a guided head turn: left, right, chin down, with a coverage ring and soft tones. Each new
+  then a guided head turn: left, right, then chin down facing the camera, chin down turned left,
+  chin down turned right, each asked for by name (an early version finished after any two chin-down
+  views with a vague prompt, and it wasn't clear the scan had worked). All three are required; the
+  full ring shows for a moment before fitting. The ±60° ticks are optional and drawn dimmer
+  (tracking often drops there). Coverage ring and soft tones. Each new
   angle stores the tracker's pose and scale plus a MediaPipe Selfie Segmentation outline (bundled
   in `vendor/`). A smooth head (superellipsoid, separate front/back lengths) is fitted to every
   outline above ear level in a worker, then kept exactly like an imported scan. Forehead landmarks

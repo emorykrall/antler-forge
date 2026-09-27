@@ -34,7 +34,7 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   tag, so the meshing worker and the head-turn worker have both. Frame format is documented above
   `fromHeadTurn`; image axes are x right, y up, z toward the camera; masks are y up.
 - Head-turn capture (page, "built-in head scan" section): eye calibration first if none is saved,
-  then angle bins (level yaw −60…60 by 10°, three chin-down); each new bin runs Selfie Segmentation
+  then angle bins (level yaw −60…60 by 10°, ±60 optional; chin-down at 0 and ±20°, all required); each new bin runs Selfie Segmentation
   on the same still frame the face tracker saw. Tested end to end in the browser pane with a fake
   camera/tracker/segmenter driven by `test/fixtures/make-head.js` (the pane blocks real cameras).
 - `tools/build-page.js [outDir]`: inlines the engine and writes the three outputs, copies

@@ -131,6 +131,8 @@ button,input,select{font:inherit;color:inherit}
 .hs-ring{width:200px;height:auto;display:block}
 .hs-ring .t{stroke:rgba(255,255,255,.22);stroke-width:7;stroke-linecap:round;transition:stroke .2s}
 .hs-ring .t.on{stroke:var(--vp-active)}
+.hs-ring .t.opt{stroke-width:4;stroke:rgba(255,255,255,.12)}
+.hs-ring .t.opt.on{stroke:var(--vp-active)}
 .hs-ring .now{fill:var(--vp-ink)}
 .hs-count{margin:0;font-size:12.5px;opacity:.85;text-align:center}
 .chipbtn[disabled]{opacity:.45;cursor:default}
@@ -1631,7 +1633,8 @@ function scanHeadObject(p) {
 // outline; a smooth head is fitted to every outline in a worker (HeadScan.fromHeadTurn) and kept
 // like an imported scan. Nothing leaves the device.
 const HS_BINS = [-60, -50, -40, -30, -20, -10, 0, 10, 20, 30, 40, 50, 60].map((y) => ({ id: 'l' + y, yaw: y, down: false, need: Math.abs(y) <= 50 }))
-  .concat([-25, 0, 25].map((y) => ({ id: 'd' + y, yaw: y, down: true, need: false })));
+  .concat([-20, 0, 20].map((y) => ({ id: 'd' + y, yaw: y, down: true, need: true })));   // chin down: all three are asked for
+const HS_TOL = { level: 4, down: 7 };   // degrees either side of a bin's angle (turning with the chin down is harder to aim)
 const HS_FOREHEAD = [10, 151, 67, 297, 109, 338, 103, 332, 108, 337];   // landmarks on the forehead skin
 const HS_CROP_MM = 170, HS_CELLS = 112;   // outline kept this far round the head, at about this many cells across
 let hsAudio = null, hsSegReady = null;
@@ -1688,21 +1691,25 @@ function hsEnough(h) {
 }
 function hsNext() {   // what to ask for next, or finish
   const h = AR.hscan; if (!h || h.stage !== 'turn') return;
-  const miss = (f) => HS_BINS.filter((b) => b.need && !hsGot(h, b) && f(b)).length;
-  const downs = HS_BINS.filter((b) => b.down && hsGot(h, b)).length;
+  const miss = (f) => HS_BINS.filter((b) => b.need && !b.down && !hsGot(h, b) && f(b)).length;
   if (!h.seg) h.msg = 'Loading the outline finder…';
   else if (!h.frames.l0) h.msg = 'Look straight at the camera and hold still.';
   else if (miss((b) => b.yaw > 0)) h.msg = 'Slowly turn your head to your left…';
   else if (miss((b) => b.yaw < 0)) h.msg = 'Now slowly turn to your right…';
-  else if (downs < 2) h.msg = 'Now tip your chin down and turn a little each way.';
-  else { hsFinish(); return; }
+  else if (!h.frames.d0) h.msg = 'Face the camera, then tip your chin down toward your chest and hold it.';
+  else if (!h.frames.d20) h.msg = 'Keep your chin down, and turn a little to your left.';
+  else if (!h.frames['d-20']) h.msg = 'Chin still down: now a little to your right.';
+  else {   // everything captured: show the full ring for a moment, then fit
+    h.stage = 'done'; h.msg = 'All views captured. Hold on a moment…';
+    arStatus(h.msg); hsDraw(); setTimeout(hsFinish, 900); return;
+  }
   arStatus(h.msg); hsDraw();
 }
 // Each tick in scan mode: a still copy of the video goes to the face tracker, and, when that pose is
 // a new angle, the same still goes to the segmentation model, so the outline matches the pose.
 async function hsTick(v) {
   const h = AR.hscan, cv = h.cv;
-  if (h.stage === 'fit') return;
+  if (h.stage === 'fit' || h.stage === 'done') return;
   if (cv.width !== AR.W || cv.height !== AR.H) { cv.width = AR.W; cv.height = AR.H; }
   cv.getContext('2d').drawImage(v, 0, 0, AR.W, AR.H);
   h.want = null;
@@ -1719,7 +1726,7 @@ function hsPose(q) {   // from the face tracker: pick up this view if it's an an
   if (moved > 2.5) { if (moved > 6 && moved < 40) h.hint = 'A little slower…'; return; }   // too fast: blurred, and the outline lags
   if (h.s0 && Math.abs(s / h.s0 - 1) > 0.12) { h.hint = 'Keep your head the same distance from the camera.'; return; }
   const rel = h.pitch0 == null ? 0 : pitch - h.pitch0;
-  const bin = HS_BINS.find((b) => !hsGot(h, b) && Math.abs(yaw - b.yaw) <= 4 && (b.down ? rel < -14 && rel > -40 : Math.abs(rel) < 10));
+  const bin = HS_BINS.find((b) => !hsGot(h, b) && Math.abs(yaw - b.yaw) <= (b.down ? HS_TOL.down : HS_TOL.level) && (b.down ? rel < -10 && rel > -45 : Math.abs(rel) < 10));
   if (!bin || (!h.frames.l0 && bin.id !== 'l0')) return;               // the face-on view comes first: it sets the level
   const o = mid.clone().addScaledVector(fwd, -HEAD_BACK_MM * s).addScaledVector(up, HEAD_UP_MM * s);   // the head frame's origin
   const fh = [];
@@ -1753,7 +1760,7 @@ function hsMask(r) {   // from the segmentation model: the person's outline roun
   hsTone(w0.bin.down ? 988 : 880, 0.07);
   hsNext();
 }
-function hsFinish() {
+function hsFinish() {   // from Done, or after the full ring has shown
   const h = AR.hscan; if (!h || h.stage === 'fit') return;
   h.stage = 'fit'; h.msg = 'Working out your head shape…'; arStatus(h.msg); hsDraw();
   hsTone(660, 0.14); hsTone(990, 0.22, 0.13);
@@ -1766,7 +1773,7 @@ function hsFinish() {
     C.registerHeadScan(id, scan);
     Object.assign(P, { style: 'crown', headSource: 'scan', headScan: id });
     hsEnd(); syncControls(); changed(); setView('wear');
-    toast(`Head scanned: ${inch(scan.circ, 1)} in round at the tape line. The crown is fitted to it.`);
+    toast(`Head scanned from ${frames.length} views: ${inch(scan.circ, 1)} in round at the tape line. The crown is fitted to it.`);
   }, (err) => {
     if (AR.hscan !== h) return;
     h.stage = 'turn'; h.frames = {}; h.fh = []; h.s0 = 0; h.pitch0 = null;   // start the turn again
@@ -1800,15 +1807,16 @@ function hsDraw() {
   let out = '';
   for (const b of HS_BINS) {
     const [r0, r1] = b.down ? [52, 64] : [78, 96], [x0, y0] = at(b.yaw, r0), [x1, y1] = at(b.yaw, r1);
-    out += `<line class="t${hsGot(h, b) ? ' on' : ''}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`;
+    out += `<line class="t${hsGot(h, b) ? ' on' : ''}${b.need ? '' : ' opt'}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/>`;
   }
   if (h.yaw != null && h.stage === 'turn') {
     const rel = h.pitch0 == null ? 0 : h.pitch - h.pitch0, [x, y] = at(Math.max(-70, Math.min(70, h.yaw)), rel < -12 ? 44 : 70);
     out += `<circle class="now" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5"/>`;
   }
   svg.innerHTML = out;
-  const n = HS_BINS.filter((b) => hsGot(h, b)).length;
-  $('hs-count').textContent = h.stage === 'size' ? 'Step 1 of 2: a quick size check' : h.stage === 'fit' ? 'Step 2 of 2: fitting…' : `Step 2 of 2: ${n} views captured`;
+  const all = HS_BINS.filter((b) => b.need).length, got = HS_BINS.filter((b) => b.need && hsGot(h, b)).length;
+  $('hs-count').textContent = h.stage === 'size' ? 'Step 1 of 2: a quick size check' : h.stage === 'fit' ? 'Step 2 of 2: fitting…'
+    : h.stage === 'done' ? 'Step 2 of 2: all views captured' : `Step 2 of 2: ${got} of ${all} views`;
   $('hs-done').disabled = h.stage !== 'turn' || !hsEnough(h);
 }
 $('scan-turn').addEventListener('click', hsStart);
