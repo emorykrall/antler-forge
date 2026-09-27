@@ -640,11 +640,12 @@ function wearObject() {
 }
 // Where a crown sits: it is built around a head ellipsoid sized from the head circumference, which
 // is the faun's skull scaled by f. Its print-frame mesh was lowered by ring.shift onto the bed.
-// An imported scan has a face, so it's shown as itself; a camera scan is only the skull's shape
-// (no face), which reads oddly on its own, so the faun takes its ellipsoid (r) like a tape head.
+// An imported scan has a face, so it's shown as itself, and so is a camera scan fitted with FLAME (the
+// fitted head has a face). An older camera scan is only a skull shape, which reads oddly on its own,
+// so the faun takes its ellipsoid (r) like a tape head.
 function crownFit(p, sk) {
   const g = sk ? sk.ring : C.ringSpec(p), r = g.head.r;
-  if (g.head.kind === 'scan' && g.head.source !== 'head-turn') return { f: [1, 1, 1], M: new THREE.Matrix4().makeTranslation(0, 0, sk ? -sk.ring.shift : 0), scan: true };   // the scanned head sits at the origin
+  if (g.head.kind === 'scan' && (g.head.source !== 'head-turn' || flameBust(p))) return { f: [1, 1, 1], M: new THREE.Matrix4().makeTranslation(0, 0, sk ? -sk.ring.shift : 0), scan: true };   // the scanned head sits at the origin
   const f = [r[0] / 74, r[1] / 92, r[2] / 92];   // the faun's skull (74 × 92 × 92) stretched to this head
   const M = new THREE.Matrix4().makeTranslation(0, -6 * f[1], sk ? -sk.ring.shift : 0);
   return { f, M };
@@ -1551,6 +1552,23 @@ const scanStore = {
 };
 let scanMetaCache = { id: null, v: null };   // the stored scan's details (source, hair), read once per scan
 const scanMeta = (id) => (scanMetaCache.id === id ? scanMetaCache.v : (scanMetaCache = { id, v: scanStore.get(id) }).v);
+// FLAME's head model (vendor/flame, CC BY 4.0): fetched when a camera scan starts (the fit falls back
+// to a smooth head shape without it) or when a design fitted to a FLAME scan is shown (as a bust).
+let hsFlame = null, flameM = null;
+function hsFlameModel() {
+  if (!hsFlame) hsFlame = fetch('vendor/flame/flame_head.bin.wasm').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null)
+    .then((b) => {
+      if (b && !flameM) { try { flameM = HS.flameModel(b); } catch (e) {} if (flameM && (view === 'wear' || view === 'ar')) { lastFitKey = ''; rebuildScene(); } }
+      return b;
+    });
+  return hsFlame;
+}
+function flameBust(p) {   // a camera scan fitted with FLAME is shown as that head (older scans: the faun)
+  const sc = p.style === 'crown' && p.headSource === 'scan' && p.headScan ? scanMeta(p.headScan) : null;
+  if (!sc || !sc.flame || !sc.c) return false;
+  if (!flameM) { hsFlameModel(); return false; }
+  return true;
+}
 function ensureScan(p) {   // make sure the engine knows the design's scan; false if it isn't on this device
   if (!p.headScan) return false;
   if (C.hasHeadScan(p.headScan)) return true;
@@ -1622,6 +1640,7 @@ $('scan-ok').addEventListener('click', () => {
 // The scanned head as a clay bust for the On head view, rebuilt from its radius map.
 let scanBust = { id: null, obj: null };
 function scanHeadObject(p) {
+  if (flameBust(p)) return flameBustObject(p);
   if (scanBust.id === p.headScan) return scanBust.obj;
   // down to just below the ears: lower, an open neck has no surface and the stand-in ellipsoid would show
   const head = C.ringSpec(p).head, geo = new THREE.SphereGeometry(1, 160, 70, 0, Math.PI * 2, 0, Math.PI * 0.64), a = geo.attributes.position, v = new THREE.Vector3();
@@ -1790,13 +1809,6 @@ function hsFinish() {   // from Done, or after the full ring has shown
     hsNext();
   });
 }
-// FLAME's head model (vendor/flame, CC BY 4.0), fetched when a scan starts; the fit falls back to a
-// smooth head shape if it can't be had.
-let hsFlame = null;
-function hsFlameModel() {
-  if (!hsFlame) hsFlame = fetch('vendor/flame/flame_head.bin.wasm').then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null);
-  return hsFlame;
-}
 async function hsSolve(frames, fh) {   // fit in a worker so the page stays responsive; here if workers aren't available
   const model = await hsFlameModel();
   return new Promise((res, rej) => {
@@ -1839,6 +1851,29 @@ function hsDraw() {
 $('scan-turn').addEventListener('click', hsStart);
 $('hs-cancel').addEventListener('click', () => { if (AR.calib) AR.calib = null; AR.calPending = false; hsEnd(); scaleNote = ''; arScaleNote(); });
 $('hs-done').addEventListener('click', hsFinish);
+
+// A FLAME-fitted camera scan as a clay bust: the fitted head (with its face, without hair), placed in the
+// scan's frame exactly as the crown was fitted to it.
+let flameBustCache = { id: null, obj: null };
+function flameBustObject(p) {
+  if (flameBustCache.id === p.headScan) return flameBustCache.obj;
+  const sc = scanMeta(p.headScan), f = sc.flame, shp = HS.flameShape(flameM, f.beta);
+  const a = (f.pitch * Math.PI) / 180, cp = Math.cos(a), sp = Math.sin(a), pos = new Float32Array(shp.length);
+  for (let i = 0; i < shp.length; i += 3) {
+    const y = shp[i + 1], z = shp[i + 2];
+    pos[i] = shp[i] + f.T[0]; pos[i + 1] = y * cp - z * sp + f.T[1]; pos[i + 2] = y * sp + z * cp + f.T[2];
+  }
+  const q = HS.transform({ pos }, sc.orient);
+  for (let i = 0; i < q.length; i += 3) for (let e = 0; e < 3; e++) q[i + e] -= sc.c[e];
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(q, 3));
+  geo.setIndex(new THREE.BufferAttribute(flameM.tri, 1));
+  geo.computeVertexNormals();
+  const g = new THREE.Group(), mesh = new THREE.Mesh(geo, new THREE.MeshToonMaterial({ color: new THREE.Color('#C9B8A6').convertSRGBToLinear(), gradientMap: toonGradient(), side: THREE.DoubleSide }));
+  mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+  flameBustCache = { id: p.headScan, obj: g };
+  return g;
+}
 
 /* ------------------------------------------------------------ library (saved designs) */
 // Saved designs live in this browser (localStorage), newest first. Each entry keeps the full

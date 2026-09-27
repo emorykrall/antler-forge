@@ -97,7 +97,7 @@ Newest first within each section. Change one only when the owner asks.
   and the scan line says how much hair the camera saw. Separate top/side thickness was tried and
   dropped: it invented hair on bald heads and hardly helped. Known limit: hair much thicker on top
   than at the sides reads a few % small.
-- **Camera scans show on the faun** in the On head view (shaped to the scan's ellipsoid, like tape
+- **Camera scans without a FLAME fit show on the faun** in the On head view (shaped to the scan's ellipsoid, like tape
   heads): the fitted skull alone has no face, and the crown's brow point read as a nose on it.
   Imported scans still show as a clay bust.
 - **No props for scanning.** A swim/wig cap would make the outline the skull, but the owner ruled it
@@ -121,7 +121,11 @@ Newest first within each section. Change one only when the owner asks.
   statistics constrain the skull. Pitch is solved smoothly, not from a grid: in the browser test one
   stray skin landmark flipped a grid pick and made the head 4% big. The smooth-head fit remains as
   the fallback if the model file can't load. The fitted FLAME parameters are stored with the scan
-  (`flame: { beta, pitch, T }`), so the head can be rebuilt later (e.g. as a bust). On synthetic heads
+  (`flame: { beta, pitch, T }`), and the scan keeps `c` (where the fitted mesh was centred).
+- **FLAME-fitted camera scans show as a clay bust of the fitted head** in the On head view (owner's
+  request): the head with its face, without hair, placed exactly as the crown was fitted. Older camera
+  scans (no FLAME fit or no `c`) keep the faun. The model loads in the background; the faun shows
+  until it arrives. On synthetic heads
   the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
   the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the

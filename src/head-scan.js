@@ -275,7 +275,7 @@
     const pos = new Float32Array(pos0.length);   // centre on the head frame's origin
     for (let i = 0; i < pos0.length; i += 3) { pos[i] = pos0[i] - m.c[0]; pos[i + 1] = pos0[i + 1] - m.c[1]; pos[i + 2] = pos0[i + 2] - m.c[2]; }
     const r = radialMap(mesh, pos, [0, 0, 0], m.fit);
-    return { v: 1, nt: NT, np: NP, r, fit: m.fit, seat: m.seat, dome: m.dome, circ: m.circ, orient: o };
+    return { v: 1, nt: NT, np: NP, r, fit: m.fit, seat: m.seat, dome: m.dome, circ: m.circ, orient: o, c: Array.from(m.c) };   // c: where the source mesh's origin went
   }
 
   // Compact storage: the radius map as base64 Float32.
