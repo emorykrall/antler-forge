@@ -540,7 +540,7 @@
         }
         const JtJ = new Float64Array(N * N), Jtr = new Float64Array(N);
         let E = 0;
-        const row = (terms, g, c0, wgt) => {   // residual g·(Σ c_i D_i) + c0, as a linear function of x
+        const row = (terms, g, c0, wgt, robust) => {   // residual g·(Σ c_i D_i) + c0, as a linear function of x
           const J = new Float64Array(N);
           const gr = [g[0], g[1] * cp + g[2] * sp, -g[1] * sp + g[2] * cp];   // Rᵀg, for the rotated shape components
           let val = c0;
@@ -551,6 +551,11 @@
             J[iP] += ci * (g[1] * (-y0 * sp - z0 * cp) + g[2] * (y0 * cp - z0 * sp));
             if (face) { const gn = ci * Wh[i] * (g[0] * Nv[3 * i] + g[1] * Nv[3 * i + 1] + g[2] * Nv[3 * i + 2]); J[iH] += gn * (1 - Up[i]); J[iH2] += gn * Up[i]; }
             val += ci * (g[0] * D[3 * i] + g[1] * D[3 * i + 1] + g[2] * D[3 * i + 2]);
+          }
+          if (robust) {   // outline pairs: Huber beyond 2σ; pairs over 30 mm apart are a ragged mask or background
+            const a = Math.abs(val);
+            if (a > 30) return;
+            if (a > 2 * O.sigSil) wgt *= (2 * O.sigSil) / a;
           }
           // constant part so that J·x + c = current residual
           let jx = 0; for (let k = 0; k < N; k++) jx += J[k] * x[k];
@@ -586,7 +591,7 @@
           const wgt = Math.min(1, O.nRef / Math.max(1, pairs.length)) / (O.sigSil * O.sigSil);
           for (const [terms, q] of pairs) {   // along the observed normal, in mm
             const g = [q.nx * A[0] + q.ny * A[3], q.nx * A[1] + q.ny * A[4], q.nx * A[2] + q.ny * A[5]];
-            row(terms, g, (q.nx * (f.o[0] - q.x) + q.ny * (f.o[1] - q.y)) / f.s, wgt);
+            row(terms, g, (q.nx * (f.o[0] - q.x) + q.ny * (f.o[1] - q.y)) / f.s, wgt, true);
           }
         }
         for (const s of fh) {   // skin lies on the surface: nearest face vertex, along its normal (robust)
@@ -635,9 +640,19 @@
 
   // The camera scan: FLAME when its model file is at hand (it tests clearly better on realistic heads),
   // otherwise the smooth-head fit.
+  // Adult heads: ANSUR II circumferences run 500–635 mm, so anything well outside is a failed fit.
+  const plausible = (s) => s.circ > 480 && s.circ < 680 && s.dome > 55 && s.dome < 150 && Math.max(s.hair || 0, s.hairTop || 0) < 50;
   function headTurnScan(frames, skin, flameBuf) {
-    return flameBuf ? fromHeadTurnFlame(frames, skin, flameModel(flameBuf)) : fromHeadTurn(frames, skin);
+    const tried = [];
+    if (flameBuf) {
+      try { const s = fromHeadTurnFlame(frames, skin, flameModel(flameBuf)); if (plausible(s)) return s; tried.push(s); } catch (e) { if (/Not enough/.test(e.message)) throw e; }
+    }
+    const s = fromHeadTurn(frames, skin);
+    if (plausible(s)) return s;
+    tried.push(s);
+    const c = tried.map((t) => (t.circ / 25.4).toFixed(1) + ' in').join(', then ');
+    throw new Error(`The scan didn’t give a believable head size (${c} round). Try again in good light, with your forehead and temples clear.`);
   }
 
-  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, fromHeadTurnFlame, headTurnScan, flameModel, flameShape, NT, NP };
+  return { parse, guessOrientation, transform, build, pack, unpack, measure, fromHeadTurn, fromHeadTurnFlame, headTurnScan, plausible, flameModel, flameShape, NT, NP };
 });

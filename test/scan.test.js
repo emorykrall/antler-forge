@@ -141,3 +141,15 @@ test('FLAME head-turn fit: realistic heads come back the right size, under hair,
     assert.ok(stored.length < 250000 && !/"mesh"/.test(stored), 'the stored scan is compact (no mesh)');
   }
 });
+
+test('a head turn with badly wrong skin points gives a believable head or an honest refusal, never a tiny head', () => {
+  const T = require('./fixtures/make-turn.js'), FL = require('./fixtures/make-flame.js');
+  const buf = require('fs').readFileSync(require('path').join(__dirname, '../vendor/flame/flame_head.bin.wasm'));
+  const h = FL.flameHead(FL.gaussians(2, 50)), frames = T.frames({ mesh: h.mesh, hair: { t: 12 } });
+  for (const k of [0.8, 0.6]) {   // skin points pulled well inside the head, as a flattened tracker would
+    try {
+      const s = HeadScan.headTurnScan(frames, h.skin.map((p) => p.map((v) => v * k)), buf);
+      assert.ok(HeadScan.plausible(s), `x${k}: ${s.circ.toFixed(0)} mm is believable`);
+    } catch (e) { assert.match(e.message, /believable head size/); }
+  }
+});

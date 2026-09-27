@@ -125,7 +125,14 @@ Newest first within each section. Change one only when the owner asks.
 - **FLAME-fitted camera scans show as a clay bust of the fitted head** in the On head view (owner's
   request): the head with its face, without hair, placed exactly as the crown was fitted. Older camera
   scans (no FLAME fit or no `c`) keep the faun. The model loads in the background; the faun shows
-  until it arrives. On synthetic heads
+  until it arrives.
+- **Scan safety net** (after the owner's first real FLAME scan came out 16.5 in round with maximum hair,
+  and a crumpled crown wrapped round the face): results must be a believable adult head (480–680 mm
+  round, dome 55–150 mm, hair under 50 mm) or the smooth-head fit is tried, and if neither is
+  believable the scan asks to be redone rather than fitting a crown to it. Outline pairs are robust
+  (Huber, pairs over 30 mm apart ignored). The last raw capture (outlines and landmark positions, no
+  picture) stays on the device as `antler-forge-last-capture` for diagnosis.
+- **No "Shrunk from … to fit the printer" note** (owner): every view already shows the printed size. On synthetic heads
   the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
   the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the

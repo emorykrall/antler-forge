@@ -939,7 +939,6 @@ function updateReadout() {
   const warns = [], notes = [];
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
   if (P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
-  if (fit && fit.shrunk) notes.push(`Shrunk from ${fit.requested.toFixed(2)}× to ${fit.scale.toFixed(2)}× to fit the printer.`);
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
   const msg = $('msg');
   if (building) { msg.className = 'msg'; msg.textContent = 'Building the final mesh and checking it…'; }
@@ -1793,6 +1792,7 @@ function hsFinish() {   // from Done, or after the full ring has shown
   h.stage = 'fit'; h.msg = 'Working out your head shape…'; arStatus(h.msg); hsDraw();
   hsTone(660, 0.14); hsTone(990, 0.22, 0.13);
   const frames = Object.values(h.frames);
+  hsKeepCapture(frames, h.fh);
   const fh = h.fh.length ? h.fh[0].map((_, j) => [0, 1, 2].map((a) => h.fh.reduce((t, f) => t + f[j][a], 0) / h.fh.length)) : [];   // averaged over the near-frontal views
   hsSolve(frames, fh).then((packed) => {
     if (AR.hscan !== h) return;
@@ -1808,6 +1808,17 @@ function hsFinish() {   // from Done, or after the full ring has shown
     toast(err && err.message ? err.message : 'The head shape couldn’t be worked out. Try again in good light.');
     hsNext();
   });
+}
+// The last scan's raw capture (outlines and landmark positions in mm, no picture) stays on this device
+// as localStorage 'antler-forge-last-capture', so a scan that fits badly can be looked into.
+function hsKeepCapture(frames, fh) {
+  try {
+    const b64 = (u) => { let t = ''; for (let i = 0; i < u.length; i += 8192) t += String.fromCharCode.apply(null, u.subarray(i, i + 8192)); return btoa(t); };
+    localStorage.setItem('antler-forge-last-capture', JSON.stringify({
+      v: 1, at: Date.now(), ua: navigator.userAgent, W: AR.W, H: AR.H, faceMM: faceMM(), fh,
+      frames: frames.map((f) => Object.assign({}, f, { mask: Object.assign({}, f.mask, { data: b64(f.mask.data) }) })),
+    }));
+  } catch (e) {}
 }
 async function hsSolve(frames, fh) {   // fit in a worker so the page stays responsive; here if workers aren't available
   const model = await hsFlameModel();
