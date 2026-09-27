@@ -125,6 +125,7 @@ button,input,select{font:inherit;color:inherit}
 .ar-row input[type=range]{flex:1;min-width:90px;accent-color:var(--vp-active)}
 .ar-scale{margin:0;display:flex;flex-wrap:wrap;gap:2px 12px;justify-content:center;align-items:baseline;font-size:12.5px}
 .ar-scale span{opacity:.85}
+.ar-scale .chipbtn{padding:3px 11px;font-size:12.5px}
 .chipbtn{border:1px solid var(--vp-edge);background:rgba(255,255,255,.05);color:var(--vp-ink);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:13.5px}
 .chipbtn:hover{background:rgba(255,255,255,.1)}
 .chipbtn.snap{background:var(--vp-active);color:#1D1A12;border-color:transparent;font-weight:700}
@@ -289,7 +290,6 @@ details[open] summary::after{transform:rotate(-135deg)}
           <button class="chipbtn snap" id="ar-snap">Save picture</button>
         </div>
         <div class="ar-row">
-          <label for="ar-size">Fine-tune</label><input type="range" id="ar-size" min="0.8" max="1.25" step="0.01">
           <label for="ar-lift">Height</label><input type="range" id="ar-lift" min="-30" max="45" step="1">
         </div>
         <p class="ar-scale" id="ar-scale"></p>
@@ -1213,7 +1213,7 @@ function arOnResults(r) {
     }
   }
   arScaleNote();
-  const s = (faceW / faceMM()) * AR.fit.size;
+  const s = faceW / faceMM();   // true size: no manual scale on top of the calibration
   const centre = mid.clone().addScaledVector(fwd, -HEAD_BACK_MM * s).addScaledVector(up, (HEAD_UP_MM + AR.fit.lift) * s);
   const next = { side, fwd, up, centre, s };
   if (AR.pose && AR.mode === 'camera') {   // light smoothing so the antlers don't jitter
@@ -1223,7 +1223,7 @@ function arOnResults(r) {
     next.centre = o.centre.clone().lerp(centre, k); next.s = o.s + (s - o.s) * k;
   }
   AR.pose = next;
-  arStatus(AR.calib ? AR.calib.msg : '');
+  arStatus(AR.calib ? AR.calib.msg : calNudge());
   arRender();
 }
 function arApplyPose() {
@@ -1346,7 +1346,7 @@ function arEnter() {
   $('ar').hidden = !AR.mode;
   if (!AR.mode) { $('ar-card').hidden = false; $('ar-bar').hidden = true; arStatus(''); }
   else if (AR.mode === 'camera') arStartCamera(); else { arRefreshPair(); arRender(); }
-  $('ar-size').value = AR.fit.size; $('ar-lift').value = AR.fit.lift;
+  $('ar-lift').value = AR.fit.lift;
 }
 function arExit() {
   AR.calib = null; AR.calPending = false;
@@ -1374,7 +1374,8 @@ function arScaleNote() {
   const link = (text, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.textContent = text; b.addEventListener('click', fn); return b; };
   if (AR.calib) { span.textContent = 'Calibrating from your eyes…'; el.append(span, link('Cancel', calCancel)); return; }
   span.textContent = AR.cal ? `Calibrated · face ${mm} mm across` : AR.irisFace ? `Sized from your eyes · face ≈ ${mm} mm across` : 'Sized for an average face';
-  el.append(span, link(AR.cal ? 'Recalibrate' : cam ? 'Calibrate' : 'Calibrate with the camera', calStart));
+  if (AR.cal) el.append(span, link('Recalibrate', calStart));
+  else { const go = link(cam ? 'Calibrate' : 'Calibrate with the camera', calStart); go.className = 'chipbtn snap'; go.title = 'Take off glasses first for an accurate reading'; el.append(span, go); }
   if (AR.cal) el.append(link('Clear', () => { AR.cal = null; try { localStorage.removeItem(SCALE_KEY); } catch (e) {} arRefit(); }));
 }
 function arRefit() {   // re-place the pair after the scale source changed
@@ -1384,16 +1385,29 @@ function arRefit() {   // re-place the pair after the scale source changed
 
 // One-tap calibration: a few seconds of close, face-on, eyes-open frames, each measuring the face
 // against the irises. Bad frames are skipped with a hint; the median of the good ones is saved.
-const CALIB_N = 45, CALIB_MS = 15000;
+const CALIB_N = 45, CALIB_MS = 15000, CALIB_READY_MS = 2500;   // a moment to take glasses off and get close
+// Until someone calibrates, suggest it once per visit, a few seconds after the camera finds them.
+let nudge = { seen: 0, until: 0, done: false };
+function calNudge() {
+  if (AR.mode !== 'camera' || AR.cal) return '';
+  const now = Date.now();
+  if (!nudge.done) {
+    if (!nudge.seen) nudge.seen = now;
+    else if (now - nudge.seen > 2500) { nudge.done = true; nudge.until = now + 7000; }
+  }
+  return now < nudge.until ? 'For true size, take off your glasses and tap Calibrate below.' : '';
+}
 function calStart() {
+  nudge.done = true; nudge.until = 0;
   if (AR.mode !== 'camera') { AR.calPending = true; arStartCamera(); return; }   // starts once a face is found
   AR.calPending = false;
-  AR.calib = { samples: [], t0: Date.now(), msg: 'Bring your face close to the camera, about 30 cm, and look straight at it.' };
+  AR.calib = { samples: [], t0: Date.now(), msg: 'Take off your glasses, bring your face about 30 cm from the camera, and look straight at it.' };
   arStatus(AR.calib.msg); scaleNote = ''; arScaleNote();
 }
 function calCancel() { AR.calib = null; arStatus(''); scaleNote = ''; arScaleNote(); }
 function calSample(est, q) {
-  const c = AR.calib;
+  const c = AR.calib, t = Date.now() - c.t0;
+  if (t < CALIB_READY_MS) return;   // keep the get-ready instruction up; measure nothing yet
   let hint = '';
   if (q.iris < 20) hint = 'Come a little closer to the camera.';
   else if (q.frontal < 0.94) hint = 'Look straight at the camera.';
@@ -1401,7 +1415,7 @@ function calSample(est, q) {
   else if (q.round < 0.8 || !(est > 100 && est < 190)) hint = 'Hold still.';
   else c.samples.push(est);
   c.msg = hint || `Calibrating… hold still (${Math.round((100 * c.samples.length) / CALIB_N)}%)`;
-  if (c.samples.length >= CALIB_N || Date.now() - c.t0 > CALIB_MS) calFinish();
+  if (c.samples.length >= CALIB_N || t > CALIB_READY_MS + CALIB_MS) calFinish();
 }
 function calFinish() {
   const s = AR.calib.samples.slice().sort((a, b) => a - b);
@@ -1418,7 +1432,7 @@ function calFinish() {
   toast(`Calibrated: your face is ${Math.round(AR.cal.faceMM)} mm across. The antlers now show at true size.`);
 }
 
-for (const [id, k] of [['ar-size', 'size'], ['ar-lift', 'lift']]) {
+for (const [id, k] of [['ar-lift', 'lift']]) {
   $(id).addEventListener('input', (e) => {
     AR.fit[k] = Number(e.target.value);
     try { localStorage.setItem('antler-forge-fit', JSON.stringify(AR.fit)); } catch (err) {}
