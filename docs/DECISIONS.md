@@ -73,6 +73,10 @@ Newest first within each section. Change one only when the owner asks.
   temples and settles lower at the back. It's built from antler beams: the band, a sweep from the
   brow up past each antler ending as a swept-back tine, and a lower beam forming open loops
   (Beams 1–3, Loops). Tines follow the beams' flow and grow near the antlers.
+- **Parametric variation (Crown shape group):** Brow dip, Temple rise, Back drop, Sweep lift and
+  reach, Loop depth, Band taper, Tine lean, Organic variation, and Asymmetry (0 = the band and its
+  tines mirror exactly; higher lets the sides differ; antlers stay mirrored). Species set the
+  defaults; Surprise me varies them for crowns. The wear view is labelled "On head" for crowns.
 - **Species shape the band**, not just the antlers: whitetail upswept spikes and a brow point;
   mule forked tines; elk tines swept back; stag clusters; reindeer a forward shovel; moose one heavy
   band with paddles; forest spirit curling tendrils; fawn a plain band with buttons.

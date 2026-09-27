@@ -61,3 +61,35 @@ test('open bases leave a gap at the back or the front', () => {
     }
   }
 });
+
+test('crown shape settings at their extremes still give one watertight solid', () => {
+  const extremes = [
+    { ringAsym: 1, ringWander: 1 },
+    { ringRise: 30, ringDrop: 30, ringDip: 35, ringSweepLift: 45, ringSweepReach: 100, ringLoopDepth: 30, ringTineLean: 1.5 },
+    { ringRise: 0, ringDrop: 0, ringDip: 0, ringSweepLift: 0, ringSweepReach: 15, ringLoopDepth: 4, ringTaper: 0, ringWander: 0, ringTineLean: 0 },
+  ];
+  for (const ex of extremes) for (const base of ['closed', 'openBack']) {
+    const r = Core.validateMesh(Core.meshAntler(Core.buildSkeleton(crown('whitetail', base, ex)), 1.5));
+    assert.ok(r.watertight && r.shells === 1 && r.volume > 0, `${base} ${JSON.stringify(ex)}`);
+  }
+});
+
+test('asymmetry 0 mirrors the band exactly; higher values let the sides differ', () => {
+  const sides = (asym) => {
+    const sk = Core.buildSkeleton(crown('spirit', 'closed', { ringAsym: asym }));
+    const ring = sk.branches.filter((b) => b.kind === 'ring' || b.kind === 'tine').filter((b) => b.pts.length);
+    const right = ring.filter((b) => b.pts[Math.floor(b.pts.length / 2)][0] > 0), left = ring.filter((b) => b.pts[Math.floor(b.pts.length / 2)][0] < 0);
+    let worst = 0;
+    for (const br of right) {   // each right-hand beam's closest mirror twin on the left
+      let best = Infinity;
+      for (const l of left) {
+        if (l.pts.length !== br.pts.length) continue;
+        best = Math.min(best, Math.max(...br.pts.map((p, i) => Math.hypot(p[0] + l.pts[i][0], p[1] - l.pts[i][1], p[2] - l.pts[i][2]))));
+      }
+      worst = Math.max(worst, best);
+    }
+    return worst;
+  };
+  assert.ok(sides(0) < 1e-9, 'mirrored');
+  assert.ok(sides(1) > 1, 'asymmetric');
+});

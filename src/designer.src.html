@@ -468,6 +468,7 @@ function syncControls() {
 // Show only the controls that apply to this style (and the crown's Opening only when it's open).
 function applyStyle() {
   for (const b of $('styles').children) b.setAttribute('aria-pressed', String(b.dataset.style === P.style));
+  $('v-wear').textContent = P.style === 'crown' ? 'On head' : 'On headband';
   for (const k in inputs) {
     const { it, wrap } = inputs[k];
     wrap.hidden = !!(it.only && it.only !== P.style) || (k === 'ringGap' && P.ringBase === 'closed');
@@ -1648,6 +1649,8 @@ function updatePlate() {
   const sm = document.createElement('small'); sm.textContent = label; el.append(sm);
   $('lore').textContent = LORE[P.preset] || '';
 }
+const CROWN_WANDER = [['ringDip', 5], ['ringRise', 5], ['ringDrop', 4], ['ringSweepLift', 7], ['ringSweepReach', 14], ['ringLoopDepth', 4],
+  ['ringTineLean', 0.25], ['ringTineLength', 6], ['ringPos', 6], ['ringWander', 0.15]];
 // "Surprise me": a new, still-balanced variation of the current species. It starts from the
 // species' own shape, keeps the headband, printer and Size settings, and jitters the silhouette.
 const WANDER = [
@@ -1659,6 +1662,10 @@ $('surprise').addEventListener('click', () => {
   next.scale = P.scale;
   const r = () => Math.random() * 2 - 1;
   for (const [k, amt, mode] of WANDER) next[k] = mode === 'rel' ? next[k] * (1 + amt * r()) : next[k] + amt * r();
+  if (next.style === 'crown') {   // and a new shape for the band, within each setting's range
+    for (const [k, amt] of CROWN_WANDER) next[k] += amt * r();
+    if (next.ringStrands >= 3) next.ringWeave = 1 + Math.floor(Math.random() * 3);
+  }
   if (next.tineCount > 1 && Math.random() < 0.4) next.tineCount += Math.random() < 0.5 ? -1 : 1;
   next.tineCrest = 0.25 + Math.random() * 0.45;
   next.tineInward = Math.max(0, next.tineInward + 8 * r());
