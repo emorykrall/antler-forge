@@ -98,7 +98,17 @@ Newest first within each section. Change one only when the owner asks.
   than at the sides reads a few % small.
 - **Camera scans show on the faun** in the On head view (shaped to the scan's ellipsoid, like tape
   heads): the fitted skull alone has no face, and the crown's brow point read as a nose on it.
-  Imported scans still show as a clay bust. On synthetic heads
+  Imported scans still show as a clay bust.
+- **No props for scanning.** A swim/wig cap would make the outline the skull, but the owner ruled it
+  out: not common enough. The scan must work with just the camera.
+- **Population priors were tried and left out** (2026-09-27). ANSUR II (US Army 2012 anthropometric
+  survey, public domain, 6,068 adults): head length ≈ 1.29 × breadth (±6%), top-above-ear ≈ 0.85 ×
+  breadth (±5%); face width predicts head length only weakly (r 0.43). As a prior on the fit it
+  didn't improve synthetic tests: it helped hair-thicker-on-top slightly but pulled unusually long
+  or short heads toward average by 3–4%. The outlines plus skin points already set the shape.
+  (A test guards unusual proportions.) Next attempt at the unseen back: FLAME 2023 Open, a
+  statistical head model under CC BY 4.0 (the other FLAME releases and the Liverpool-York model
+  forbid redistribution, so they can't ship in a public site even non-commercially). On synthetic heads
   the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
   the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the

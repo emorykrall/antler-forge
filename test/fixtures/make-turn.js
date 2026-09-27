@@ -22,9 +22,11 @@ function hairy(m, hair) {
   }
   return { pos, tri: m.tri };
 }
+// scale: stretch the synthetic head ([width, length, height] factors) to try unusual proportions
+function scaled(m, k) { return k ? { pos: m.pos.map((v, i) => v * k[i % 3]), tri: m.tri } : m; }
 function frames(opts) {
-  const o = Object.assign({ s: 1.4, origin: [640, 360], k: 4, hair: null }, opts || {}), torso = body();
-  const head = o.hair ? hairy(F.headMesh(), Object.assign({ az: 70, el: 30 }, o.hair)) : F.headMesh();
+  const o = Object.assign({ s: 1.4, origin: [640, 360], k: 4, hair: null, scale: null }, opts || {}), torso = body();
+  const skull = scaled(F.headMesh(), o.scale), head = o.hair ? hairy(skull, Object.assign({ az: 70, el: 30 }, o.hair)) : skull;
   const views = [];
   for (let yaw = -60; yaw <= 60; yaw += 10) views.push([yaw, 0]);
   for (const yaw of [-30, 0, 30]) views.push([yaw, 22]);
@@ -48,12 +50,12 @@ function frames(opts) {
     return { yaw: yd, pitch: pd, side, fwd, up, o: o.origin.slice(), s: o.s, mask: { x0, y0, k: o.k, w, h, data } };
   });
 }
-function forehead() {   // skin points across the forehead and temples, as the face tracker reports them
+function forehead(scale) {   // skin points across the forehead and temples, as the face tracker reports them
   const pts = [];
   for (const [el, az] of [[15, -25], [15, 0], [15, 25], [26, -12], [26, 12], [28, 0], [22, -45], [22, 45], [12, -60], [12, 60], [2, -68], [2, 68]]) {
     const e = (el * Math.PI) / 180, a = (az * Math.PI) / 180, u = [Math.sin(a) * Math.cos(e), Math.cos(a) * Math.cos(e), Math.sin(e)], r = F.radius(u[0], u[1], u[2]);
-    pts.push([u[0] * r, u[1] * r, u[2] * r]);
+    pts.push([0, 1, 2].map((a) => u[a] * r * (scale ? scale[a] : 1)));
   }
   return pts;
 }
-module.exports = { frames, forehead };
+module.exports = { frames, forehead, scaled };

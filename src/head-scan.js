@@ -411,6 +411,10 @@
       const r = nelderMead(loss, start, [6, 8, 8, 8, 6, 6, 0.3, 6], 320);
       if (!best || r.v < best.v) best = r;
     }
+    for (const k of [0.5, 0.2]) {   // restart from the best with a smaller simplex: Nelder-Mead stalls early on this loss
+      const r = nelderMead(loss, best.x, [6, 8, 8, 8, 6, 6, 0.3, 6].map((v) => v * k), 200);
+      if (r.v < best.v) best = r;
+    }
     const p = best.x.map((x, i) => Math.min(HI[i], Math.max(LO[i], x)));
     if (!face) p[7] = 0;
     const scan = build(modelMesh(p), { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });

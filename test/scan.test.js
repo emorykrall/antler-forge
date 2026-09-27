@@ -94,6 +94,14 @@ test('a head turn sees through hair: the skull under it, from the face\'s skin p
   assert.ok(blind.circ > scan.circ + 40, 'hair counted as head without skin points');
 });
 
+test('a head turn keeps an unusually long, narrow head as it is', () => {
+  const T = require('./fixtures/make-turn.js'), k = [0.95, 1.08, 1];   // length/breadth ~1.43, well above average
+  const m = T.scaled(head, k), truth = HeadScan.build({ pos: Float32Array.from(m.pos), tri: Uint32Array.from(m.tri) }, { scale: 1, base: 'z-up' });
+  const scan = HeadScan.fromHeadTurn(T.frames({ scale: k, hair: { t: 12 } }), T.forehead(k));
+  assert.ok(Math.abs(scan.circ - truth.circ) / truth.circ < 0.03, `circumference ${scan.circ.toFixed(1)} vs ${truth.circ.toFixed(1)}`);
+  assert.ok(Math.abs(scan.seat[1] - truth.seat[1]) < 6, `length ${scan.seat[1].toFixed(1)} vs ${truth.seat[1].toFixed(1)}`);
+});
+
 test('a head turn needs enough views', () => {
   const T = require('./fixtures/make-turn.js');
   assert.throws(() => HeadScan.fromHeadTurn(T.frames().slice(0, 3), []), /not enough of the head turn/i);
