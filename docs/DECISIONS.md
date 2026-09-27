@@ -173,6 +173,14 @@ Newest first within each section. Change one only when the owner asks.
   mule *calligraphic loops* (open loops above the band behind the antlers, sweeps ending in a curl),
   forest spirit *woven filigree* (strands braid over and under the band), moose, reindeer and fawn the
   plain *band*. Designs saved earlier default to Sculpted 0 / Band, so they keep their look.
+- **Sculpted crowns, second pass** (owner: "messy"; the lattice "looks like piping on a cake"). Cause:
+  several round tubes of near-equal thickness running side by side, small shallow openings, clustered
+  spikes, and leftover antler texture. The sculpted patterns now use few, bold, well-separated strands
+  with a hierarchy (a bold band; an arch from the brow point that rejoins the band at the antler base;
+  a flourish past the antler; almonds behind), openings of about 2:1 instead of 4:1, thick-to-thin
+  modulation along each strand, a carved ribbon section (flat against the head, a ridge along the outer
+  face), single flame tines instead of clusters, no wander at Sculpted 1, and no antler texture from
+  Sculpted 0.7. The weave is two strands crossing in a slow wave (a chain of almonds), no centre line.
 - **Crowns must survive printing and handling** (owner): crown strands are at least 4.6 mm thick
   (radius 2.3) except where a free end fines to its tip; band tines and brow pieces at least 4.4 mm at
   the base and no longer than 14× their base radius. Tested for every pattern, grown and sculpted.
