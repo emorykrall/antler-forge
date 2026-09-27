@@ -28,6 +28,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
   autosave is `antler-forge-design-v3`. The viewport pill must say whether it shows the coarse
   preview or the final built mesh.
+- `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map). Inlined
+  after the engine in the same script tag, so the meshing worker has both.
 - `tools/build-page.js [outDir]`: inlines the engine and writes the three outputs, copies
   `vendor/face_mesh` and `serve.js` into `site/`, and generates the `*.wasm.b64.js` copies.
 - `tools/build-antlers.js`: CLI builder. Exits with code 1 unless the mesh is one watertight solid.

@@ -72,6 +72,14 @@ Newest first within each section. Change one only when the owner asks.
   circumference). A smooth liner rests on it all the way round, with no texture; beams, tines and
   antlers sit outside it; anything inside the head surface is cut away with a soft edge; open ends
   are rounded and flare outward. The crown tilts front-up (Tilt, default 10°).
+- **3D head scans (built):** "Head size from: A 3D head scan" imports STL/OBJ/PLY from a phone
+  scanning app. `src/head-scan.js` guesses units, which way is up, and turns the face to the front
+  by finding the nose; an alignment view (front arrow, tape-line ring, units / up / flip / turn /
+  tip / lean) confirms it. The scan is kept as its radius in every 1.5° direction (~150 KB, in the
+  browser, never uploaded), travels to the mesh worker, and goes in the STL zip for the CLI
+  (`--scan`). The crown's liner and head cut use the scanned surface; the On head view shows the
+  scan as a clay bust. A web page can't reach Face ID / LiDAR depth; a built-in guided head-turn
+  scan (camera + face tracker + a segmentation model) is the planned next step.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the
   back of the crown is scaled to the crown's head size.
 - **It prints upright, as worn, on supports**, resting on a small flat foot at its lowest point.
@@ -100,4 +108,5 @@ Newest first within each section. Change one only when the owner asks.
 
 - Optional "Switch camera" (front/back) button for trying antlers on someone else.
 - Cross-device library sync with sign-in (see above), only if the owner asks.
-- 3D head-scan import for crowns (phone scanning apps → OBJ/STL), fitting the liner to the real head.
+- Built-in guided head-turn scan (camera + face tracker + segmentation), feeding the same fitting.
+- Consider a coarser default resolution for crowns (at Fine, 0.5 mm, a crown STL is ~70 MB).

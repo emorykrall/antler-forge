@@ -126,6 +126,13 @@ button,input,select{font:inherit;color:inherit}
 .ar-scale{margin:0;display:flex;flex-wrap:wrap;gap:2px 12px;justify-content:center;align-items:baseline;font-size:12.5px}
 .ar-scale span{opacity:.85}
 .ar-scale .chipbtn{padding:3px 11px;font-size:12.5px}
+.scan-ui{position:absolute;inset:0;pointer-events:none}
+.scan-panel{pointer-events:auto;position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:grid;gap:8px;background:var(--vp-chip);border:1px solid var(--vp-edge);border-radius:16px;padding:12px 14px;backdrop-filter:blur(8px);color:var(--vp-ink);width:min(560px,calc(100% - 32px))}
+.scan-panel p{margin:0;font-size:13.5px;line-height:1.4}
+.scan-panel select{background:rgba(255,255,255,.08);border:1px solid var(--vp-edge);border-radius:8px;padding:4px 8px;color:var(--vp-ink)}
+.scan-panel select option{color:#1D1A12}
+#scan-ctl{display:grid;gap:8px}
+#scan-ctl .row-actions{margin-top:0}
 .chipbtn{border:1px solid var(--vp-edge);background:rgba(255,255,255,.05);color:var(--vp-ink);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:13.5px}
 .chipbtn:hover{background:rgba(255,255,255,.1)}
 .chipbtn.snap{background:var(--vp-active);color:#1D1A12;border-color:transparent;font-weight:700}
@@ -294,6 +301,24 @@ details[open] summary::after{transform:rotate(-135deg)}
       </div>
       <p class="ar-note" id="ar-note" hidden></p>
     </div>
+    <div class="scan-ui" id="scan-ui" hidden>
+      <div class="scan-panel">
+        <p id="scan-msg"></p>
+        <div class="ar-row">
+          <label for="scan-units">Units</label>
+          <select id="scan-units"><option value="1">mm</option><option value="10">cm</option><option value="25.4">inches</option><option value="1000">metres</option></select>
+          <label for="scan-up">Up is</label>
+          <select id="scan-up"><option value="y-up">Y</option><option value="z-up">Z</option></select>
+          <button class="chipbtn" id="scan-flip">Flip upside down</button>
+        </div>
+        <div class="ar-row">
+          <button class="chipbtn" data-turn="yaw,15">Turn left</button><button class="chipbtn" data-turn="yaw,-15">Turn right</button>
+          <button class="chipbtn" data-turn="pitch,-5">Tip back</button><button class="chipbtn" data-turn="pitch,5">Tip forward</button>
+          <button class="chipbtn" data-turn="roll,-5">Lean left</button><button class="chipbtn" data-turn="roll,5">Lean right</button>
+        </div>
+        <div class="ar-row"><button class="chipbtn" id="scan-cancel">Cancel</button><button class="chipbtn snap" id="scan-ok">Use this scan</button></div>
+      </div>
+    </div>
     <div class="lib" id="lib" hidden>
       <div class="lib-head"><h2>Your library</h2><p id="lib-sub"></p></div>
       <div class="lib-grid" id="lib-grid" role="list"></div>
@@ -418,7 +443,7 @@ C.PARAM_SPEC.forEach((g) => {
   d.appendChild(list);
   $({ essentials: 'tier-essentials', details: 'tier-details' }[g.tier] || 'tier-advanced').appendChild(d);
   for (const it of g.items) {
-    if (it.k === 'filament' || it.k === 'style') continue;   // shown as swatches / chips at the top
+    if (it.k === 'filament' || it.k === 'style' || it.k === 'headScan') continue;   // shown as swatches / chips / the scan block
     const w = document.createElement('div'); w.className = 'ctl';
     const id = 'p-' + it.k;
     const lab = document.createElement('label'); lab.htmlFor = id; lab.textContent = it.label; w.appendChild(lab);
@@ -467,13 +492,31 @@ function syncControls() {
   applyStyle();
 }
 // Show only the controls that apply to this style (and the crown's Opening only when it's open).
+// The head-scan block, under "Head size from": status, import, and where scans come from.
+{
+  const w = document.createElement('div'); w.className = 'ctl'; w.id = 'scan-ctl';
+  w.innerHTML = '<div class="hint" id="scan-status" style="font-style:normal"></div>'
+    + '<div class="row-actions"><button class="btn" id="scan-import">Import head scan</button></div>'
+    + '<div class="hint">An STL, OBJ or PLY file from a phone scanning app (for example Polycam, Scaniverse or Heges). Scan with your hair as you’ll wear it. The file stays on this device.</div>'
+    + '<input type="file" id="scan-file" accept=".stl,.obj,.ply" hidden>';
+  inputs.headSource.wrap.after(w);
+}
 function applyStyle() {
   for (const b of $('styles').children) b.setAttribute('aria-pressed', String(b.dataset.style === P.style));
   $('v-wear').textContent = P.style === 'crown' ? 'On head' : 'On headband';
   for (const k in inputs) {
     const { it, wrap } = inputs[k];
+    const scanning = P.headSource === 'scan';
     wrap.hidden = !!(it.only && it.only !== P.style) || (k === 'ringGap' && P.ringBase === 'closed')
-      || ((k === 'headArcFB' || k === 'headArcEE') && !P.headMeasured);
+      || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
+      || ((k === 'headCirc' || k === 'headMeasured') && scanning);
+  }
+  $('scan-ctl').hidden = !(P.style === 'crown' && P.headSource === 'scan');
+  if (!$('scan-ctl').hidden) {
+    const have = ensureScan(P), sh = have ? C.ringSpec(P).shape : null;
+    $('scan-status').textContent = sh ? `Fitted to your scan: ${inch(sh.circ, 1)} in round at the tape line, ${inch(sh.width, 1)} × ${inch(sh.length, 1)} in, dome ${inch(sh.dome, 1)} in.`
+      : P.headScan ? 'This design’s scan isn’t on this device, so the tape measurements are used. Import the scan again to fit to it.'
+      : 'No scan yet. Until you import one, the tape measurements are used.';
   }
   // what the tape measurements add up to, so a mis-measurement is easy to spot
   const ee = inputs.headArcEE && inputs.headArcEE.wrap;
@@ -561,9 +604,12 @@ function bedObject() {
 function wearObject() {
   const g = new THREE.Group();
   if (!faunGroup) faunGroup = buildFaun();
-  const crown = P.style === 'crown';
-  if (crown) faunGroup.scale.set(...crownFit(P).f); else faunGroup.scale.setScalar(1);   // the faun takes the crown's head shape
-  g.add(faunGroup);
+  const crown = P.style === 'crown', scanned = crown && P.headSource === 'scan' && ensureScan(P);
+  if (scanned) g.add(scanHeadObject(P));   // a clay bust of the scanned head instead of the faun
+  else {
+    if (crown) faunGroup.scale.set(...crownFit(P).f); else faunGroup.scale.setScalar(1);   // the faun takes the crown's head shape
+    g.add(faunGroup);
+  }
   if (!crown) {
     const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
     const band = new THREE.Mesh(new THREE.CylinderGeometry(Rb, Rb, P.hbWidth, 96, 1, true, -1.95, 3.9), mats.band);
@@ -577,6 +623,7 @@ function wearObject() {
 // is the faun's skull scaled by f. Its print-frame mesh was lowered by ring.shift onto the bed.
 function crownFit(p, sk) {
   const g = sk ? sk.ring : C.ringSpec(p), r = g.head.r;
+  if (g.head.kind === 'scan') return { f: [1, 1, 1], M: new THREE.Matrix4().makeTranslation(0, 0, sk ? -sk.ring.shift : 0), scan: true };   // the scanned head sits at the origin
   const f = [r[0] / 74, r[1] / 92, r[2] / 92];   // the faun's skull (74 × 92 × 92) stretched to this head
   const M = new THREE.Matrix4().makeTranslation(0, -6 * f[1], sk ? -sk.ring.shift : 0);
   return { f, M };
@@ -815,6 +862,7 @@ function rebuildScene() {
   if (view === 'ar') { arRefreshPair(); return; }
   if (view === 'library') return;
   while (root.children.length) root.remove(root.children[0]);
+  if (importing) { root.add(alignObject()); if (!importing.framed) { fitCamera(); importing.framed = true; } return; }
   if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
   else root.add(wearObject());
   const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + (P.headMeasured ? P.headArcFB + '|' + P.headArcEE : '') + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
@@ -902,6 +950,7 @@ function makeWorker() {
     const src = $('antler-core').textContent + `
       self.onmessage = function (e) {
         var j = e.data;
+        if (j.scan && !AntlerCore.hasHeadScan(j.params.headScan)) AntlerCore.registerHeadScan(j.params.headScan, HeadScan.unpack(j.scan));
         var sk = AntlerCore.buildSkeleton(j.params);
         var mesh = AntlerCore.meshAntler(sk, j.res, j.kind === 'build' ? function (p) { self.postMessage({ type: 'progress', id: j.id, p: p }); } : null);
         var report = j.kind === 'build' ? AntlerCore.validateMesh(mesh) : AntlerCore.meshBounds(mesh);
@@ -930,12 +979,14 @@ function pump() {
   running = queued; queued = null; running.id = ++jobId;
   if (running.kind === 'build') { building = true; updateReadout(); }
   if (!worker) worker = makeWorker();
-  if (worker) worker.postMessage({ id: running.id, kind: running.kind, params: running.params, res: running.res });
+  const scan = running.params.headSource === 'scan' && running.params.headScan ? scanStore.get(running.params.headScan) : null;
+  if (worker) worker.postMessage({ id: running.id, kind: running.kind, params: running.params, res: running.res, scan });
   else runInline(running);
 }
 function runInline(j) {
   running = j;
   setTimeout(() => {
+    ensureScan(j.params);
     const sk = C.buildSkeleton(j.params);
     const mesh = C.meshAntler(sk, j.res);
     const rep = j.kind === 'build' ? C.validateMesh(mesh) : C.meshBounds(mesh); rep.fit = sk.fit;
@@ -1018,6 +1069,7 @@ async function downloadSTLs() {
   const notesReport = Object.assign({}, b.report, { size: C.plateSize(b.mesh, angle) });   // size as it sits on the plate
   const zip = C.makeZip([
     ...stls,
+    ...(b.params.headSource === 'scan' && scanStore.get(b.params.headScan) ? [{ name: base + '-head-scan.json', data: JSON.stringify(scanStore.get(b.params.headScan)) }] : []),
     { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params: b.params }, null, 2) },
     { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), notesReport, b.report.fit, { units: 'in' }) },
   ]);
@@ -1113,8 +1165,9 @@ function arSetup() {
 function arRefreshPair() {
   if (!AR.root || !shown) return;
   if (AR.pair) AR.root.remove(AR.pair);
-  const f = P.style === 'crown' ? crownFit(P).f : [1, 1, 1];   // the head that hides the back of a crown takes its shape
-  AR.occ.scale.set(72 * f[0], 90 * f[1], 90 * f[2]); AR.occ.position.set(0, -6 * f[1], 0);
+  const cf = P.style === 'crown' ? crownFit(P) : null, f = cf ? cf.f : [1, 1, 1];   // the head that hides the back of a crown takes its shape
+  if (cf && cf.scan) { const r = C.ringSpec(P).head.r; AR.occ.scale.set(r[0], r[1], r[2]); AR.occ.position.set(0, 0, 0); }
+  else { AR.occ.scale.set(72 * f[0], 90 * f[1], 90 * f[2]); AR.occ.position.set(0, -6 * f[1], 0); }
   AR.pair = antlerPair(C.buildSkeleton(P));
   AR.root.add(AR.pair);
   arRender();
@@ -1463,6 +1516,97 @@ for (const [id, k] of [['ar-lift', 'lift']]) {
   });
 }
 
+/* ------------------------------------------------------------ head scans (crowns) */
+// A scan is kept in this browser as its compact radius map (not the original file), keyed by id;
+// designs refer to it by headScan. Importing shows the scan with a front arrow and the tape line
+// so the orientation can be checked before the crown is fitted to it.
+const HS = window.HeadScan, SCAN_PREFIX = 'antler-forge-scan-';
+const scanStore = {
+  get(id) { try { const v = localStorage.getItem(SCAN_PREFIX + id); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
+  put(id, packed) { localStorage.setItem(SCAN_PREFIX + id, JSON.stringify(packed)); },
+};
+function ensureScan(p) {   // make sure the engine knows the design's scan; false if it isn't on this device
+  if (!p.headScan) return false;
+  if (C.hasHeadScan(p.headScan)) return true;
+  const packed = scanStore.get(p.headScan);
+  if (!packed) return false;
+  C.registerHeadScan(p.headScan, HS.unpack(packed));
+  return true;
+}
+let importing = null;   // { mesh, name, o, framed } while the alignment view is open
+$('scan-import').addEventListener('click', () => $('scan-file').click());
+$('scan-file').addEventListener('change', async (e) => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  try {
+    const mesh = HS.parse(await file.arrayBuffer(), file.name);
+    importing = { mesh, name: file.name, o: HS.guessOrientation(mesh, file.name), framed: false };
+    alignOpen();
+  } catch (err) { toast(err && err.message ? err.message : 'That file couldn’t be read.'); }
+});
+function alignOpen() {
+  if (view !== 'wear' && view !== 'print') setView('wear');
+  $('scan-ui').hidden = false;
+  $('scan-units').value = String(importing.o.scale); $('scan-up').value = importing.o.base;
+  alignMessage(); rebuildScene();
+}
+function alignClose() { importing = null; $('scan-ui').hidden = true; lastFitKey = ''; rebuildScene(); }
+function alignMessage() {
+  let m = null; try { m = HS.measure(importing.mesh, HS.transform(importing.mesh, importing.o)); } catch (e) {}
+  $('scan-msg').innerHTML = m
+    ? `<b>Check your scan:</b> upright, with the face toward the gold arrow and the ring round your forehead. It measures ${inch(m.circ, 1)} in round. Adjust if needed.`
+    : '<b>The head wasn’t found.</b> Try another “Up is” setting, or Flip upside down.';
+}
+function alignObject() {   // the scan as it will be used, centred on its head frame, with a front arrow and the tape line
+  const g = new THREE.Group(), o = importing.o, pos = HS.transform(importing.mesh, o);
+  let m = null; try { m = HS.measure(importing.mesh, pos); } catch (e) {}
+  const c = m ? m.c : [0, 0, 0];
+  for (let i = 0; i < pos.length; i += 3) { pos[i] -= c[0]; pos[i + 1] -= c[1]; pos[i + 2] -= c[2]; }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setIndex(new THREE.BufferAttribute(importing.mesh.tri, 1));
+  geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xc9b8a6, roughness: 0.85, side: THREE.DoubleSide })));
+  const reach = m ? m.seat[1] + 40 : 140, z = m ? m.fit[2] * 0.38 : 0;
+  g.add(new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, reach - 30, z), 60, 0xd8c48e, 18, 12));
+  if (m) {   // the tape line, where the crown will sit
+    const curve = new THREE.EllipseCurve(0, 0, m.seat[0] + 2, m.seat[1] + 2, 0, Math.PI * 2);
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(curve.getPoints(96)), new THREE.LineBasicMaterial({ color: 0xd8c48e }));
+    line.position.z = z; g.add(line);
+  }
+  return g;
+}
+$('scan-units').addEventListener('change', (e) => { importing.o.scale = Number(e.target.value); importing.framed = false; alignMessage(); rebuildScene(); });
+$('scan-up').addEventListener('change', (e) => { importing.o.base = e.target.value; importing.framed = false; alignMessage(); rebuildScene(); });
+$('scan-flip').addEventListener('click', () => { importing.o.flip = !importing.o.flip; alignMessage(); rebuildScene(); });
+for (const b of document.querySelectorAll('[data-turn]')) b.addEventListener('click', () => {
+  const [k, d] = b.dataset.turn.split(','); importing.o[k] = (importing.o[k] || 0) + Number(d); alignMessage(); rebuildScene();
+});
+$('scan-cancel').addEventListener('click', alignClose);
+$('scan-ok').addEventListener('click', () => {
+  let scan;
+  try { scan = HS.build(importing.mesh, importing.o); } catch (err) { toast(err.message); return; }
+  const id = 'scan-' + Date.now().toString(36);
+  try { scanStore.put(id, HS.pack(scan)); } catch (err) { libError(err); return; }
+  C.registerHeadScan(id, scan);
+  Object.assign(P, { style: 'crown', headSource: 'scan', headScan: id });
+  alignClose(); syncControls(); changed();
+  toast(`Crown fitted to your scan: ${inch(scan.circ, 1)} in round at the tape line.`);
+});
+// The scanned head as a clay bust for the On head view, rebuilt from its radius map.
+let scanBust = { id: null, obj: null };
+function scanHeadObject(p) {
+  if (scanBust.id === p.headScan) return scanBust.obj;
+  // down to just below the ears: lower, an open neck has no surface and the stand-in ellipsoid would show
+  const head = C.ringSpec(p).head, geo = new THREE.SphereGeometry(1, 160, 70, 0, Math.PI * 2, 0, Math.PI * 0.64), a = geo.attributes.position, v = new THREE.Vector3();
+  for (let i = 0; i < a.count; i++) { v.fromBufferAttribute(a, i); a.setXYZ(i, ...v.multiplyScalar(head.R(v.x, v.y, v.z)).toArray()); }
+  geo.computeVertexNormals();
+  const g = new THREE.Group(), mesh = new THREE.Mesh(geo, new THREE.MeshToonMaterial({ color: new THREE.Color('#C9B8A6').convertSRGBToLinear(), gradientMap: toonGradient(), side: THREE.DoubleSide }));
+  mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+  scanBust = { id: p.headScan, obj: g };
+  return g;
+}
+
 /* ------------------------------------------------------------ library (saved designs) */
 // Saved designs live in this browser (localStorage), newest first. Each entry keeps the full
 // params, a ¾ headband snapshot and the printed size, so the library can be reviewed without
@@ -1740,7 +1884,7 @@ $('surprise').addEventListener('click', () => {
 })();
 
 /* ------------------------------------------------------------ boot */
-syncControls(); libCount();
+ensureScan(P); syncControls(); libCount();
 resize(); rebuildScene(); requestPreview(); updateReadout(); loop();
 })();
 </script>

@@ -242,8 +242,19 @@
           const t = (e2[0] * qv[0] + e2[1] * qv[1] + e2[2] * qv[2]) * inv;
           if (t > far) far = t;
         }
-        // no surface that way (an open neck, a hole): the matching ellipsoid stands in
-        r[j * NT + i] = far > 0 ? far : 1 / Math.hypot(u[0] / fit[0], u[1] / fit[1], u[2] / fit[2]);
+        r[j * NT + i] = far > 0 ? far : NaN;
+      }
+    }
+    // Holes (an open neck, a scan that stops at the chin): carry the nearest radius above down the
+    // same azimuth, so the surface continues smoothly; with nothing above, the ellipsoid stands in.
+    for (let i = 0; i < NT; i++) {
+      let last = NaN;
+      for (let j = 0; j < NP; j++) {
+        const k = j * NT + i;
+        if (Number.isNaN(r[k])) {
+          if (Number.isNaN(last)) { const ph = (Math.PI * j) / (NP - 1), th = -Math.PI + (2 * Math.PI * i) / NT; r[k] = 1 / Math.hypot((Math.sin(ph) * Math.cos(th)) / fit[0], (Math.sin(ph) * Math.sin(th)) / fit[1], Math.cos(ph) / fit[2]); }
+          else r[k] = last;
+        } else last = r[k];
       }
     }
     const sm = new Float32Array(r.length);   // a light smoothing pass takes out scan noise
