@@ -276,17 +276,14 @@ details[open] summary::after{transform:rotate(-135deg)}
       <div class="ar-card" id="ar-card">
         <svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg>
         <h2>Try them on</h2>
-        <p>See the pair on your own head, at the size they'll print. The camera and photos stay on this device; nothing is uploaded.</p>
+        <p>See the pair on your own head, at the size they'll print. The camera picture stays on this device; nothing is uploaded.</p>
         <div class="ar-actions">
           <button class="btn primary" id="ar-cam">Use camera</button>
-          <button class="btn" id="ar-photo">Use a photo</button>
         </div>
       </div>
       <div class="ar-bar" id="ar-bar" hidden>
         <div class="ar-row">
-          <button class="chipbtn" id="ar-cam2">Camera</button>
-          <button class="chipbtn" id="ar-flip" title="Switch between front and back camera">Flip</button>
-          <button class="chipbtn" id="ar-photo2">Photo</button>
+          <button class="chipbtn" id="ar-mirror" aria-pressed="true" title="Show the picture as a mirror, or as others see you">Mirror image</button>
           <button class="chipbtn snap" id="ar-snap">Save picture</button>
         </div>
         <div class="ar-row">
@@ -295,7 +292,6 @@ details[open] summary::after{transform:rotate(-135deg)}
         <p class="ar-scale" id="ar-scale"></p>
       </div>
       <p class="ar-note" id="ar-note" hidden></p>
-      <input type="file" id="ar-file" accept="image/*" hidden>
     </div>
     <div class="lib" id="lib" hidden>
       <div class="lib-head"><h2>Your library</h2><p id="lib-sub"></p></div>
@@ -351,7 +347,7 @@ details[open] summary::after{transform:rotate(-135deg)}
         <summary><svg class="sprig"><use href="#sprig"/></svg>About the files</summary>
         <div class="notes">
           <p>The download is a zip with a right and a mirrored left antler, the design file, and print notes. Both STLs are single closed solids, checked for open and non-manifold edges before you get them.</p>
-          <p>Each antler is one complete part, standing on its flat base and turned on the plate if that's what it takes to fit the P2S. The print notes list Bambu Studio settings for your filament: tree supports, a 5 mm brim, and the right nozzle for PLA Wood.</p>
+          <p>Each antler is one complete part, standing on its flat base and turned on the plate if that's what it takes to fit the P2S. The print notes list Bambu Studio settings for your filament: tree supports, a brim, and the right nozzle for PLA Wood. Sizes are in inches; the slicer settings stay in millimetres, as Bambu Studio uses them.</p>
           <p>Save to library keeps designs in this browser, on this device. The STL zip also holds a design file; <code>node tools/build-antlers.js &lt;name&gt;-design.json --res 0.35</code> builds it at higher resolution offline.</p>
         </div>
       </details>
@@ -394,8 +390,11 @@ for (const [k, v] of Object.entries(C.PRESETS)) {
   b.addEventListener('click', () => { P = C.presetParams(k, P); syncControls(); changed(); });
   presetsEl.appendChild(b);
 }
+// Lengths are stored and built in millimetres; people see inches.
+const inch = (mm, d) => (mm / 25.4).toFixed(d == null ? (mm / 25.4 < 10 ? 2 : 1) : d);
 const fmt = (it, v) => {
   if (it.pct) return Math.round(v * 100) + '%';
+  if (it.u === 'mm') return inch(v) + ' in';
   const dec = it.step < 0.1 ? 2 : it.step < 1 ? (it.step < 0.5 ? 2 : 1) : 0;
   return Number(v).toFixed(dec) + (it.u && it.u.length <= 3 ? ' ' + it.u : '');
 };
@@ -810,20 +809,20 @@ function updateReadout() {
   const r = fresh ? built.report : null, ok = !!(r && r.watertight && r.shells === 1);
   const fit = fresh ? r.fit : shown ? shown.fit : null;
   const fits = fit ? fit.fits : true;
-  const f = (x) => x.toFixed(0);
-  $('dims').innerHTML = fit ? `${f(fit.w)} × ${f(fit.d)} × ${f(fit.h)} mm · ${fits ? 'one piece on the P2S' : '<span class="over">too big for the P2S</span>'}` : 'Shaping…';
+  const f = (x) => inch(x, 1);
+  $('dims').innerHTML = fit ? `${f(fit.w)} × ${f(fit.d)} × ${f(fit.h)} in · ${fits ? 'one piece on the P2S' : '<span class="over">too big for the P2S</span>'}` : 'Shaping…';
   // Say plainly whether the view shows the coarse preview or the final, checked mesh.
   const st = $('status'), stale = !shown || shown.key !== keyOf(P);
   if (building) { st.className = 'pill busy'; st.lastChild.textContent = 'Building final mesh…'; }
-  else if (ok) { st.className = 'pill ok'; st.lastChild.textContent = `Final mesh · ${P.resolution} mm`; }
+  else if (ok) { st.className = 'pill ok'; st.lastChild.textContent = 'Final mesh'; }
   else if (fresh) { st.className = 'pill warn'; st.lastChild.textContent = 'Final mesh failed its check'; }
   else if (stale) { st.className = 'pill busy'; st.lastChild.textContent = 'Updating preview…'; }
-  else { st.className = 'pill preview'; st.lastChild.textContent = `Preview · coarse ${previewRes(P).toFixed(1)} mm`; }
+  else { st.className = 'pill preview'; st.lastChild.textContent = 'Preview · coarse'; }
   updatePlate();
   // Footer: one line of status, then Save to library and one primary action that moves the job on.
   const warns = [], notes = [];
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
-  if (P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least 6 mm wide.');
+  if (P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
   if (fit && fit.shrunk) notes.push(`Shrunk from ${fit.requested.toFixed(2)}× to ${fit.scale.toFixed(2)}× to fit the printer.`);
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
   const msg = $('msg');
@@ -968,7 +967,7 @@ async function downloadSTLs() {
     { name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: b.report.fit.angle })) },
     { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -b.report.fit.angle })) },
     { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params: b.params }, null, 2) },
-    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), b.report, b.report.fit) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), b.report, b.report.fit, { units: 'in' }) },
   ]);
   offerFile(base + '.zip', zip);
 }
@@ -1010,7 +1009,7 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add(
 // Every frame stays on this device; nothing is uploaded.
 const AR = {
   on: false, mode: null, renderer: null, scene: null, cam: null, bg: null, pair: null, occ: null,
-  video: null, stream: null, facing: 'user', photo: null, W: 0, H: 0, fm: null, fmReady: null,
+  video: null, stream: null, mirror: true, W: 0, H: 0, fm: null, fmReady: null,
   busy: false, pose: null, found: false, fit: { size: 1, lift: 0 },
 };
 try { const f = JSON.parse(localStorage.getItem('antler-forge-fit') || 'null'); if (f) AR.fit = f; } catch (e) {}
@@ -1039,7 +1038,7 @@ function arSetup() {
   const key = new THREE.DirectionalLight(0xfff4e6, 1.0); key.position.set(0.3, 0.6, 1); AR.scene.add(key);
   const fill = new THREE.DirectionalLight(0xdfe7ff, 0.35); fill.position.set(-0.6, -0.2, 0.6); AR.scene.add(fill);
   AR.root = new THREE.Group(); AR.root.matrixAutoUpdate = false; AR.scene.add(AR.root);
-  // the photo/video, plus a blurred continuation above it so tall antlers have headroom
+  // the video, plus a blurred continuation above it so tall antlers have headroom
   AR.media = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ toneMapped: false, depthWrite: false, depthTest: false }));
   AR.media.renderOrder = -10;
   AR.bgScene = new THREE.Scene();
@@ -1081,14 +1080,14 @@ function arSize(W, H, tex) {
   if (tex) { AR.media.material.map = tex; AR.media.material.needsUpdate = true; AR.room.material.uniforms.map.value = tex; }
   arLayout();
 }
-function arLayout() {   // cover (camera) or contain (photo) inside the stage
+function arLayout() {   // fit the whole frame inside the stage
   if (!AR.W) return;
   const st = document.querySelector('.stage'), sw = st.clientWidth, sh = st.clientHeight;
   const k = Math.min(sw / AR.W, sh / AR.Ht);   // show the whole frame so the antlers never get cropped
   const cv = $('ar'), w = AR.W * k, h = AR.Ht * k;
   cv.style.width = w + 'px'; cv.style.height = h + 'px';
   cv.style.left = (sw - w) / 2 + 'px'; cv.style.top = (sh - h) / 2 + 'px';
-  cv.style.transform = AR.mode === 'camera' && AR.facing === 'user' ? 'scaleX(-1)' : 'none';
+  cv.style.transform = AR.mirror ? 'scaleX(-1)' : 'none';
 }
 window.addEventListener('resize', arLayout);
 
@@ -1185,7 +1184,7 @@ const V = (x, y, z) => new THREE.Vector3(x, y, z);
 function arOnResults(r) {
   const l = r.multiFaceLandmarks && r.multiFaceLandmarks[0];
   AR.found = !!l;
-  if (!l) { arStatus(AR.mode === 'photo' ? 'No face found. Try a well-lit photo, facing forward.' : 'Looking for your face…'); arRender(); return; }
+  if (!l) { arStatus('Looking for your face…'); arRender(); return; }
   const W = AR.W, H = AR.H;
   const p = (i) => V(l[i].x * W, (1 - l[i].y) * H, -l[i].z * W);
   const a = p(234), b = p(454), top = p(10), chin = p(152), nose = p(1);
@@ -1265,15 +1264,15 @@ async function arStartCamera() {
   arSetup();
   arStatus('Starting the camera…');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Use a photo, or open the standalone Antler Forge folder in your browser for live try-on.' : 'This browser can’t open the camera here. Live try-on needs https or localhost.');
+    arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Open Antler Forge in a browser tab to try the antlers on.' : 'This browser can’t open the camera here. Live try-on needs https or localhost.');
     return;
   }
   try {
     arStopCamera();
-    AR.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: AR.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    AR.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
   } catch (e) {
-    arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Use a photo, or open the standalone Antler Forge folder in your browser for live try-on.'
-      : e && e.name === 'NotAllowedError' ? 'Camera access was declined. Allow it in your browser’s site settings, or use a photo.' : 'Couldn’t open a camera. Try a photo instead.');
+    arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Open Antler Forge in a browser tab to try the antlers on.'
+      : e && e.name === 'NotAllowedError' ? 'Camera access was declined. Allow it in your browser’s site settings to try the antlers on.' : 'Couldn’t open a camera on this device.');
     return;
   }
   let v = AR.video;
@@ -1299,31 +1298,6 @@ async function arStartCamera() {
   try { await arTracker(); } catch (e) { console.error(e); arStatus(trackerError(e)); return; }
   if (!AR.found) arStatus('Looking for your face…');
 }
-async function arUsePhoto(file) {
-  arSetup(); arStopCamera();
-  const url = URL.createObjectURL(file);
-  const img = new Image();
-  try { await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; }); }
-  catch (e) { arStatus('That file isn’t an image this browser can open.'); return; }
-  const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
-  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
-  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-  URL.revokeObjectURL(url);
-  await arUseCanvas(c);
-}
-async function arUseCanvas(c) {
-  arSetup(); arStopCamera();
-  AR.mode = 'photo'; AR.photo = c; AR.pose = null; AR.found = false; AR.irisFace = null; AR.calib = null; AR.calPending = false;
-  if (AR.bg) AR.bg.dispose();
-  AR.bg = new THREE.CanvasTexture(c); AR.bg.encoding = THREE.sRGBEncoding;
-  arSize(c.width, c.height, AR.bg);
-  arShowBar();
-  arStatus('Finding your face…');
-  arRender();
-  try { await arTracker(); } catch (e) { console.error(e); arStatus(inViewer() ? 'The face tracker couldn’t load inside this viewer. Use the Antler Forge folder from the download instead.' : trackerError(e)); return; }
-  arRefreshPair();
-  await AR.fm.send({ image: c });
-}
 function arShowBar() { $('ar-card').hidden = true; $('ar-bar').hidden = false; $('ar').hidden = false; arLayout(); scaleNote = ''; arScaleNote(); }
 function inViewer() { return !!window.claude; }
 
@@ -1333,7 +1307,7 @@ async function arSnapshot() {
   const src = $('ar');
   const out = document.createElement('canvas'); out.width = AR.W; out.height = AR.Ht;
   const ctx = out.getContext('2d');
-  if (AR.mode === 'camera' && AR.facing === 'user') { ctx.translate(AR.W, 0); ctx.scale(-1, 1); }
+  if (AR.mirror) { ctx.translate(AR.W, 0); ctx.scale(-1, 1); }   // save it the way it looks
   ctx.drawImage(src, 0, 0);
   const blob = await new Promise((r) => out.toBlob(r, 'image/png'));
   offerFile(rackName(P).replace(/^The /, '').replace(/\s+/g, '-').toLowerCase() + '-try-on.png', new Uint8Array(await blob.arrayBuffer()));
@@ -1345,7 +1319,7 @@ function arEnter() {
   $('ar-ui').hidden = false;
   $('ar').hidden = !AR.mode;
   if (!AR.mode) { $('ar-card').hidden = false; $('ar-bar').hidden = true; arStatus(''); }
-  else if (AR.mode === 'camera') arStartCamera(); else { arRefreshPair(); arRender(); }
+  else arStartCamera();
   $('ar-lift').value = AR.fit.lift;
 }
 function arExit() {
@@ -1356,31 +1330,26 @@ function arExit() {
   $('ar').hidden = true; $('ar-ui').hidden = true;
 }
 $('ar-cam').addEventListener('click', arStartCamera);
-$('ar-cam2').addEventListener('click', arStartCamera);
-$('ar-photo').addEventListener('click', () => $('ar-file').click());
-$('ar-photo2').addEventListener('click', () => $('ar-file').click());
-$('ar-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) arUsePhoto(f); e.target.value = ''; });
-$('ar-flip').addEventListener('click', () => { AR.facing = AR.facing === 'user' ? 'environment' : 'user'; if (AR.mode === 'camera') arStartCamera(); });
+$('ar-mirror').addEventListener('click', () => { AR.mirror = !AR.mirror; $('ar-mirror').setAttribute('aria-pressed', String(AR.mirror)); arLayout(); });
 $('ar-snap').addEventListener('click', arSnapshot);
 // One line in the try-on bar says what the sizing is based on, with a way to calibrate.
 let scaleNote = '';
 function arScaleNote() {
-  const mm = Math.round(faceMM()), cam = AR.mode === 'camera';
-  const key = (AR.calib ? 'c' : AR.cal ? 'k' : AR.irisFace ? 'i' : 'a') + mm + AR.mode;
+  const key = (AR.calib ? 'c' : AR.cal ? 'k' : AR.irisFace ? 'i' : 'a') + Math.round(faceMM());
   if (key === scaleNote) return;
   scaleNote = key;
   const el = $('ar-scale'); el.innerHTML = '';
   const span = document.createElement('span');
   const link = (text, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.textContent = text; b.addEventListener('click', fn); return b; };
   if (AR.calib) { span.textContent = 'Calibrating from your eyes…'; el.append(span, link('Cancel', calCancel)); return; }
-  span.textContent = AR.cal ? `Calibrated · face ${mm} mm across` : AR.irisFace ? `Sized from your eyes · face ≈ ${mm} mm across` : 'Sized for an average face';
+  const across = inch(faceMM(), 1) + ' in across';
+  span.textContent = AR.cal ? `Calibrated · face ${across}` : AR.irisFace ? `Sized from your eyes · face ≈ ${across}` : 'Sized for an average face';
   if (AR.cal) el.append(span, link('Recalibrate', calStart));
-  else { const go = link(cam ? 'Calibrate' : 'Calibrate with the camera', calStart); go.className = 'chipbtn snap'; go.title = 'Take off glasses first for an accurate reading'; el.append(span, go); }
+  else { const go = link('Calibrate', calStart); go.className = 'chipbtn snap'; go.title = 'Take off glasses first for an accurate reading'; el.append(span, go); }
   if (AR.cal) el.append(link('Clear', () => { AR.cal = null; try { localStorage.removeItem(SCALE_KEY); } catch (e) {} arRefit(); }));
 }
 function arRefit() {   // re-place the pair after the scale source changed
-  scaleNote = ''; arScaleNote();
-  if (AR.mode === 'photo' && AR.fm && AR.photo) AR.fm.send({ image: AR.photo }); else arRender();
+  scaleNote = ''; arScaleNote(); arRender();
 }
 
 // One-tap calibration: a few seconds of close, face-on, eyes-open frames, each measuring the face
@@ -1401,7 +1370,7 @@ function calStart() {
   nudge.done = true; nudge.until = 0;
   if (AR.mode !== 'camera') { AR.calPending = true; arStartCamera(); return; }   // starts once a face is found
   AR.calPending = false;
-  AR.calib = { samples: [], t0: Date.now(), msg: 'Take off your glasses, bring your face about 30 cm from the camera, and look straight at it.' };
+  AR.calib = { samples: [], t0: Date.now(), msg: 'Take off your glasses, bring your face about 12 in from the camera, and look straight at it.' };
   arStatus(AR.calib.msg); scaleNote = ''; arScaleNote();
 }
 function calCancel() { AR.calib = null; arStatus(''); scaleNote = ''; arScaleNote(); }
@@ -1429,14 +1398,14 @@ function calFinish() {
   AR.cal = { faceMM: Math.round(at(0.5) * 10) / 10, method: 'eyes', at: Date.now() };
   try { localStorage.setItem(SCALE_KEY, JSON.stringify(AR.cal)); } catch (e) {}
   arRefit();
-  toast(`Calibrated: your face is ${Math.round(AR.cal.faceMM)} mm across. The antlers now show at true size.`);
+  toast(`Calibrated: your face is ${inch(AR.cal.faceMM, 1)} in across. The antlers now show at true size.`);
 }
 
 for (const [id, k] of [['ar-lift', 'lift']]) {
   $(id).addEventListener('input', (e) => {
     AR.fit[k] = Number(e.target.value);
     try { localStorage.setItem('antler-forge-fit', JSON.stringify(AR.fit)); } catch (err) {}
-    if (AR.mode === 'photo' && AR.fm && AR.photo) AR.fm.send({ image: AR.photo }); else arRender();
+    arRender();
   });
 }
 
@@ -1576,7 +1545,7 @@ function libCard(d) {
   const meta = el('p', 'card-meta'); const dot = el('i'); dot.style.background = fil.hex;
   meta.append(dot, `${(C.PRESETS[p.preset] || {}).label || 'Custom'} · ${p.filament === 'oak' ? 'White Oak' : 'Bone White'}`);
   const dims = el('p', 'card-dims');
-  if (d.size) dims.append(`${d.size.join(' × ')} mm · `);
+  if (d.size) dims.append(`${d.size.map((x) => inch(x, 1)).join(' × ')} in · `);
   dims.append(d.fits === false ? Object.assign(el('span', 'over'), { textContent: 'too big for the P2S' }) : 'one piece on the P2S');
   const actions = el('div', 'card-actions');
   actions.append(

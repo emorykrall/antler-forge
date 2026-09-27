@@ -72,8 +72,10 @@ The tests in `test/` cover the first five. If a change needs one of them to move
 ## Constraints
 
 - **Published claude.ai artifact pages** block the camera and all non-script network fetches, so
-  try-on there is photo only. `dist/antler-forge.html` is the body-only page for the Artifact publisher.
-  Downloads there go through `window.claude.use('downloads')`.
+  try-on (camera only; there is no photo mode) isn't available there. `dist/antler-forge.html` is
+  the body-only page for the Artifact publisher. Downloads there go through `window.claude.use('downloads')`.
+- **Units:** the page shows inches (`inch()` / `fmt`); params, the engine, the CLI and STLs stay in mm.
+  Print notes from the page pass `{ units: 'in' }`; slicer settings in them stay in mm.
 - **Try-on real size** comes from the face width (landmarks 234 ↔ 454) in mm: a saved one-tap eye
   calibration (`antler-forge-scale`, median of close, face-on frames), else the live iris estimate
   (`refineLandmarks: true`, 11.7 mm irises), else 145 mm. Keep calibration one step with no manual

@@ -81,7 +81,7 @@
     { group: 'Beam', tier: 'details', items: [
       { k: 'baseDia', label: 'Base diameter', min: 8, max: 45, step: 0.5, u: 'mm' },
       { k: 'beamTaper', label: 'Taper along beam', min: 0, max: 0.8, step: 0.01, u: '' },
-      { k: 'tipDia', label: 'Tip diameter', min: 2.5, max: 16, step: 0.5, u: 'mm', hint: '3 mm or more survives handling' },
+      { k: 'tipDia', label: 'Tip diameter', min: 2.5, max: 16, step: 0.5, u: 'mm', hint: '⅛ in or more survives handling' },
       { k: 'beamLean', label: 'Lean (back ↔ forward)', min: -80, max: 40, step: 1, u: '°' },
       { k: 'curlBias', label: 'Curl toward tip', min: 0.4, max: 3, step: 0.05, u: '×' },
       { k: 'beamInCurl', label: 'Tip inward curl', min: -120, max: 40, step: 1, u: '°' },
@@ -142,8 +142,8 @@
     { group: 'Printer · Bambu P2S', tier: 'advanced', items: [
       { k: 'filament', label: 'Filament', type: 'select', options: [['bone', 'PLA Matte · Bone White'], ['oak', 'PLA Wood · White Oak']] },
       { k: 'autoFit', label: 'Shrink to fit the printer', type: 'bool', hint: 'Each antler prints as one piece, turned for the smallest footprint' },
-      { k: 'resolution', label: 'Mesh resolution', type: 'select', options: [['1.0', 'Draft · 1.0 mm'], ['0.7', 'Standard · 0.7 mm'], ['0.5', 'Fine · 0.5 mm'], ['0.35', 'Extra fine · 0.35 mm']] },
-      { k: 'bedX', label: 'Bed width', min: 100, max: 500, step: 1, u: 'mm', hint: 'P2S: 256 × 256 × 256 mm' },
+      { k: 'resolution', label: 'Mesh resolution', type: 'select', options: [['1.0', 'Draft'], ['0.7', 'Standard'], ['0.5', 'Fine'], ['0.35', 'Extra fine']] },
+      { k: 'bedX', label: 'Bed width', min: 100, max: 500, step: 1, u: 'mm', hint: 'P2S: 10.1 × 10.1 × 10.1 in' },
       { k: 'bedY', label: 'Bed depth', min: 100, max: 500, step: 1, u: 'mm' },
       { k: 'bedZ', label: 'Max height', min: 100, max: 500, step: 1, u: 'mm' },
     ] },
@@ -994,8 +994,12 @@
     oak: { name: 'Bambu PLA Wood · White Oak (13106)', hex: '#D6CCA3', preset: 'Bambu PLA Wood', slug: 'white-oak' },
   };
 
-  function printNotes(P, report, fit) {
+  // opts.units === 'in' gives sizes in inches (with mm alongside) for the page; slicer settings
+  // stay in millimetres either way, because that is what Bambu Studio asks for.
+  function printNotes(P, report, fit, opts) {
     const f = (x) => x.toFixed(1);
+    const inches = !!(opts && opts.units === 'in'), toIn = (mm) => (mm / 25.4).toFixed(2);
+    const len = (mm) => (inches ? `${toIn(mm)} in` : `${f(mm)} mm`);
     const s = report.size, fil = FILAMENTS[P.filament] || FILAMENTS.bone;
     const mount = { tunnel: 'flared base with slide-on headband channel', clip: 'flared base with snap-on headband clip', flat: 'flared base for gluing', none: 'burr with a flat-cut base' }[P.mount];
     const grams = report.volume / 1000 * 1.24;
@@ -1005,18 +1009,18 @@
       '',
       `Design     ${(PRESETS[P.preset] || {}).label || 'Custom'} · antler scale ${((fit && fit.scale) || P.scale).toFixed(2)}× · ${mount}`,
       `Filament   ${fil.name}`,
-      `Printer    Bambu Lab P2S (256 × 256 × 256 mm)`,
-      `Each part  ${f(s[0])} × ${f(s[1])} × ${f(s[2])} mm${fit && fit.angle ? ` (turned ${fit.angle}° on the plate to fit)` : ''}`,
+      `Printer    Bambu Lab P2S (${inches ? '10.1 × 10.1 × 10.1 in' : '256 × 256 × 256 mm'})`,
+      `Each part  ${inches ? `${s.map(toIn).join(' × ')} in (${s.map((x) => x.toFixed(0)).join(' × ')} mm)` : `${f(s[0])} × ${f(s[1])} × ${f(s[2])} mm`}${fit && fit.angle ? ` (turned ${fit.angle}° on the plate to fit)` : ''}`,
       `Material   about ${Math.round(grams * 0.45)}–${Math.round(grams * 0.6)} g per antler at the settings below, plus supports`,
       `Mesh       ${report.triangles.toLocaleString()} triangles · one closed solid · watertight=${report.watertight}`,
       '',
       'Each antler is one complete part, already standing on its flat base at Z = 0.',
       'Print the right and the left on separate plates, or together if both footprints fit.',
       P.mount === 'tunnel' || P.mount === 'clip'
-        ? `Headband channel: ${f(P.hbWidth + P.clearance)} mm wide × ${f(P.hbThick + P.clearance)} mm tall, plus curve allowance for a ${P.hbRadius} mm band radius.`
+        ? `Headband channel: ${len(P.hbWidth + P.clearance)} wide × ${len(P.hbThick + P.clearance)} tall, plus curve allowance for a ${inches ? len(P.hbRadius) : P.hbRadius + ' mm'} band radius.`
         : 'The base is flat for gluing to a headband or hair clip (E6000 or CA glue).',
       '',
-      'Bambu Studio',
+      inches ? 'Bambu Studio (settings in millimetres, as the slicer uses them)' : 'Bambu Studio',
       `- Filament preset: ${fil.preset}. Plate: Textured PEI.`,
       wood ? '- Nozzle: hardened steel, 0.4 mm or larger. Bambu advises against the 0.2 mm stainless nozzle for PLA Wood.' : '- Nozzle: 0.4 mm.',
       wood ? '- Dry the spool first (55 °C for 8 h). Wood PLA absorbs moisture faster than regular PLA.' : '- Matte PLA hides layer lines well, so 0.16 mm layers look almost cast.',

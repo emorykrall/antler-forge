@@ -41,15 +41,19 @@ The 3D view normally shows a coarse preview mesh. **Build final mesh** builds th
 
 The panel runs in the order you work: pick a species (or **Surprise me** for a new variation of it) and a filament, set the **Essentials** (size, beam, tines, base style and headband width), then open **Shape details** for fine sculpting or **Advanced** for headband fit and printer settings.
 
-## Try on (camera or photo)
+## Try on (camera)
 
-The **Try on** view places the pair on your head, at the size it will print. MediaPipe Face Mesh, bundled in `vendor/face_mesh`, finds your face, and a head frame is fitted from the forehead, chin and both sides of the face. Everything runs on your device, and no image leaves it. The pair is shown at real size. The size comes from your irises, which are about 11.7 mm across in almost everyone. For the best accuracy, take off your glasses, tap **Calibrate** and look straight at the camera from about 30 cm for a few seconds: the page keeps only close, face-on, eyes-open frames, takes the median and saves the result in the browser for next time. Take glasses off before calibrating: lenses change how big the irises look. Use the Height slider to adjust for thick hair. "Save picture" exports a PNG.
+The **Try on** view places the pair on your head with the camera, at the size it will print. MediaPipe Face Mesh, bundled in `vendor/face_mesh`, finds your face, and a head frame is fitted from the forehead, chin and both sides of the face. Everything runs on your device, and no image leaves it. **Mirror image** switches between a mirror view and the view others see; "Save picture" exports a PNG.
 
-- **Inside the Claude viewer:** the camera is blocked there, so use **Use a photo** with a front-facing selfie.
+The pair is shown at real size. The size comes from your irises, which are about 11.7 mm across in almost everyone. For the best accuracy, take off your glasses, tap **Calibrate** and look straight at the camera from about 12 in for a few seconds: the page keeps only close, face-on, eyes-open frames, takes the median and saves the result in the browser for next time. Use the Height slider to adjust for thick hair.
+
+- **Inside the Claude viewer:** the camera is blocked there, so try-on isn't available; open the page in a browser tab.
 - **Live camera on this computer:** run `npm run build`, then double-click `dist/site/index.html`, or run `npm run serve` and open http://localhost:8080. Keep the `vendor` folder next to `index.html`. When the page is opened from disk, it reads the tracker from the `.b64.js` copies, because browsers block `file://` pages from loading the binary files directly.
-- **Live camera on your phone:** host the `dist/site` folder over https. Dragging it onto Netlify Drop (app.netlify.com/drop) or pushing it to GitHub Pages both work. Then open the link on your phone and tap **Use camera**, then **Flip** to use the back camera on someone else.
+- **Live camera on your phone:** open the GitHub Pages site (https://emorykrall.github.io/antler-forge/) and tap **Try on → Use camera**.
 
 The two binary tracker files carry a `.wasm` suffix only so that every host serves them; the page asks for them by those names.
+
+**Units:** the page shows lengths in inches. Designs, the engine, the CLI and the STL files work in millimetres (slicers read STLs as mm), and the print notes give sizes in inches with millimetres alongside, and slicer settings in millimetres.
 
 ## Materials and printer
 
