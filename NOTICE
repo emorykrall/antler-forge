@@ -1,0 +1,20 @@
+Antler Forge
+Copyright (c) 2026 Emory Krall. Licensed under the MIT License (see LICENSE).
+
+This repository includes third-party software:
+
+vendor/face_mesh/
+  MediaPipe Face Mesh (JavaScript solution, @mediapipe/face_mesh)
+  Copyright Google LLC
+  Licensed under the Apache License, Version 2.0.
+  face_mesh.js also bundles Closure Library code
+  (Copyright The Closure Library Authors, Apache-2.0).
+  You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+  The two binary data files are renamed with a .wasm suffix
+  (face_mesh.binarypb.wasm, face_mesh_solution_packed_assets.data.wasm)
+  so that every static host serves them; their contents are unchanged.
+
+Loaded at runtime from public CDNs (not included in this repository):
+  three.js r128 and OrbitControls (MIT License)
+  Google Fonts: IM Fell English, Alegreya Sans, IBM Plex Mono (SIL Open Font License 1.1)

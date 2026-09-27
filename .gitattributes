@@ -1,0 +1,7 @@
+# Text files use LF everywhere
+* text=auto eol=lf
+
+# Binaries: never diff or convert
+*.wasm binary
+*.stl binary
+*.png binary

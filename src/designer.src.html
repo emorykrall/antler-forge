@@ -1,0 +1,1285 @@
+<title>Antler Forge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Palette drawn from John Bauer's moss-grey-brown forests, Rackham's muted washes and
+   silhouette cuts, and Kazuo Oga's layered green light. Viewport lighting stays neutral
+   so the antlers read in true filament colour. */
+:root{
+  --ground:#E8E9DD; --panel:#F4F2E8; --raise:#FBFAF4; --ink:#1E2A21; --muted:#5E6A58; --line:#D2D2C0;
+  --accent:#3B6344; --accent-ink:#F7F4E8; --gold:#8E6E2C; --gold-soft:#EEE3C4;
+  --ok:#3B7A48; --warn:#9A5B12; --bad:#A93A2C;
+  --vp-top:#23322A; --vp-bot:#0B100D; --vp-ink:#ECE8D8; --vp-chip:rgba(10,16,12,.66); --vp-edge:rgba(214,190,122,.22); --vp-active:#D8C48E;
+  --f-display:"IM Fell English SC", "IM Fell English", Georgia, "Times New Roman", serif;
+  --f-fell:"IM Fell English", Georgia, "Times New Roman", serif;
+  --f-body:"Alegreya Sans", "Gill Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0E1410; --panel:#131A15; --raise:#1A231C; --ink:#E6E3D3; --muted:#9BA491; --line:#29342B;
+    --accent:#9CC39A; --accent-ink:#0F1511; --gold:#D6B56A; --gold-soft:#2C281A;
+    --ok:#8CCB8E; --warn:#E3A24A; --bad:#EE8B7B;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1410; --panel:#131A15; --raise:#1A231C; --ink:#E6E3D3; --muted:#9BA491; --line:#29342B;
+  --accent:#9CC39A; --accent-ink:#0F1511; --gold:#D6B56A; --gold-soft:#2C281A;
+  --ok:#8CCB8E; --warn:#E3A24A; --bad:#EE8B7B;
+}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font:15px/1.45 var(--f-body);}
+*{box-sizing:border-box}
+button,input,select{font:inherit;color:inherit}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 396px;height:100%;}
+
+/* ---------- the glade (viewport) */
+.stage{position:relative;min-height:0;overflow:hidden;
+  background:
+    radial-gradient(120% 70% at 22% -8%, rgba(226,208,150,.20), rgba(226,208,150,0) 55%),
+    radial-gradient(90% 60% at 80% 0%, rgba(150,190,150,.10), rgba(150,190,150,0) 60%),
+    linear-gradient(180deg,var(--vp-top),var(--vp-bot));}
+.glade{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+/* storybook frame: a thin gilt line with vine corners, drawn behind the controls */
+.frame{position:absolute;inset:8px;border:1px solid rgba(216,196,142,.2);border-radius:14px;pointer-events:none}
+.frame svg{position:absolute;width:44px;height:44px;color:rgba(216,196,142,.55)}
+.frame .tl{top:-5px;left:-5px}.frame .tr{top:-5px;right:-5px;transform:scaleX(-1)}
+.frame .bl{bottom:-5px;left:-5px;transform:scaleY(-1)}.frame .br{bottom:-5px;right:-5px;transform:scale(-1,-1)}
+.swash{display:block;width:170px;height:12px;color:var(--vp-active);opacity:.7;margin:-2px 0 2px}
+.ornament{display:flex;align-items:center;gap:10px;color:var(--gold);margin:22px 18px 0}
+.ornament::before,.ornament::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line))}
+.ornament::after{background:linear-gradient(90deg,var(--line),transparent)}
+.ornament svg{width:46px;height:14px;flex:none}
+#motes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#vp{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none}
+.hud{position:absolute;left:16px;right:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;pointer-events:none}
+.hud>*{pointer-events:auto}
+.hud.top{top:14px;justify-content:space-between;align-items:flex-start}
+.hud.bot{bottom:14px;justify-content:space-between;align-items:flex-end}
+.brand{color:var(--vp-ink);display:grid;gap:2px}
+.brand h1{margin:0;font:400 28px/1 var(--f-display);letter-spacing:.01em;text-shadow:0 1px 12px rgba(0,0,0,.4)}
+.plate{font:italic 400 15px/1.2 var(--f-fell);color:var(--vp-active);opacity:.95;min-height:1.2em;transition:opacity .4s}
+.plate small{font:400 11px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--vp-ink);opacity:.55;margin-left:8px;font-style:normal}
+.seg{display:inline-flex;background:var(--vp-chip);border:1px solid var(--vp-edge);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
+.seg button{border:0;background:transparent;color:var(--vp-ink);padding:6px 13px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:500}
+.seg button:hover{color:#fff}
+.seg button[aria-pressed="true"]{background:var(--vp-active);color:#1D1A12}
+.seg button:focus-visible{outline:2px solid var(--vp-active);outline-offset:1px}
+.top-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.seg.small button{padding:5px 11px;font-size:12.5px}
+.readout{background:var(--vp-chip);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:10px;padding:8px 11px;font:500 12px/1.55 var(--f-mono);font-variant-numeric:tabular-nums;backdrop-filter:blur(6px)}
+.readout b{font-weight:500;color:var(--vp-active)}
+.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 11px;font:500 11.5px/1 var(--f-mono);letter-spacing:.02em;background:var(--vp-chip);color:var(--vp-ink);border:1px solid var(--vp-edge)}
+.pill i{width:7px;height:7px;border-radius:50%;background:#A3AD9A;display:inline-block}
+.pill.ok i{background:#9FD79A;box-shadow:0 0 8px #9FD79A}.pill.warn i{background:#E3A24A}.pill.busy i{background:#E8D38A;box-shadow:0 0 8px #E8D38A;animation:pulse 1.1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.progress{position:absolute;left:0;right:0;bottom:0;height:3px}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,#8FB88A,var(--vp-active));transition:width .15s}
+.stage.ar-on #vp,.stage.ar-on #motes,.stage.ar-on .hud.bot,.stage.ar-on [aria-label="Camera"]{visibility:hidden}
+#ar{position:absolute;display:block;background:#0B100D}
+.ar-ui{position:absolute;inset:0;pointer-events:none}
+.ar-ui>*{pointer-events:auto}
+.ar-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 32px));background:rgba(20,28,22,.86);border:1px solid var(--vp-edge);border-radius:18px;padding:22px 22px 20px;color:var(--vp-ink);text-align:center;backdrop-filter:blur(8px);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.ar-card .swash{margin:0 auto 6px}
+.ar-card h2{margin:0 0 8px;font:400 26px/1.1 var(--f-display);letter-spacing:.01em}
+.ar-card p{margin:0 0 16px;font-size:14.5px;opacity:.85}
+.ar-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.ar-actions .btn{background:rgba(255,255,255,.06);border-color:var(--vp-edge);color:var(--vp-ink)}
+.ar-actions .btn.primary{background:#3B6344;color:#F7F4E8}
+.ar-bar{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:grid;gap:8px;background:var(--vp-chip);border:1px solid var(--vp-edge);border-radius:16px;padding:10px 12px;backdrop-filter:blur(8px);color:var(--vp-ink);width:min(520px,calc(100% - 32px))}
+.ar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.ar-row label{font-size:13px;opacity:.8}
+.ar-row input[type=range]{flex:1;min-width:90px;accent-color:var(--vp-active)}
+.chipbtn{border:1px solid var(--vp-edge);background:rgba(255,255,255,.05);color:var(--vp-ink);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:13.5px}
+.chipbtn:hover{background:rgba(255,255,255,.1)}
+.chipbtn.snap{background:var(--vp-active);color:#1D1A12;border-color:transparent;font-weight:700}
+.chipbtn:focus-visible{outline:2px solid var(--vp-active);outline-offset:2px}
+.ar-note{position:absolute;left:50%;top:92px;transform:translateX(-50%);margin:0;background:rgba(12,18,14,.8);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:12px;padding:8px 14px;font:italic 400 15px/1.3 var(--f-fell);max-width:calc(100% - 32px);text-align:center}
+.err{position:absolute;inset:auto 16px 60px 16px;color:var(--vp-ink);font-size:13px}
+
+/* ---------- the ledger (panel) */
+.panel{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.scroll{overflow:auto;flex:1;padding-block:18px 8px}
+.sect{padding-inline:18px}
+.label{font:400 15px/1 var(--f-display);letter-spacing:.04em;color:var(--gold);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--raise);border-radius:999px;padding:6px 13px;cursor:pointer;font-weight:500;font-size:14px;transition:border-color .15s, background .15s}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.lore{margin:10px 2px 0;font:italic 400 15px/1.35 var(--f-fell);color:var(--muted);min-height:2.7em;max-width:44ch}
+.swatches{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.swatch{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--raise);border-radius:12px;padding:9px 10px;cursor:pointer;text-align:left;transition:border-color .15s}
+.swatch:hover{border-color:var(--accent)}
+.swatch i{width:28px;height:28px;border-radius:50%;flex:none;box-shadow:inset 0 -4px 8px rgba(0,0,0,.14), inset 0 0 0 1px rgba(0,0,0,.12)}
+.swatch b{display:block;font-weight:700;font-size:14px}
+.swatch span{display:block;font:500 10.5px/1.3 var(--f-mono);color:var(--muted)}
+.swatch[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.chip:focus-visible,.btn:focus-visible,summary:focus-visible,.swatch:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.row-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--raise);border-radius:10px;padding:8px 13px;cursor:pointer;font-weight:500;font-size:14px;display:inline-flex;align-items:center;gap:7px;transition:border-color .15s, transform .1s}
+.btn:hover{border-color:var(--muted)}
+.btn:active{transform:translateY(1px)}
+.btn svg{width:16px;height:16px;flex:none}
+.btn.wander{background:var(--gold-soft);border-color:color-mix(in srgb, var(--gold) 45%, var(--line));color:var(--ink);font-weight:700}
+.btn.wander:hover{border-color:var(--gold)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700;box-shadow:inset 0 0 0 1px rgba(216,196,142,.35), inset 0 1px 0 rgba(255,255,255,.12)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn[disabled]{opacity:.5;cursor:default}
+details{border-top:1px solid var(--line);margin-top:18px}
+summary{list-style:none;cursor:pointer;display:flex;gap:10px;align-items:center;padding:14px 18px;font:400 18px/1.1 var(--f-display);letter-spacing:.02em}
+summary::-webkit-details-marker{display:none}
+summary .sprig{width:16px;height:16px;color:var(--gold);flex:none}
+summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);margin-right:4px;transition:transform .15s}
+details[open] summary::after{transform:rotate(-135deg)}
+.ctl-list{display:grid;gap:15px;padding:2px 18px 18px}
+.ctl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.ctl label{font-size:14.5px;color:var(--ink)}
+.ctl output{font:500 12px/1 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted);min-width:64px;text-align:right}
+.ctl input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent);margin:0;height:22px}
+.ctl .hint{grid-column:1/-1;font-size:12.5px;color:var(--muted);font-style:italic}
+.ctl select{grid-column:2;background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:14px;max-width:200px}
+.switch{grid-column:2;position:relative;width:38px;height:22px}
+.switch input{appearance:none;-webkit-appearance:none;width:38px;height:22px;border-radius:999px;background:var(--line);margin:0;cursor:pointer;transition:background .15s}
+.switch input:checked{background:var(--accent)}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--raise);transition:transform .15s;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.switch input:checked::after{transform:translateX(16px)}
+.switch input:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.foot{border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom,0px));background:var(--panel);display:grid;gap:10px}
+.foot .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.foot .btn{justify-content:center;padding:11px 12px}
+.checks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font:500 11px/1.25 var(--f-mono);font-variant-numeric:tabular-nums}
+.checks div{background:var(--raise);border:1px solid var(--line);border-radius:8px;padding:6px 7px}
+.checks span{display:block;color:var(--muted);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.checks.empty{display:none}
+.checks .good{color:var(--ok)}.checks .bad{color:var(--bad)}
+.msg{font-size:13.5px;color:var(--muted);min-height:1.3em}
+.msg.warn{color:var(--warn)}.msg.bad{color:var(--bad)}
+.notes{padding:4px 18px 18px;color:var(--muted);font-size:14px;display:grid;gap:8px}
+.notes p{margin:0;max-width:62ch}
+.notes code{font:12px var(--f-mono);background:var(--raise);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--ink);word-break:break-all}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#16201A;color:#EFE9D6;border:1px solid rgba(214,190,122,.35);padding:10px 16px;border-radius:12px;font:italic 400 16px/1.3 var(--f-fell);z-index:9;opacity:0;transition:opacity .25s;pointer-events:none;max-width:calc(100% - 32px);box-shadow:0 8px 30px rgba(0,0,0,.3)}
+.toast.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.pill.busy i{animation:none}.plate{transition:none}}
+
+@media (max-width:820px){
+  .app{display:block;height:auto}
+  .stage{position:sticky;top:env(safe-area-inset-top,0px);height:48vh;min-height:300px;z-index:2}
+  .panel{border-left:0}
+  .scroll{overflow:visible}
+  .foot{position:sticky;bottom:0;z-index:1}
+  .hud.top{top:10px}
+  .hud.bot{bottom:10px}
+  .brand h1{font-size:23px}
+  .swash{width:130px}
+  .frame svg{width:34px;height:34px}
+  .plate{font-size:13.5px}
+  .plate small{display:none}
+  .readout{font-size:11px;padding:6px 9px}
+  .seg button{padding:5px 9px;font-size:12.5px}
+  .ar-note{top:96px;font-size:13.5px}
+  .ar-bar{bottom:10px;padding:7px 8px;gap:6px}
+  .stage.ar-on{height:74vh}
+  .chipbtn{padding:5px 10px;font-size:12.5px}
+  .ar-row label{font-size:12px}
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="vine" viewBox="0 0 44 44"><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M6 40C6 20 14 8 40 6"/><path d="M12 22c-4-1-6-4-6-8 4 1 6 4 6 8zM22 12c-1-4 1-7 5-8 0 4-2 7-5 8z"/><circle cx="6" cy="6" r="2.2"/><path d="M9 9c3 3 3 7 0 10"/></g></symbol>
+  <symbol id="swash" viewBox="0 0 170 12"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M2 6C30 2 60 10 80 6"/><path d="M90 6c20-4 50 4 78 0"/><path d="M85 1.5c-3 2-3 7 0 9 3-2 3-7 0-9z" fill="currentColor"/></g></symbol>
+  <symbol id="orn" viewBox="0 0 46 14"><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M23 1.5c-3 2.5-3 8.5 0 11 3-2.5 3-8.5 0-11z" fill="currentColor" fill-opacity=".25"/><path d="M19 7c-5-4-10-4-15 0 5 4 10 4 15 0zM27 7c5-4 10-4 15 0-5 4-10 4-15 0z"/></g></symbol>
+  <symbol id="sprig" viewBox="0 0 16 16"><path d="M8 15V3M8 6.5C6.2 6.2 4.8 4.8 4.5 3c1.8.3 3.2 1.7 3.5 3.5zM8 9.5c1.8-.3 3.2-1.7 3.5-3.5-1.8.3-3.2 1.7-3.5 3.5zM8 12.5C6.2 12.2 4.8 10.8 4.5 9c1.8.3 3.2 1.7 3.5 3.5z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="app">
+  <section class="stage" aria-label="3D preview">
+    <svg class="glade" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A5847"/><stop offset=".55" stop-color="#20342A"/><stop offset="1" stop-color="#101A14"/></linearGradient>
+        <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4E7B8" stop-opacity=".22"/><stop offset="1" stop-color="#F4E7B8" stop-opacity="0"/></linearGradient>
+        <radialGradient id="halo"><stop offset="0" stop-color="#F6EBC6" stop-opacity=".35"/><stop offset="1" stop-color="#F6EBC6" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="1200" height="600" fill="url(#sky)"/>
+      <circle cx="985" cy="96" r="120" fill="url(#halo)"/>
+      <circle cx="985" cy="96" r="34" fill="#F1E5BD"/>
+      <circle cx="973" cy="88" r="7" fill="#E4D6A8" opacity=".6"/><circle cx="996" cy="106" r="4.5" fill="#E4D6A8" opacity=".55"/>
+      <polygon points="170,0 250,0 420,600 700,600" fill="url(#shaft)" opacity="0.55"/><polygon points="300,0 340,0 640,600 820,600" fill="url(#shaft)" opacity="0.35"/><polygon points="60,0 110,0 160,600 330,600" fill="url(#shaft)" opacity="0.3"/>
+      <path d="M0 600V360 C120 330 220 300 360 318 C500 336 560 290 700 296 C840 302 920 340 1040 322 C1110 312 1160 300 1200 306V600Z" fill="#2C4536"/>
+      <path d="M-22.9 600.0 L-44.2 600.0 L-30.9 587.9 L-41.1 579.1 L-29.5 573.5 L-37.9 564.8 L-28.1 559.2 L-34.6 550.5 L-26.6 544.9 L-31.3 536.1 L-25.1 530.5 L-27.8 521.8 L-23.5 516.2 L-24.2 507.5 L-21.9 501.9 L-20.0 491.0 L-18.1 501.9 L-15.8 507.5 L-16.5 516.2 L-12.2 521.8 L-14.9 530.5 L-8.7 536.1 L-13.4 544.9 L-5.4 550.5 L-11.9 559.2 L-2.1 564.8 L-10.5 573.5 L1.1 579.1 L-9.1 587.9 L4.2 600.0 L-17.1 600.0Z M11.2 600.0 L-19.3 600.0 L-0.2 581.8 L-14.1 570.9 L2.1 560.9 L-8.7 550.0 L4.6 540.0 L-3.2 529.0 L7.0 519.0 L2.5 508.1 L9.6 498.1 L8.5 487.2 L12.3 477.2 L15.4 463.5 L18.5 477.2 L22.3 487.2 L21.2 498.1 L28.3 508.1 L23.8 519.0 L34.0 529.0 L26.3 540.0 L39.5 550.0 L28.7 560.9 L44.9 570.9 L31.0 581.8 L50.1 600.0 L19.6 600.0Z M42.1 600.0 L20.3 600.0 L33.9 587.9 L23.5 579.2 L35.4 573.6 L26.8 564.9 L36.9 559.3 L30.1 550.6 L38.4 545.0 L33.5 536.3 L39.9 530.7 L37.1 522.0 L41.5 516.4 L40.8 507.7 L43.2 502.1 L45.1 491.3 L47.0 502.1 L49.4 507.7 L48.7 516.4 L53.1 522.0 L50.3 530.7 L56.7 536.3 L51.9 545.0 L60.1 550.6 L53.4 559.3 L63.4 564.9 L54.8 573.6 L66.7 579.2 L56.3 587.9 L69.9 600.0 L48.1 600.0Z M76.5 600.0 L47.0 600.0 L65.5 584.3 L51.3 573.0 L67.4 565.7 L55.8 554.4 L69.4 547.2 L60.3 535.9 L71.4 528.6 L64.9 517.3 L73.5 510.1 L69.7 498.8 L75.7 491.5 L74.7 480.2 L78.0 473.0 L80.6 458.9 L83.2 473.0 L86.4 480.2 L85.5 491.5 L91.5 498.8 L87.6 510.1 L96.3 517.3 L89.7 528.6 L100.9 535.9 L91.7 547.2 L105.4 554.4 L93.7 565.7 L109.8 573.0 L95.7 584.3 L114.2 600.0 L84.6 600.0Z M111.5 600.0 L94.6 600.0 L105.2 589.8 L97.1 582.5 L106.3 577.8 L99.6 570.6 L107.4 565.9 L102.2 558.6 L108.6 553.9 L104.8 546.6 L109.7 541.9 L107.6 534.6 L111.0 529.9 L110.4 522.6 L112.3 517.9 L113.8 508.8 L115.2 517.9 L117.1 522.6 L116.5 529.9 L119.9 534.6 L117.8 541.9 L122.7 546.6 L119.0 553.9 L125.3 558.6 L120.1 565.9 L127.9 570.6 L121.2 577.8 L130.4 582.5 L122.4 589.8 L132.9 600.0 L116.0 600.0Z M133.7 600.0 L104.7 600.0 L122.9 583.0 L109.0 570.8 L124.8 563.0 L113.4 550.8 L126.7 543.0 L117.8 530.8 L128.7 522.9 L122.3 510.7 L130.8 502.9 L127.0 490.7 L132.9 482.9 L132.0 470.7 L135.1 462.8 L137.7 447.6 L140.3 462.8 L143.4 470.7 L142.5 482.9 L148.4 490.7 L144.6 502.9 L153.1 510.7 L146.6 522.9 L157.6 530.8 L148.6 543.0 L162.0 550.8 L150.6 563.0 L166.4 570.8 L152.5 583.0 L170.6 600.0 L141.6 600.0Z M174.7 600.0 L138.7 600.0 L161.2 578.6 L144.9 565.8 L164.0 554.0 L151.2 541.2 L166.8 529.5 L157.7 516.6 L169.7 504.9 L164.4 492.1 L172.8 480.3 L171.5 467.5 L175.9 455.7 L179.6 439.7 L183.3 455.7 L187.8 467.5 L186.5 480.3 L194.8 492.1 L189.5 504.9 L201.5 516.6 L192.4 529.5 L208.0 541.2 L195.2 554.0 L214.3 565.8 L198.0 578.6 L220.5 600.0 L184.5 600.0Z M218.4 600.0 L193.5 600.0 L209.0 581.8 L197.7 571.0 L211.0 561.0 L202.1 550.1 L212.9 540.1 L206.6 529.2 L214.9 519.2 L211.2 508.3 L217.0 498.3 L216.1 487.4 L219.2 477.5 L221.8 463.8 L224.3 477.5 L227.4 487.4 L226.5 498.3 L232.3 508.3 L228.6 519.2 L237.0 529.2 L230.6 540.1 L241.4 550.1 L232.6 561.0 L245.8 571.0 L234.5 581.8 L250.1 600.0 L225.2 600.0Z M244.0 600.0 L221.2 600.0 L235.5 586.5 L225.1 578.5 L237.2 571.1 L229.1 563.0 L239.0 555.6 L233.2 547.5 L240.9 540.1 L237.5 532.1 L242.8 524.7 L242.0 516.6 L244.8 509.2 L247.2 499.1 L249.5 509.2 L252.4 516.6 L251.5 524.7 L256.9 532.1 L253.4 540.1 L261.1 547.5 L255.3 555.6 L265.2 563.0 L257.1 571.1 L269.3 578.5 L258.9 586.5 L273.2 600.0 L250.3 600.0Z M285.9 600.0 L251.1 600.0 L272.9 582.3 L256.2 569.7 L275.2 561.5 L261.4 548.9 L277.5 540.7 L266.8 528.0 L279.9 519.9 L272.2 507.2 L282.4 499.1 L277.9 486.4 L284.9 478.2 L283.8 465.6 L287.6 457.4 L290.7 441.6 L293.8 457.4 L297.6 465.6 L296.5 478.2 L303.5 486.4 L299.0 499.1 L309.2 507.2 L301.5 519.9 L314.6 528.0 L303.9 540.7 L319.9 548.9 L306.2 561.5 L325.2 569.7 L308.5 582.3 L330.3 600.0 L295.4 600.0Z M318.7 600.0 L288.0 600.0 L307.2 584.8 L292.5 573.8 L309.2 566.8 L297.1 555.8 L311.3 548.8 L301.8 537.9 L313.4 530.8 L306.6 519.9 L315.5 512.8 L311.6 501.9 L317.8 494.9 L316.8 483.9 L320.1 476.9 L322.8 463.2 L325.5 476.9 L328.9 483.9 L327.9 494.9 L334.1 501.9 L330.1 512.8 L339.1 519.9 L332.3 530.8 L343.8 537.9 L334.4 548.8 L348.5 555.8 L336.5 566.8 L353.1 573.8 L338.5 584.8 L357.6 600.0 L327.0 600.0Z M367.4 600.0 L348.2 600.0 L360.2 589.7 L351.0 582.3 L361.4 577.6 L353.9 570.2 L362.7 565.5 L356.8 558.1 L364.1 553.3 L359.8 545.9 L365.4 541.2 L362.9 533.8 L366.8 529.1 L366.2 521.7 L368.3 516.9 L370.0 507.7 L371.7 516.9 L373.8 521.7 L373.2 529.1 L377.0 533.8 L374.6 541.2 L380.2 545.9 L375.9 553.3 L383.2 558.1 L377.2 565.5 L386.1 570.2 L378.5 577.6 L389.0 582.3 L379.8 589.7 L391.8 600.0 L372.6 600.0Z M392.3 600.0 L356.7 600.0 L378.9 582.3 L362.0 569.6 L381.3 561.4 L367.3 548.7 L383.7 540.5 L372.7 527.8 L386.1 519.7 L378.3 507.0 L388.6 498.8 L384.0 486.1 L391.2 477.9 L390.1 465.2 L394.0 457.0 L397.1 441.1 L400.3 457.0 L404.1 465.2 L403.0 477.9 L410.2 486.1 L405.6 498.8 L416.0 507.0 L408.1 519.7 L421.5 527.8 L410.6 540.5 L427.0 548.7 L412.9 561.4 L432.3 569.6 L415.3 582.3 L437.5 600.0 L402.0 600.0Z M418.3 600.0 L385.8 600.0 L406.1 581.0 L391.3 569.6 L408.6 559.2 L397.1 547.8 L411.2 537.3 L402.9 525.9 L413.8 515.5 L409.0 504.1 L416.5 493.6 L415.3 482.2 L419.4 471.8 L422.7 457.6 L426.0 471.8 L430.1 482.2 L428.9 493.6 L436.4 504.1 L431.6 515.5 L442.5 525.9 L434.2 537.3 L448.3 547.8 L436.8 559.2 L454.0 569.6 L439.3 581.0 L459.6 600.0 L427.1 600.0Z M450.1 600.0 L428.4 600.0 L442.0 584.4 L432.9 576.8 L444.0 566.9 L437.5 559.3 L446.1 549.4 L442.3 541.8 L448.2 531.9 L447.3 524.3 L450.5 514.4 L453.1 504.9 L455.7 514.4 L458.9 524.3 L457.9 531.9 L463.9 541.8 L460.1 549.4 L468.6 559.3 L462.1 566.9 L473.2 576.8 L464.2 584.4 L477.7 600.0 L456.0 600.0Z M482.7 600.0 L465.8 600.0 L476.4 587.3 L468.7 579.7 L477.7 572.7 L471.7 565.0 L479.0 558.1 L474.7 550.4 L480.4 543.4 L477.9 535.8 L481.8 528.8 L481.2 521.2 L483.3 514.2 L485.0 504.7 L486.7 514.2 L488.8 521.2 L488.2 528.8 L492.2 535.8 L489.6 543.4 L495.3 550.4 L491.0 558.1 L498.3 565.0 L492.3 572.7 L501.3 579.7 L493.7 587.3 L504.2 600.0 L487.3 600.0Z M522.4 600.0 L479.1 600.0 L506.1 565.9 L488.0 549.3 L510.2 527.7 L497.2 511.1 L514.3 489.5 L506.7 472.8 L518.6 451.2 L516.7 434.6 L523.1 413.0 L528.3 392.2 L533.5 413.0 L539.8 434.6 L538.0 451.2 L549.8 472.8 L542.3 489.5 L559.3 511.1 L546.4 527.7 L568.5 549.3 L550.4 565.9 L577.5 600.0 L534.2 600.0Z M556.9 600.0 L526.2 600.0 L545.4 581.7 L531.5 570.8 L547.8 560.8 L536.9 549.8 L550.2 539.8 L542.4 528.8 L552.7 518.8 L548.1 507.8 L555.3 497.8 L554.2 486.8 L558.0 476.8 L561.1 463.1 L564.3 476.8 L568.1 486.8 L567.0 497.8 L574.1 507.8 L569.6 518.8 L579.9 528.8 L572.0 539.8 L585.4 549.8 L574.5 560.8 L590.8 570.8 L576.9 581.7 L596.1 600.0 L565.3 600.0Z M593.2 600.0 L562.6 600.0 L581.7 581.1 L567.1 567.5 L583.8 558.7 L571.7 545.2 L585.8 536.4 L576.4 522.8 L587.9 514.1 L581.2 500.5 L590.1 491.8 L586.1 478.2 L592.3 469.4 L591.3 455.8 L594.7 447.1 L597.4 430.1 L600.1 447.1 L603.4 455.8 L602.4 469.4 L608.6 478.2 L604.7 491.8 L613.6 500.5 L606.8 514.1 L618.4 522.8 L608.9 536.4 L623.0 545.2 L611.0 558.7 L627.6 567.5 L613.0 581.1 L632.1 600.0 L601.5 600.0Z M630.1 600.0 L598.3 600.0 L618.2 577.9 L603.8 564.6 L620.6 552.4 L609.4 539.2 L623.1 527.0 L615.1 513.7 L625.7 501.6 L621.0 488.3 L628.4 476.1 L627.2 462.8 L631.2 450.7 L634.4 434.1 L637.7 450.7 L641.6 462.8 L640.5 476.1 L647.8 488.3 L643.1 501.6 L653.8 513.7 L645.7 527.0 L659.5 539.2 L648.2 552.4 L665.0 564.6 L650.7 577.9 L670.5 600.0 L638.7 600.0Z M658.9 600.0 L640.9 600.0 L652.2 584.7 L644.6 577.2 L653.8 567.5 L648.5 560.0 L655.6 550.3 L652.4 542.8 L657.3 533.1 L656.6 525.7 L659.2 515.9 L661.4 506.6 L663.5 515.9 L666.2 525.7 L665.4 533.1 L670.3 542.8 L667.2 550.3 L674.3 560.0 L668.9 567.5 L678.1 577.2 L670.6 584.7 L681.8 600.0 L663.8 600.0Z M704.7 600.0 L680.2 600.0 L695.5 586.6 L683.8 577.0 L697.1 570.8 L687.5 561.2 L698.8 555.0 L691.2 545.4 L700.5 539.2 L695.1 529.6 L702.2 523.4 L699.0 513.8 L704.0 507.6 L703.2 498.0 L705.8 491.8 L708.0 479.8 L710.2 491.8 L712.8 498.0 L712.1 507.6 L717.0 513.8 L713.9 523.4 L721.0 529.6 L715.6 539.2 L724.8 545.4 L717.3 555.0 L728.6 561.2 L718.9 570.8 L732.2 577.0 L720.5 586.6 L735.8 600.0 L711.4 600.0Z M748.1 600.0 L705.3 600.0 L732.0 579.1 L711.6 564.0 L734.9 554.4 L718.0 539.4 L737.7 529.7 L724.6 514.7 L740.7 505.0 L731.2 490.0 L743.7 480.3 L738.2 465.3 L746.8 455.6 L745.5 440.6 L750.1 431.0 L753.9 412.2 L757.7 431.0 L762.3 440.6 L760.9 455.6 L769.6 465.3 L764.1 480.3 L776.5 490.0 L767.1 505.0 L783.2 514.7 L770.0 529.7 L789.7 539.4 L772.9 554.4 L796.1 564.0 L775.7 579.1 L802.4 600.0 L759.7 600.0Z M779.6 600.0 L747.8 600.0 L767.7 581.2 L753.3 570.0 L770.1 559.7 L758.9 548.4 L772.6 538.1 L764.6 526.8 L775.2 516.5 L770.5 505.2 L777.9 494.9 L776.7 483.7 L780.7 473.3 L783.9 459.3 L787.1 473.3 L791.1 483.7 L789.9 494.9 L797.3 505.2 L792.6 516.5 L803.2 526.8 L795.2 538.1 L808.9 548.4 L797.7 559.7 L814.5 570.0 L800.1 581.2 L820.0 600.0 L788.2 600.0Z M829.5 600.0 L806.3 600.0 L820.8 582.4 L810.3 571.9 L822.6 562.2 L814.4 551.7 L824.4 542.1 L818.5 531.5 L826.3 521.9 L822.9 511.3 L828.3 501.7 L827.4 491.1 L830.3 481.5 L832.7 468.3 L835.1 481.5 L838.0 491.1 L837.1 501.7 L842.5 511.3 L839.1 521.9 L846.9 531.5 L841.0 542.1 L851.1 551.7 L842.8 562.2 L855.1 571.9 L844.6 582.4 L859.1 600.0 L835.9 600.0Z M878.5 600.0 L854.7 600.0 L869.6 581.1 L859.6 571.9 L871.8 559.9 L864.7 550.7 L874.1 538.7 L869.9 529.5 L876.4 517.5 L875.4 508.3 L878.9 496.3 L881.8 484.8 L884.6 496.3 L888.1 508.3 L887.1 517.5 L893.7 529.5 L889.5 538.7 L898.9 550.7 L891.7 559.9 L903.9 571.9 L894.0 581.1 L908.9 600.0 L885.0 600.0Z M902.1 600.0 L872.4 600.0 L891.0 581.3 L877.5 570.1 L893.3 559.8 L882.7 548.6 L895.6 538.3 L888.1 527.1 L898.0 516.8 L893.6 505.6 L900.5 495.3 L899.4 484.1 L903.1 473.8 L906.2 459.8 L909.2 473.8 L912.9 484.1 L911.8 495.3 L918.7 505.6 L914.3 516.8 L924.3 527.1 L916.7 538.3 L929.6 548.6 L919.1 559.8 L934.8 570.1 L921.4 581.3 L939.9 600.0 L910.2 600.0Z M942.0 600.0 L918.7 600.0 L933.3 587.5 L922.2 578.5 L934.8 572.7 L925.6 563.7 L936.4 558.0 L929.2 549.0 L938.0 543.2 L932.8 534.2 L939.6 528.4 L936.6 519.5 L941.3 513.7 L940.6 504.7 L943.1 498.9 L945.2 487.7 L947.2 498.9 L949.8 504.7 L949.0 513.7 L953.7 519.5 L950.7 528.4 L957.5 534.2 L952.4 543.2 L961.1 549.0 L954.0 558.0 L964.7 563.7 L955.5 572.7 L968.2 578.5 L957.1 587.5 L971.6 600.0 L948.3 600.0Z M965.4 600.0 L942.5 600.0 L956.8 586.7 L945.9 577.1 L958.3 571.0 L949.3 561.4 L959.9 555.3 L952.8 545.7 L961.4 539.6 L956.4 530.0 L963.1 523.8 L960.1 514.3 L964.7 508.1 L964.0 498.6 L966.5 492.4 L968.5 480.5 L970.6 492.4 L973.0 498.6 L972.3 508.1 L977.0 514.3 L974.0 523.8 L980.7 530.0 L975.6 539.6 L984.3 545.7 L977.2 555.3 L987.8 561.4 L978.7 571.0 L991.2 577.1 L980.3 586.7 L994.6 600.0 L971.7 600.0Z M996.7 600.0 L973.4 600.0 L987.9 586.7 L976.8 577.2 L989.5 571.1 L980.3 561.5 L991.0 555.4 L983.9 545.9 L992.6 539.8 L987.5 530.2 L994.3 524.1 L991.3 514.6 L996.0 508.5 L995.2 498.9 L997.8 492.8 L999.8 480.9 L1001.9 492.8 L1004.4 498.9 L1003.7 508.5 L1008.4 514.6 L1005.4 524.1 L1012.2 530.2 L1007.0 539.8 L1015.8 545.9 L1008.6 555.4 L1019.4 561.5 L1010.2 571.1 L1022.9 577.2 L1011.7 586.7 L1026.3 600.0 L1003.0 600.0Z M1023.7 600.0 L980.2 600.0 L1007.4 577.8 L986.6 561.9 L1010.3 551.7 L993.1 535.8 L1013.2 525.6 L999.8 509.7 L1016.2 499.4 L1006.6 483.5 L1019.3 473.3 L1013.6 457.4 L1022.5 447.1 L1021.1 431.2 L1025.8 421.0 L1029.7 401.1 L1033.5 421.0 L1038.3 431.2 L1036.9 447.1 L1045.7 457.4 L1040.1 473.3 L1052.7 483.5 L1043.1 499.4 L1059.6 509.7 L1046.1 525.6 L1066.2 535.8 L1049.0 551.7 L1072.7 561.9 L1051.9 577.8 L1079.1 600.0 L1035.6 600.0Z M1067.8 600.0 L1046.6 600.0 L1059.8 586.6 L1050.2 578.6 L1061.5 571.2 L1054.0 563.1 L1063.1 555.8 L1057.8 547.7 L1064.9 540.4 L1061.7 532.3 L1066.6 524.9 L1065.9 516.9 L1068.5 509.5 L1070.7 499.5 L1072.8 509.5 L1075.4 516.9 L1074.7 524.9 L1079.6 532.3 L1076.5 540.4 L1083.5 547.7 L1078.2 555.8 L1087.3 563.1 L1079.8 571.2 L1091.1 578.6 L1081.5 586.6 L1094.7 600.0 L1073.5 600.0Z M1096.8 600.0 L1074.4 600.0 L1088.4 582.8 L1079.0 574.4 L1090.5 563.5 L1083.8 555.1 L1092.6 544.1 L1088.7 535.7 L1094.8 524.8 L1093.8 516.4 L1097.1 505.5 L1099.8 495.0 L1102.5 505.5 L1105.8 516.4 L1104.8 524.8 L1110.9 535.7 L1107.0 544.1 L1115.8 555.1 L1109.2 563.5 L1120.6 574.4 L1111.2 582.8 L1125.2 600.0 L1102.9 600.0Z M1134.3 600.0 L1103.2 600.0 L1122.6 572.8 L1109.6 559.5 L1125.5 542.3 L1116.2 529.0 L1128.5 511.7 L1123.1 498.4 L1131.6 481.2 L1130.3 467.9 L1134.8 450.7 L1138.6 434.1 L1142.3 450.7 L1146.9 467.9 L1145.6 481.2 L1154.1 498.4 L1148.6 511.7 L1161.0 529.0 L1151.6 542.3 L1167.6 559.5 L1154.5 572.8 L1174.0 600.0 L1142.8 600.0Z M1159.3 600.0 L1128.5 600.0 L1147.8 580.1 L1133.8 568.1 L1150.2 557.2 L1139.2 545.2 L1152.6 534.3 L1144.8 522.3 L1155.1 511.4 L1150.5 499.4 L1157.7 488.5 L1156.5 476.5 L1160.4 465.6 L1163.5 450.6 L1166.6 465.6 L1170.5 476.5 L1169.4 488.5 L1176.5 499.4 L1171.9 511.4 L1182.2 522.3 L1174.4 534.3 L1187.8 545.2 L1176.9 557.2 L1193.2 568.1 L1179.2 580.1 L1198.5 600.0 L1167.7 600.0Z M1189.8 600.0 L1171.2 600.0 L1182.8 588.9 L1174.0 580.9 L1184.0 575.8 L1176.7 567.8 L1185.3 562.7 L1179.6 554.7 L1186.6 549.6 L1182.5 541.6 L1187.9 536.5 L1185.5 528.5 L1189.2 523.4 L1188.6 515.4 L1190.7 510.3 L1192.3 500.3 L1193.9 510.3 L1196.0 515.4 L1195.4 523.4 L1199.1 528.5 L1196.7 536.5 L1202.1 541.6 L1198.0 549.6 L1205.0 554.7 L1199.3 562.7 L1207.9 567.8 L1200.6 575.8 L1210.6 580.9 L1201.8 588.9 L1213.4 600.0 L1194.8 600.0Z M1216.8 600.0 L1193.2 600.0 L1207.9 587.5 L1196.7 578.5 L1209.5 572.7 L1200.2 563.7 L1211.1 558.0 L1203.8 549.0 L1212.7 543.2 L1207.5 534.2 L1214.4 528.5 L1211.3 519.5 L1216.1 513.7 L1215.3 504.7 L1217.9 498.9 L1220.0 487.7 L1222.1 498.9 L1224.6 504.7 L1223.9 513.7 L1228.7 519.5 L1225.6 528.5 L1232.5 534.2 L1227.3 543.2 L1236.2 549.0 L1228.9 558.0 L1239.8 563.7 L1230.5 572.7 L1243.3 578.5 L1232.0 587.5 L1246.8 600.0 L1223.2 600.0Z M0 598H1200V600H0Z" fill="#223A2C" transform="translate(0,-110)"/>
+      <path d="M-22.4 600.0 L-39.7 600.0 L-28.9 589.7 L-36.7 583.5 L-27.5 577.9 L-33.7 571.7 L-26.2 566.1 L-30.6 559.9 L-24.8 554.2 L-27.3 548.1 L-23.3 542.4 L-23.9 536.2 L-21.8 530.6 L-20.0 522.9 L-18.2 530.6 L-16.1 536.2 L-16.7 542.4 L-12.7 548.1 L-15.2 554.2 L-9.4 559.9 L-13.8 566.1 L-6.3 571.7 L-12.5 577.9 L-3.3 583.5 L-11.1 589.7 L-0.3 600.0 L-17.6 600.0Z M4.5 600.0 L-17.7 600.0 L-3.8 586.5 L-13.9 578.4 L-2.1 571.0 L-10.0 562.9 L-0.4 555.4 L-6.0 547.3 L1.4 539.9 L-1.9 531.8 L3.3 524.4 L2.5 516.3 L5.2 508.8 L7.5 498.7 L9.7 508.8 L12.5 516.3 L11.7 524.4 L16.8 531.8 L13.6 539.9 L21.0 547.3 L15.3 555.4 L24.9 562.9 L17.1 571.0 L28.8 578.4 L18.8 586.5 L32.6 600.0 L10.5 600.0Z M35.4 600.0 L11.0 600.0 L26.3 579.2 L16.1 569.0 L28.5 555.9 L21.2 545.7 L30.9 532.5 L26.6 522.4 L33.3 509.2 L32.2 499.0 L35.8 485.8 L38.7 473.1 L41.6 485.8 L45.2 499.0 L44.2 509.2 L50.9 522.4 L46.6 532.5 L56.2 545.7 L48.9 555.9 L61.4 569.0 L51.2 579.2 L66.4 600.0 L42.0 600.0Z M65.1 600.0 L43.6 600.0 L57.1 586.2 L47.3 577.9 L58.7 570.4 L51.1 562.1 L60.4 554.5 L55.0 546.2 L62.1 538.6 L59.0 530.4 L63.9 522.8 L63.2 514.5 L65.8 506.9 L68.0 496.6 L70.2 506.9 L72.9 514.5 L72.1 522.8 L77.1 530.4 L73.9 538.6 L81.1 546.2 L75.6 554.5 L85.0 562.1 L77.3 570.4 L88.7 577.9 L79.0 586.2 L92.4 600.0 L71.0 600.0Z M104.0 600.0 L87.6 600.0 L97.9 585.4 L91.0 578.2 L99.4 568.9 L94.5 561.8 L101.0 552.5 L98.1 545.4 L102.6 536.1 L101.9 529.0 L104.3 519.7 L106.3 510.8 L108.3 519.7 L110.7 529.0 L110.0 536.1 L114.5 545.4 L111.6 552.5 L118.1 561.8 L113.2 568.9 L121.6 578.2 L114.7 585.4 L125.0 600.0 L108.5 600.0Z M139.6 600.0 L124.1 600.0 L133.8 592.2 L126.4 586.6 L134.8 583.0 L128.7 577.4 L135.9 573.8 L131.1 568.2 L136.9 564.6 L133.5 559.0 L138.0 555.4 L136.0 549.9 L139.2 546.3 L138.7 540.7 L140.4 537.1 L141.8 530.1 L143.1 537.1 L144.8 540.7 L144.3 546.3 L147.5 549.9 L145.5 555.4 L150.0 559.0 L146.6 564.6 L152.4 568.2 L147.6 573.8 L154.8 577.4 L148.7 583.0 L157.1 586.6 L149.7 592.2 L159.4 600.0 L143.9 600.0Z M158.0 600.0 L140.9 600.0 L151.6 591.3 L143.4 585.1 L152.7 581.1 L146.0 574.9 L153.9 570.9 L148.6 564.6 L155.1 560.6 L151.3 554.4 L156.3 550.4 L154.1 544.2 L157.5 540.2 L157.0 534.0 L158.9 529.9 L160.4 522.2 L161.9 529.9 L163.8 534.0 L163.2 540.2 L166.7 544.2 L164.5 550.4 L169.5 554.4 L165.7 560.6 L172.2 564.6 L166.9 570.9 L174.8 574.9 L168.0 581.1 L177.4 585.1 L169.2 591.3 L179.9 600.0 L162.7 600.0Z M181.1 600.0 L165.3 600.0 L175.2 590.2 L167.6 583.2 L176.2 578.6 L170.0 571.6 L177.3 567.1 L172.4 560.0 L178.4 555.5 L174.9 548.5 L179.5 544.0 L177.5 536.9 L180.7 532.4 L180.2 525.4 L181.9 520.9 L183.3 512.1 L184.7 520.9 L186.4 525.4 L185.9 532.4 L189.1 536.9 L187.1 544.0 L191.7 548.5 L188.2 555.5 L194.2 560.0 L189.3 567.1 L196.6 571.6 L190.4 578.6 L199.0 583.2 L191.4 590.2 L201.3 600.0 L185.5 600.0Z M203.8 600.0 L179.6 600.0 L194.8 587.8 L183.2 579.0 L196.4 573.3 L186.8 564.5 L198.0 558.9 L190.5 550.1 L199.7 544.4 L194.3 535.7 L201.4 530.0 L198.2 521.2 L203.1 515.6 L202.4 506.8 L205.0 501.1 L207.1 490.1 L209.3 501.1 L211.9 506.8 L211.1 515.6 L216.0 521.2 L212.9 530.0 L220.0 535.7 L214.6 544.4 L223.8 550.1 L216.3 558.9 L227.5 564.5 L217.9 573.3 L231.1 579.0 L219.5 587.8 L234.6 600.0 L210.4 600.0Z M228.2 600.0 L211.2 600.0 L221.8 589.4 L213.7 581.7 L222.9 576.8 L216.2 569.2 L224.1 564.3 L218.8 556.6 L225.2 551.7 L221.5 544.1 L226.4 539.2 L224.2 531.5 L227.7 526.6 L227.1 519.0 L229.0 514.1 L230.5 504.5 L232.0 514.1 L233.8 519.0 L233.3 526.6 L236.7 531.5 L234.5 539.2 L239.5 544.1 L235.7 551.7 L242.1 556.6 L236.9 564.3 L244.7 569.2 L238.0 576.8 L247.2 581.7 L239.1 589.4 L249.7 600.0 L232.8 600.0Z M262.6 600.0 L248.0 600.0 L257.1 587.9 L251.0 581.9 L258.5 574.2 L254.1 568.3 L259.9 560.6 L257.3 554.7 L261.3 547.0 L260.7 541.1 L262.8 533.4 L264.6 526.0 L266.3 533.4 L268.4 541.1 L267.8 547.0 L271.8 554.7 L269.3 560.6 L275.0 568.3 L270.6 574.2 L278.1 581.9 L272.0 587.9 L281.1 600.0 L266.5 600.0Z M298.8 600.0 L287.6 600.0 L294.6 593.3 L289.5 589.3 L295.5 585.7 L291.5 581.7 L296.4 578.0 L293.5 574.0 L297.3 570.3 L295.6 566.3 L298.2 562.6 L297.8 558.6 L299.2 555.0 L300.4 550.0 L301.5 555.0 L302.9 558.6 L302.5 562.6 L305.1 566.3 L303.4 570.3 L307.2 574.0 L304.3 578.0 L309.2 581.7 L305.2 585.7 L311.2 589.3 L306.1 593.3 L313.1 600.0 L301.9 600.0Z M323.6 600.0 L304.6 600.0 L316.5 584.8 L308.5 577.4 L318.3 567.8 L312.6 560.4 L320.1 550.8 L316.7 543.4 L322.0 533.7 L321.2 526.3 L323.9 516.7 L326.2 507.5 L328.5 516.7 L331.3 526.3 L330.5 533.7 L335.7 543.4 L332.4 550.8 L339.9 560.4 L334.2 567.8 L343.9 577.4 L336.0 584.8 L347.9 600.0 L328.8 600.0Z M358.3 600.0 L341.7 600.0 L352.1 588.5 L344.5 581.6 L353.4 575.3 L347.4 568.5 L354.7 562.1 L350.4 555.3 L356.0 548.9 L353.5 542.1 L357.4 535.8 L356.8 528.9 L358.9 522.6 L360.6 514.0 L362.3 522.6 L364.4 528.9 L363.8 535.8 L367.6 542.1 L365.2 548.9 L370.7 555.3 L366.5 562.1 L373.7 568.5 L367.8 575.3 L376.6 581.6 L369.1 588.5 L379.5 600.0 L362.9 600.0Z M393.1 600.0 L382.7 600.0 L389.2 590.6 L384.9 586.1 L390.2 580.1 L387.1 575.6 L391.2 569.6 L389.3 565.1 L392.2 559.1 L391.7 554.6 L393.3 548.6 L394.5 542.9 L395.7 548.6 L397.3 554.6 L396.8 559.1 L399.7 565.1 L397.8 569.6 L401.9 575.6 L398.8 580.1 L404.1 586.1 L399.8 590.6 L406.3 600.0 L395.9 600.0Z M420.3 600.0 L405.5 600.0 L414.7 591.2 L407.7 584.8 L415.7 580.8 L409.9 574.4 L416.7 570.4 L412.2 564.0 L417.7 559.9 L414.5 553.6 L418.8 549.5 L416.8 543.2 L419.8 539.1 L419.4 532.8 L421.0 528.7 L422.3 520.8 L423.6 528.7 L425.2 532.8 L424.7 539.1 L427.7 543.2 L425.8 549.5 L430.1 553.6 L426.8 559.9 L432.4 564.0 L427.8 570.4 L434.6 574.4 L428.8 580.8 L436.8 584.8 L429.8 591.2 L439.0 600.0 L424.3 600.0Z M441.6 600.0 L421.9 600.0 L434.2 584.6 L425.9 577.1 L436.0 567.3 L430.1 559.8 L437.9 550.0 L434.4 542.5 L439.9 532.8 L439.0 525.2 L441.9 515.5 L444.3 506.1 L446.6 515.5 L449.5 525.2 L448.7 532.8 L454.1 542.5 L450.6 550.0 L458.4 559.8 L452.5 567.3 L462.6 577.1 L454.4 584.6 L466.7 600.0 L447.0 600.0Z M466.3 600.0 L434.7 600.0 L454.4 584.2 L439.4 572.8 L456.5 565.5 L444.1 554.1 L458.7 546.8 L448.9 535.4 L460.8 528.1 L453.9 516.7 L463.0 509.4 L459.0 498.0 L465.3 490.7 L464.3 479.3 L467.8 472.0 L470.6 457.8 L473.4 472.0 L476.8 479.3 L475.8 490.7 L482.2 498.0 L478.1 509.4 L487.3 516.7 L480.3 528.1 L492.2 535.4 L482.5 546.8 L497.0 554.1 L484.6 565.5 L501.7 572.8 L486.7 584.2 L506.4 600.0 L474.9 600.0Z M492.2 600.0 L471.9 600.0 L484.6 588.5 L474.9 580.3 L485.9 575.0 L477.9 566.7 L487.3 561.4 L481.0 553.2 L488.7 547.9 L484.2 539.6 L490.1 534.3 L487.5 526.1 L491.6 520.8 L491.0 512.5 L493.2 507.2 L495.0 496.9 L496.8 507.2 L499.0 512.5 L498.3 520.8 L502.4 526.1 L499.8 534.3 L505.7 539.6 L501.2 547.9 L508.9 553.2 L502.6 561.4 L512.0 566.7 L504.0 575.0 L515.0 580.3 L505.3 588.5 L518.0 600.0 L497.7 600.0Z M525.0 600.0 L514.5 600.0 L521.1 592.5 L516.3 588.0 L521.9 583.9 L518.2 579.5 L522.7 575.4 L520.0 570.9 L523.6 566.8 L522.0 562.3 L524.4 558.2 L524.1 553.7 L525.4 549.6 L526.4 544.0 L527.5 549.6 L528.8 553.7 L528.4 558.2 L530.9 562.3 L529.3 566.8 L532.8 570.9 L530.2 575.4 L534.7 579.5 L531.0 583.9 L536.5 588.0 L531.8 592.5 L538.4 600.0 L527.9 600.0Z M542.3 600.0 L525.3 600.0 L535.9 585.8 L528.8 578.9 L537.5 569.9 L532.4 562.9 L539.1 553.9 L536.2 547.0 L540.8 538.0 L540.1 531.1 L542.6 522.0 L544.6 513.4 L546.7 522.0 L549.2 531.1 L548.4 538.0 L553.1 547.0 L550.1 553.9 L556.8 562.9 L551.7 569.9 L560.4 578.9 L553.3 585.8 L564.0 600.0 L547.0 600.0Z M562.1 600.0 L544.5 600.0 L555.5 588.7 L547.5 581.9 L556.9 575.6 L550.6 568.8 L558.3 562.6 L553.8 555.8 L559.7 549.6 L557.1 542.8 L561.2 536.6 L560.5 529.8 L562.7 523.5 L564.5 515.0 L566.3 523.5 L568.5 529.8 L567.9 536.6 L572.0 542.8 L569.4 549.6 L575.3 555.8 L570.8 562.6 L578.5 568.8 L572.2 575.6 L581.5 581.9 L573.6 588.7 L584.6 600.0 L566.9 600.0Z M593.9 600.0 L581.2 600.0 L589.1 590.5 L583.8 585.9 L590.3 579.9 L586.5 575.3 L591.5 569.3 L589.3 564.7 L592.7 558.7 L592.2 554.1 L594.1 548.1 L595.6 542.4 L597.1 548.1 L599.0 554.1 L598.4 558.7 L601.9 564.7 L599.7 569.3 L604.7 575.3 L600.9 579.9 L607.4 585.9 L602.1 590.5 L610.0 600.0 L597.3 600.0Z M629.9 600.0 L616.3 600.0 L624.8 593.2 L618.3 588.3 L625.7 585.2 L620.3 580.3 L626.6 577.2 L622.4 572.3 L627.6 569.2 L624.5 564.3 L628.5 561.2 L626.8 556.3 L629.5 553.1 L629.1 548.3 L630.6 545.1 L631.8 539.0 L633.0 545.1 L634.5 548.3 L634.0 553.1 L636.8 556.3 L635.0 561.2 L639.0 564.3 L636.0 569.2 L641.2 572.3 L636.9 577.2 L643.2 580.3 L637.9 585.2 L645.3 588.3 L638.8 593.2 L647.3 600.0 L633.6 600.0Z M653.1 600.0 L639.3 600.0 L647.9 589.9 L642.1 585.0 L649.2 578.6 L645.1 573.7 L650.6 567.3 L648.1 562.4 L651.9 556.0 L651.3 551.1 L653.4 544.8 L655.0 538.6 L656.7 544.8 L658.7 551.1 L658.1 556.0 L661.9 562.4 L659.5 567.3 L665.0 573.7 L660.8 578.6 L667.9 585.0 L662.1 589.9 L670.8 600.0 L656.9 600.0Z M685.7 600.0 L672.4 600.0 L680.7 588.0 L675.2 582.1 L681.9 574.5 L678.0 568.6 L683.2 561.0 L680.9 555.1 L684.5 547.5 L683.9 541.7 L685.9 534.0 L687.5 526.7 L689.0 534.0 L691.0 541.7 L690.4 547.5 L694.0 555.1 L691.7 561.0 L696.9 568.6 L693.0 574.5 L699.7 582.1 L694.2 588.0 L702.5 600.0 L689.3 600.0Z M706.3 600.0 L696.4 600.0 L702.6 594.2 L697.9 590.0 L703.2 587.3 L699.4 583.1 L703.9 580.4 L700.9 576.2 L704.6 573.5 L702.4 569.4 L705.3 566.7 L704.0 562.5 L706.0 559.8 L705.7 555.6 L706.8 552.9 L707.6 547.7 L708.5 552.9 L709.6 555.6 L709.3 559.8 L711.3 562.5 L710.0 566.7 L712.9 569.4 L710.7 573.5 L714.4 576.2 L711.4 580.4 L715.9 583.1 L712.0 587.3 L717.4 590.0 L712.7 594.2 L718.8 600.0 L709.0 600.0Z M731.8 600.0 L716.6 600.0 L726.1 591.6 L718.8 585.6 L727.1 581.7 L721.1 575.7 L728.1 571.8 L723.4 565.8 L729.2 561.9 L725.8 555.9 L730.2 552.1 L728.3 546.0 L731.3 542.2 L730.9 536.1 L732.5 532.3 L733.9 524.8 L735.2 532.3 L736.9 536.1 L736.4 542.2 L739.4 546.0 L737.5 552.1 L741.9 555.9 L738.6 561.9 L744.3 565.8 L739.6 571.8 L746.6 575.7 L740.6 581.7 L748.9 585.6 L741.6 591.6 L751.1 600.0 L735.9 600.0Z M752.4 600.0 L729.6 600.0 L743.9 586.5 L733.0 576.8 L745.4 570.6 L736.4 560.9 L746.9 554.6 L739.9 544.9 L748.5 538.7 L743.5 529.0 L750.1 522.8 L747.2 513.1 L751.8 506.9 L751.0 497.2 L753.5 490.9 L755.5 478.8 L757.6 490.9 L760.0 497.2 L759.3 506.9 L763.9 513.1 L761.0 522.8 L767.6 529.0 L762.6 538.7 L771.2 544.9 L764.2 554.6 L774.7 560.9 L765.7 570.6 L778.1 576.8 L767.2 586.5 L781.4 600.0 L758.6 600.0Z M784.4 600.0 L763.2 600.0 L776.4 581.5 L767.6 572.4 L778.4 560.7 L772.1 551.6 L780.4 539.9 L776.7 530.8 L782.5 519.1 L781.6 510.0 L784.7 498.3 L787.3 487.0 L789.8 498.3 L792.9 510.0 L792.0 519.1 L797.8 530.8 L794.1 539.9 L802.5 551.6 L796.1 560.7 L806.9 572.4 L798.1 581.5 L811.3 600.0 L790.2 600.0Z M819.6 600.0 L809.4 600.0 L815.8 591.1 L811.5 586.8 L816.7 581.2 L813.6 576.8 L817.7 571.2 L815.9 566.9 L818.7 561.2 L818.3 556.9 L819.8 551.3 L821.0 545.9 L822.2 551.3 L823.7 556.9 L823.3 561.2 L826.1 566.9 L824.3 571.2 L828.3 576.8 L825.3 581.2 L830.5 586.8 L826.2 591.1 L832.6 600.0 L822.4 600.0Z M840.9 600.0 L827.7 600.0 L835.9 590.4 L830.0 584.6 L837.0 579.3 L832.3 573.6 L838.0 568.3 L834.7 562.5 L839.1 557.2 L837.1 551.4 L840.2 546.1 L839.7 540.4 L841.3 535.1 L842.7 527.9 L844.0 535.1 L845.7 540.4 L845.2 546.1 L848.3 551.4 L846.3 557.2 L850.7 562.5 L847.4 568.3 L853.1 573.6 L848.4 579.3 L855.4 584.6 L849.4 590.4 L857.7 600.0 L844.5 600.0Z M861.3 600.0 L844.8 600.0 L855.1 591.4 L847.2 585.3 L856.2 581.3 L849.7 575.1 L857.4 571.2 L852.2 565.0 L858.5 561.0 L854.8 554.9 L859.7 550.9 L857.5 544.8 L860.9 540.8 L860.3 534.6 L862.1 530.7 L863.6 523.0 L865.1 530.7 L866.9 534.6 L866.3 540.8 L869.7 544.8 L867.5 550.9 L872.4 554.9 L868.7 561.0 L875.0 565.0 L869.8 571.2 L877.5 575.1 L871.0 581.3 L880.0 585.3 L872.1 591.4 L882.4 600.0 L865.9 600.0Z M892.0 600.0 L878.6 600.0 L887.0 589.9 L880.9 583.8 L888.0 578.2 L883.3 572.2 L889.1 566.6 L885.7 560.5 L890.2 554.9 L888.2 548.9 L891.3 543.3 L890.8 537.2 L892.5 531.6 L893.9 524.1 L895.2 531.6 L896.9 537.2 L896.4 543.3 L899.6 548.9 L897.6 554.9 L902.1 560.5 L898.6 566.6 L904.5 572.2 L899.7 578.2 L906.8 583.8 L900.7 589.9 L909.1 600.0 L895.7 600.0Z M922.6 600.0 L893.2 600.0 L911.6 581.3 L898.3 570.1 L913.9 559.8 L903.4 548.6 L916.2 538.4 L908.7 527.2 L918.5 516.9 L914.2 505.7 L921.0 495.4 L919.9 484.2 L923.6 473.9 L926.6 459.9 L929.6 473.9 L933.2 484.2 L932.2 495.4 L939.0 505.7 L934.6 516.9 L944.5 527.2 L937.0 538.4 L949.8 548.6 L939.3 559.8 L954.9 570.1 L941.6 581.3 L960.0 600.0 L930.6 600.0Z M944.3 600.0 L932.0 600.0 L939.7 590.8 L934.1 585.4 L940.6 580.3 L936.3 574.8 L941.6 569.8 L938.5 564.3 L942.6 559.3 L940.8 553.8 L943.7 548.7 L943.2 543.2 L944.7 538.2 L946.0 531.3 L947.3 538.2 L948.8 543.2 L948.4 548.7 L951.2 553.8 L949.4 559.3 L953.5 564.3 L950.4 569.8 L955.7 574.8 L951.4 580.3 L957.9 585.4 L952.3 590.8 L960.0 600.0 L947.7 600.0Z M972.7 600.0 L952.5 600.0 L965.1 589.5 L955.4 582.0 L966.5 577.1 L958.5 569.6 L967.8 564.7 L961.6 557.2 L969.2 552.4 L964.7 544.8 L970.6 540.0 L968.0 532.4 L972.1 527.6 L971.5 520.0 L973.7 515.2 L975.5 505.8 L977.3 515.2 L979.5 520.0 L978.8 527.6 L982.9 532.4 L980.3 540.0 L986.2 544.8 L981.7 552.4 L989.4 557.2 L983.1 564.7 L992.5 569.6 L984.5 577.1 L995.5 582.0 L985.8 589.5 L998.5 600.0 L978.2 600.0Z M993.5 600.0 L974.1 600.0 L986.2 585.6 L977.4 577.0 L987.8 569.1 L980.8 560.5 L989.3 552.6 L984.3 543.9 L990.9 536.0 L988.0 527.4 L992.5 519.5 L991.8 510.9 L994.2 503.0 L996.2 492.2 L998.2 503.0 L1000.6 510.9 L999.9 519.5 L1004.4 527.4 L1001.5 536.0 L1008.0 543.9 L1003.1 552.6 L1011.5 560.5 L1004.6 569.1 L1015.0 577.0 L1006.1 585.6 L1018.3 600.0 L998.8 600.0Z M1030.1 600.0 L1007.8 600.0 L1021.7 586.4 L1011.6 578.2 L1023.5 570.7 L1015.5 562.5 L1025.2 555.0 L1019.6 546.8 L1027.0 539.3 L1023.7 531.1 L1028.9 523.6 L1028.1 515.5 L1030.8 508.0 L1033.1 497.7 L1035.4 508.0 L1038.2 515.5 L1037.4 523.6 L1042.5 531.1 L1039.2 539.3 L1046.7 546.8 L1041.0 555.0 L1050.7 562.5 L1042.8 570.7 L1054.6 578.2 L1044.5 586.4 L1058.4 600.0 L1036.2 600.0Z M1060.7 600.0 L1042.6 600.0 L1053.9 590.3 L1045.2 583.3 L1055.1 578.8 L1048.0 571.8 L1056.3 567.3 L1050.7 560.3 L1057.6 555.8 L1053.6 548.8 L1058.8 544.3 L1056.5 537.3 L1060.1 532.8 L1059.6 525.8 L1061.5 521.3 L1063.1 512.5 L1064.7 521.3 L1066.7 525.8 L1066.1 532.8 L1069.8 537.3 L1067.5 544.3 L1072.7 548.8 L1068.7 555.8 L1075.6 560.3 L1070.0 567.3 L1078.3 571.8 L1071.2 578.8 L1081.0 583.3 L1072.4 590.3 L1083.7 600.0 L1065.6 600.0Z M1080.8 600.0 L1067.1 600.0 L1075.7 590.4 L1069.5 584.6 L1076.7 579.3 L1071.9 573.6 L1077.8 568.3 L1074.3 562.5 L1078.9 557.2 L1076.9 551.5 L1080.1 546.2 L1079.6 540.4 L1081.3 535.1 L1082.7 527.9 L1084.1 535.1 L1085.8 540.4 L1085.3 546.2 L1088.4 551.5 L1086.4 557.2 L1091.0 562.5 L1087.5 568.3 L1093.4 573.6 L1088.6 579.3 L1095.8 584.6 L1089.6 590.4 L1098.2 600.0 L1084.5 600.0Z M1113.9 600.0 L1098.7 600.0 L1108.2 590.2 L1101.3 584.4 L1109.4 579.0 L1104.0 573.1 L1110.6 567.7 L1106.7 561.9 L1111.8 556.5 L1109.5 550.6 L1113.1 545.3 L1112.5 539.4 L1114.4 534.0 L1116.0 526.7 L1117.5 534.0 L1119.4 539.4 L1118.8 545.3 L1122.4 550.6 L1120.1 556.5 L1125.2 561.9 L1121.3 567.7 L1127.9 573.1 L1122.5 579.0 L1130.6 584.4 L1123.7 590.2 L1133.2 600.0 L1118.0 600.0Z M1141.4 600.0 L1124.6 600.0 L1135.1 589.0 L1127.5 582.4 L1136.4 576.4 L1130.4 569.8 L1137.7 563.7 L1133.5 557.1 L1139.1 551.1 L1136.6 544.5 L1140.5 538.4 L1139.9 531.8 L1142.0 525.8 L1143.7 517.5 L1145.4 525.8 L1147.5 531.8 L1146.9 538.4 L1150.8 544.5 L1148.3 551.1 L1153.9 557.1 L1149.6 563.7 L1156.9 569.8 L1150.9 576.4 L1159.8 582.4 L1152.2 589.0 L1162.7 600.0 L1146.0 600.0Z M1172.0 600.0 L1155.2 600.0 L1165.7 589.5 L1158.1 583.2 L1167.0 577.4 L1161.1 571.1 L1168.3 565.3 L1164.1 559.0 L1169.7 553.2 L1167.2 546.9 L1171.1 541.1 L1170.5 534.8 L1172.6 529.0 L1174.3 521.1 L1176.0 529.0 L1178.1 534.8 L1177.5 541.1 L1181.4 546.9 L1178.9 553.2 L1184.5 559.0 L1180.3 565.3 L1187.5 571.1 L1181.6 577.4 L1190.5 583.2 L1182.9 589.5 L1193.4 600.0 L1176.6 600.0Z M1205.9 600.0 L1185.9 600.0 L1198.4 588.1 L1189.4 580.9 L1200.0 574.3 L1192.9 567.1 L1201.6 560.6 L1196.5 553.4 L1203.2 546.8 L1200.2 539.7 L1204.9 533.1 L1204.1 525.9 L1206.6 519.4 L1208.7 510.4 L1210.7 519.4 L1213.2 525.9 L1212.5 533.1 L1217.1 539.7 L1214.2 546.8 L1220.9 553.4 L1215.8 560.6 L1224.5 567.1 L1217.4 574.3 L1228.0 580.9 L1218.9 588.1 L1231.4 600.0 L1211.4 600.0Z M0 598H1200V600H0Z" fill="#142219" transform="translate(0,-40)"/>
+      <rect y="560" width="1200" height="40" fill="#0E1812"/>
+      <g fill="#0B140F"><path d="M38.2 586.5 Q21.8 592.0 3.7 577.2 Q26.9 572.4 37.0 572.9Z M38.2 586.5 Q55.3 589.1 70.6 571.3 Q46.9 570.7 37.0 572.9Z M37.0 572.9 Q21.5 577.0 5.9 560.5 Q27.7 557.8 37.0 559.2Z M37.0 572.9 Q52.6 577.0 68.1 560.6 Q46.4 557.8 37.0 559.2Z M37.0 559.2 Q22.3 561.4 10.4 543.0 Q30.6 543.0 38.9 545.5Z M37.0 559.2 Q50.6 565.2 67.0 550.6 Q47.6 545.2 38.9 545.5Z M38.9 545.5 Q25.2 545.6 17.9 525.4 Q36.2 528.2 43.2 531.9Z M38.9 545.5 Q50.0 553.4 67.5 541.1 Q51.0 532.9 43.2 531.9Z M43.2 531.9 Q30.8 530.1 29.4 508.8 Q45.1 514.1 50.5 518.9Z M43.2 531.9 Q51.1 541.5 70.1 531.5 Q57.3 521.0 50.5 518.9Z M50.5 518.9 Q39.6 515.5 45.0 494.3 Q57.8 501.6 61.3 506.9Z M50.5 518.9 Q54.8 529.3 75.4 522.0 Q66.9 509.9 61.3 506.9Z M61.3 506.9 Q51.9 502.6 64.7 483.3 Q74.5 491.6 76.0 497.0Z M61.3 506.9 Q61.8 517.3 84.4 512.7 Q80.4 500.4 76.0 497.0Z M76.0 497.0 Q67.9 492.2 87.9 477.1 Q95.2 485.4 94.8 490.2Z M76.0 497.0 Q72.9 506.0 97.9 504.7 Q98.2 493.6 94.8 490.2Z M94.8 490.2 Q87.4 485.2 114.0 476.6 Q119.4 484.1 117.5 487.8Z M94.8 490.2 Q88.6 496.6 116.4 499.4 Q120.1 490.9 117.5 487.8Z M117.5 487.8 Q110.2 482.8 141.8 483.2 Q146.3 489.3 143.4 491.3Z M117.5 487.8 Q109.2 490.6 139.7 498.7 Q145.7 494.0 143.4 491.3Z M23.8 589.8 Q9.9 587.4 2.4 570.0 Q20.9 575.5 28.1 579.7Z M23.8 589.8 Q35.2 598.2 52.9 591.5 Q36.1 581.9 28.1 579.7Z M28.1 579.7 Q15.3 576.6 10.2 559.0 Q27.0 565.5 33.2 570.1Z M28.1 579.7 Q37.8 588.6 55.2 583.0 Q40.5 572.7 33.2 570.1Z M33.2 570.1 Q21.8 565.9 20.0 548.3 Q34.6 556.1 39.7 561.1Z M33.2 570.1 Q40.8 579.6 58.1 575.6 Q46.1 564.3 39.7 561.1Z M39.7 561.1 Q29.8 555.8 32.0 538.6 Q44.1 547.7 47.8 553.1Z M39.7 561.1 Q44.7 571.1 62.0 569.1 Q53.1 556.9 47.8 553.1Z M47.8 553.1 Q39.6 546.9 46.4 531.1 Q55.7 541.1 57.9 546.6Z M47.8 553.1 Q50.0 563.1 67.3 563.4 Q62.0 550.8 57.9 546.6Z M57.9 546.6 Q51.4 539.9 63.0 526.6 Q69.5 537.0 70.0 542.3Z M57.9 546.6 Q57.1 555.9 74.5 558.7 Q72.9 546.6 70.0 542.3Z M70.0 542.3 Q65.0 535.4 81.2 526.3 Q85.1 536.2 84.1 540.8Z M70.0 542.3 Q66.5 550.0 84.2 555.6 Q86.0 545.0 84.1 540.8Z M84.1 540.8 Q80.2 534.0 100.1 530.6 Q102.0 539.6 100.0 543.0Z M84.1 540.8 Q78.5 546.2 96.7 555.0 Q101.0 546.9 100.0 543.0Z M100.0 543.0 Q96.7 536.4 118.8 540.1 Q119.7 547.8 116.9 549.8Z M100.0 543.0 Q93.1 545.5 111.5 558.2 Q117.5 553.2 116.9 549.8Z M116.9 549.8 Q113.8 543.4 136.2 555.3 Q136.7 561.6 133.8 562.1Z M116.9 549.8 Q109.8 548.9 128.1 566.4 Q134.3 565.0 133.8 562.1Z M84.4 592.6 Q73.6 588.6 69.8 573.9 Q83.9 580.9 89.1 585.3Z M84.4 592.6 Q92.3 600.8 107.4 598.2 Q95.2 588.2 89.1 585.3Z M89.1 585.3 Q79.3 580.9 77.5 566.3 Q90.0 573.9 94.4 578.5Z M89.1 585.3 Q95.7 593.8 110.3 592.0 Q99.9 581.6 94.4 578.5Z M94.4 578.5 Q85.8 573.5 86.7 559.2 Q97.3 567.6 100.7 572.3Z M94.4 578.5 Q99.3 587.2 113.5 586.7 Q105.4 575.9 100.7 572.3Z M100.7 572.3 Q93.5 566.6 97.4 553.3 Q105.9 562.4 108.1 567.2Z M100.7 572.3 Q103.4 581.1 117.3 582.2 Q111.9 571.1 108.1 567.2Z M108.1 567.2 Q102.4 561.0 109.8 549.3 Q115.9 558.8 116.9 563.6Z M108.1 567.2 Q108.6 575.7 122.1 578.6 Q119.6 567.6 116.9 563.6Z M116.9 563.6 Q112.7 557.1 123.5 548.1 Q127.2 557.5 126.9 561.9Z M116.9 563.6 Q115.0 571.1 128.3 576.0 Q128.6 565.9 126.9 561.9Z M126.9 561.9 Q124.0 555.5 137.9 550.3 Q139.5 559.0 138.1 562.6Z M126.9 561.9 Q123.1 567.8 136.1 574.8 Q139.0 566.4 138.1 562.6Z M138.1 562.6 Q136.1 556.5 152.2 556.3 Q152.3 564.0 150.2 566.6Z M138.1 562.6 Q132.9 566.4 145.8 576.1 Q150.4 569.9 150.2 566.6Z M150.2 566.6 Q148.7 560.7 165.6 566.4 Q165.0 572.8 162.4 574.2Z M150.2 566.6 Q144.3 567.8 156.8 580.5 Q162.3 577.1 162.4 574.2Z M162.4 574.2 Q161.1 568.5 177.2 580.6 Q176.4 586.0 174.0 586.1Z M162.4 574.2 Q156.8 572.8 168.5 589.1 Q173.8 588.5 174.0 586.1Z M1166.8 586.5 Q1149.7 589.1 1134.4 571.3 Q1158.1 570.7 1168.0 572.9Z M1166.8 586.5 Q1183.2 592.0 1201.3 577.2 Q1178.1 572.4 1168.0 572.9Z M1168.0 572.9 Q1152.4 577.0 1136.9 560.6 Q1158.6 557.8 1168.0 559.2Z M1168.0 572.9 Q1183.5 577.0 1199.1 560.5 Q1177.3 557.8 1168.0 559.2Z M1168.0 559.2 Q1154.4 565.2 1138.0 550.6 Q1157.4 545.2 1166.1 545.5Z M1168.0 559.2 Q1182.7 561.4 1194.6 543.0 Q1174.4 543.0 1166.1 545.5Z M1166.1 545.5 Q1155.0 553.4 1137.5 541.1 Q1154.0 532.9 1161.8 531.9Z M1166.1 545.5 Q1179.8 545.6 1187.1 525.4 Q1168.8 528.2 1161.8 531.9Z M1161.8 531.9 Q1153.9 541.5 1134.9 531.5 Q1147.7 521.0 1154.5 518.9Z M1161.8 531.9 Q1174.2 530.1 1175.6 508.8 Q1159.9 514.1 1154.5 518.9Z M1154.5 518.9 Q1150.2 529.3 1129.6 522.0 Q1138.1 509.9 1143.7 506.9Z M1154.5 518.9 Q1165.4 515.5 1160.0 494.3 Q1147.2 501.6 1143.7 506.9Z M1143.7 506.9 Q1143.2 517.3 1120.6 512.7 Q1124.6 500.4 1129.0 497.0Z M1143.7 506.9 Q1153.1 502.6 1140.3 483.3 Q1130.5 491.6 1129.0 497.0Z M1129.0 497.0 Q1132.1 506.0 1107.1 504.7 Q1106.8 493.6 1110.2 490.2Z M1129.0 497.0 Q1137.1 492.2 1117.1 477.1 Q1109.8 485.4 1110.2 490.2Z M1110.2 490.2 Q1116.4 496.6 1088.6 499.4 Q1084.9 490.9 1087.5 487.8Z M1110.2 490.2 Q1117.6 485.2 1091.0 476.6 Q1085.6 484.1 1087.5 487.8Z M1087.5 487.8 Q1095.8 490.6 1065.3 498.7 Q1059.3 494.0 1061.6 491.3Z M1087.5 487.8 Q1094.8 482.8 1063.2 483.2 Q1058.7 489.3 1061.6 491.3Z M1180.8 589.9 Q1169.8 598.7 1151.8 592.6 Q1168.3 582.5 1176.2 580.0Z M1180.8 589.9 Q1194.7 587.1 1201.6 569.4 Q1183.2 575.6 1176.2 580.0Z M1176.2 580.0 Q1166.8 589.3 1149.2 584.3 Q1163.6 573.4 1170.7 570.5Z M1176.2 580.0 Q1188.9 576.5 1193.3 558.7 Q1176.8 565.8 1170.7 570.5Z M1170.7 570.5 Q1163.5 580.3 1146.1 577.0 Q1157.7 565.2 1164.0 561.8Z M1170.7 570.5 Q1182.1 566.0 1183.2 548.3 Q1168.9 556.6 1164.0 561.8Z M1164.0 561.8 Q1159.3 572.0 1142.0 570.6 Q1150.4 558.0 1155.6 554.1Z M1164.0 561.8 Q1173.7 556.2 1170.9 539.1 Q1159.1 548.6 1155.6 554.1Z M1155.6 554.1 Q1153.7 564.2 1136.5 565.1 Q1141.3 552.3 1145.3 548.0Z M1155.6 554.1 Q1163.6 547.6 1156.2 532.0 Q1147.2 542.4 1145.3 548.0Z M1145.3 548.0 Q1146.4 557.3 1129.1 560.7 Q1130.3 548.5 1133.0 544.0Z M1145.3 548.0 Q1151.6 541.0 1139.5 528.2 Q1133.4 538.8 1133.0 544.0Z M1133.0 544.0 Q1136.8 551.7 1119.3 557.9 Q1117.1 547.4 1118.9 543.1Z M1133.0 544.0 Q1137.8 537.0 1121.3 528.4 Q1117.7 538.5 1118.9 543.1Z M1118.9 543.1 Q1124.7 548.3 1106.8 557.7 Q1102.2 549.8 1103.1 545.8Z M1118.9 543.1 Q1122.5 536.2 1102.5 533.4 Q1100.9 542.5 1103.1 545.8Z M1103.1 545.8 Q1110.1 548.1 1092.1 561.4 Q1086.0 556.6 1086.4 553.2Z M1103.1 545.8 Q1106.1 539.2 1084.2 543.6 Q1083.6 551.3 1086.4 553.2Z M1086.4 553.2 Q1093.5 552.1 1075.8 570.2 Q1069.5 569.0 1069.9 566.1Z M1086.4 553.2 Q1089.3 546.7 1067.3 559.3 Q1067.0 565.7 1069.9 566.1Z M1115.6 593.1 Q1108.3 601.2 1093.9 599.3 Q1105.2 589.4 1110.9 586.4Z M1115.6 593.1 Q1125.8 589.0 1128.9 574.8 Q1115.7 582.0 1110.9 586.4Z M1110.9 586.4 Q1104.9 594.7 1091.0 593.5 Q1100.5 583.3 1105.6 580.1Z M1110.9 586.4 Q1120.1 581.9 1121.4 567.9 Q1109.7 575.6 1105.6 580.1Z M1105.6 580.1 Q1101.3 588.6 1087.7 588.6 Q1095.2 578.0 1099.5 574.5Z M1105.6 580.1 Q1113.7 575.0 1112.5 561.5 Q1102.6 569.9 1099.5 574.5Z M1099.5 574.5 Q1097.1 583.0 1084.0 584.5 Q1088.9 573.7 1092.3 569.9Z M1099.5 574.5 Q1106.2 568.8 1102.0 556.2 Q1094.3 565.2 1092.3 569.9Z M1092.3 569.9 Q1092.1 578.0 1079.4 581.3 Q1081.4 570.7 1083.9 566.7Z M1092.3 569.9 Q1097.5 563.8 1090.1 552.8 Q1084.7 562.2 1083.9 566.7Z M1083.9 566.7 Q1085.9 573.8 1073.5 579.0 Q1072.8 569.3 1074.3 565.4Z M1083.9 566.7 Q1087.7 560.4 1077.1 552.2 Q1073.9 561.3 1074.3 565.4Z M1074.3 565.4 Q1078.1 571.0 1066.0 578.2 Q1063.0 570.2 1063.7 566.6Z M1074.3 565.4 Q1076.9 559.2 1063.6 554.7 Q1062.3 563.1 1063.7 566.6Z M1063.7 566.6 Q1068.8 570.0 1057.0 579.6 Q1052.4 573.9 1052.5 570.7Z M1063.7 566.6 Q1065.4 560.6 1050.2 560.9 Q1050.3 568.3 1052.5 570.7Z M1052.5 570.7 Q1058.1 571.7 1046.7 584.2 Q1041.3 581.1 1041.1 578.3Z M1052.5 570.7 Q1053.6 565.0 1037.7 570.8 Q1038.6 577.1 1041.1 578.3Z M1041.1 578.3 Q1046.5 576.8 1036.0 592.7 Q1030.8 592.3 1030.6 589.9Z M1041.1 578.3 Q1042.1 572.8 1027.2 584.8 Q1028.2 589.9 1030.6 589.9Z"/></g>
+      <g fill="none" stroke="#0B140F" stroke-width="3" stroke-linecap="round"><path d="M40.0 600.0 L38.2 586.5 L37.0 572.9 L37.0 559.2 L38.9 545.5 L43.2 531.9 L50.5 518.9 L61.3 506.9 L76.0 497.0 L94.8 490.2 L117.5 487.8 L143.4 491.3 M20.0 600.0 L23.8 589.8 L28.1 579.7 L33.2 570.1 L39.7 561.1 L47.8 553.1 L57.9 546.6 L70.0 542.3 L84.1 540.8 L100.0 543.0 L116.9 549.8 L133.8 562.1 M80.0 600.0 L84.4 592.6 L89.1 585.3 L94.4 578.5 L100.7 572.3 L108.1 567.2 L116.9 563.6 L126.9 561.9 L138.1 562.6 L150.2 566.6 L162.4 574.2 L174.0 586.1 M1165.0 600.0 L1166.8 586.5 L1168.0 572.9 L1168.0 559.2 L1166.1 545.5 L1161.8 531.9 L1154.5 518.9 L1143.7 506.9 L1129.0 497.0 L1110.2 490.2 L1087.5 487.8 L1061.6 491.3 M1185.0 600.0 L1180.8 589.9 L1176.2 580.0 L1170.7 570.5 L1164.0 561.8 L1155.6 554.1 L1145.3 548.0 L1133.0 544.0 L1118.9 543.1 L1103.1 545.8 L1086.4 553.2 L1069.9 566.1 M1120.0 600.0 L1115.6 593.1 L1110.9 586.4 L1105.6 580.1 L1099.5 574.5 L1092.3 569.9 L1083.9 566.7 L1074.3 565.4 L1063.7 566.6 L1052.5 570.7 L1041.1 578.3 L1030.6 589.9"/></g>
+    </svg>
+    <div class="frame" aria-hidden="true">
+      <svg class="tl" viewBox="0 0 44 44"><use href="#vine"/></svg><svg class="tr" viewBox="0 0 44 44"><use href="#vine"/></svg>
+      <svg class="bl" viewBox="0 0 44 44"><use href="#vine"/></svg><svg class="br" viewBox="0 0 44 44"><use href="#vine"/></svg>
+    </div>
+    <canvas id="motes" aria-hidden="true"></canvas>
+    <canvas id="vp"></canvas>
+    <canvas id="ar" hidden></canvas>
+    <div class="ar-ui" id="ar-ui" hidden>
+      <div class="ar-card" id="ar-card">
+        <svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg>
+        <h2>Try them on</h2>
+        <p>See the pair on your own head, at the size they'll print. The camera and photos stay on this device; nothing is uploaded.</p>
+        <div class="ar-actions">
+          <button class="btn primary" id="ar-cam">Use camera</button>
+          <button class="btn" id="ar-photo">Use a photo</button>
+        </div>
+      </div>
+      <div class="ar-bar" id="ar-bar" hidden>
+        <div class="ar-row">
+          <button class="chipbtn" id="ar-cam2">Camera</button>
+          <button class="chipbtn" id="ar-flip" title="Switch between front and back camera">Flip</button>
+          <button class="chipbtn" id="ar-photo2">Photo</button>
+          <button class="chipbtn snap" id="ar-snap">Save picture</button>
+        </div>
+        <div class="ar-row">
+          <label for="ar-size">Size</label><input type="range" id="ar-size" min="0.8" max="1.25" step="0.01">
+          <label for="ar-lift">Height</label><input type="range" id="ar-lift" min="-30" max="45" step="1">
+        </div>
+      </div>
+      <p class="ar-note" id="ar-note" hidden></p>
+      <input type="file" id="ar-file" accept="image/*" hidden>
+    </div>
+    <div class="hud top">
+      <div class="brand"><h1>Antler Forge</h1><svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg><div class="plate" id="plate" aria-live="polite"></div></div>
+      <div class="top-right">
+        <div class="seg" role="group" aria-label="View">
+          <button id="v-print" aria-pressed="false">Print bed</button>
+          <button id="v-wear" aria-pressed="true">On headband</button>
+          <button id="v-ar" aria-pressed="false">Try on</button>
+        </div>
+        <div class="seg small" role="group" aria-label="Camera">
+          <button id="cam-34" aria-pressed="true">¾</button>
+          <button id="cam-front" aria-pressed="false">Front</button>
+          <button id="cam-side" aria-pressed="false">Side</button>
+        </div>
+      </div>
+    </div>
+    <div class="hud bot">
+      <div class="readout" id="dims">—</div>
+      <div class="pill" id="status"><i></i><span>Preview</span></div>
+    </div>
+    <div class="progress"><div id="prog"></div></div>
+    <div class="err" id="gl-err" hidden>3D preview needs WebGL. The controls and STL export still work.</div>
+  </section>
+
+  <aside class="panel">
+    <div class="scroll">
+      <div class="sect">
+        <p class="label">Species</p>
+        <div class="presets" id="presets"></div>
+        <p class="lore" id="lore"></p>
+        <div class="row-actions">
+          <button class="btn wander" id="wander" title="Find a new, balanced variation">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l1.4 3.6 3.6 1.4-3.6 1.4L8 11.5 6.6 7.9 3 6.5l3.6-1.4z" fill="currentColor"/><circle cx="13" cy="12.5" r="1.2" fill="currentColor"/><circle cx="3.2" cy="12" r=".9" fill="currentColor"/></svg>
+            Wander the woods
+          </button>
+          <button class="btn" id="reroll" title="Same species, new natural variation">New seed</button>
+        </div>
+        <p class="label" style="margin-top:20px">Filament</p>
+        <div class="swatches" id="swatches"></div>
+        <div class="row-actions">
+          <button class="btn" id="save-design">Save design</button>
+          <button class="btn" id="load-design">Load design</button>
+          <input type="file" id="file-in" accept=".json,application/json" hidden>
+        </div>
+      </div>
+      <div class="ornament" aria-hidden="true"><svg viewBox="0 0 46 14"><use href="#orn"/></svg></div>
+      <div id="groups"></div>
+      <details>
+        <summary><svg class="sprig"><use href="#sprig"/></svg>About the files</summary>
+        <div class="notes">
+          <p>The download is a zip with a right and a mirrored left antler, the design file, and print notes. Both STLs are single closed solids, checked for open and non-manifold edges before you get them.</p>
+          <p>Each antler is one complete part, standing on its flat base and turned on the plate if that's what it takes to fit the P2S. The print notes list Bambu Studio settings for your filament: tree supports, a 5 mm brim, and the right nozzle for PLA Wood.</p>
+          <p>To build at higher resolution offline, save the design and run <code>node tools/build-antlers.js design.json --res 0.35</code>.</p>
+        </div>
+      </details>
+    </div>
+    <div class="foot">
+      <div class="checks" id="checks">
+        <div><span>Triangles</span><b id="c-tri">—</b></div>
+        <div><span>Open edges</span><b id="c-open">—</b></div>
+        <div><span>Solids</span><b id="c-shell">—</b></div>
+        <div><span>PLA solid</span><b id="c-g">—</b></div>
+      </div>
+      <div class="msg" id="msg">Preview updates live. Build the printable mesh when the shape looks right.</div>
+      <div class="btns">
+        <button class="btn primary" id="build">Build mesh</button>
+        <button class="btn" id="download">Download STLs</button>
+      </div>
+    </div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script id="antler-core">
+/*__CORE__*/
+</script>
+<script>
+(function(){
+'use strict';
+const C = window.AntlerCore;
+const $ = (id) => document.getElementById(id);
+const STORE = 'antler-forge-design-v3';
+
+/* ------------------------------------------------------------ state */
+let P = C.presetParams('whitetail');
+try { const s = localStorage.getItem(STORE); if (s) P = C.resolveParams(JSON.parse(s)); } catch (e) {}
+let view = 'wear', camView = '34';
+let built = null;       // last full-resolution build {mesh, report, key, params}
+let building = false;
+const keyOf = (p) => JSON.stringify(Object.assign({}, p, { filament: 0 })); // colour doesn't change geometry
+
+/* ------------------------------------------------------------ controls */
+const presetsEl = $('presets');
+for (const [k, v] of Object.entries(C.PRESETS)) {
+  const b = document.createElement('button');
+  b.className = 'chip'; b.textContent = v.label; b.dataset.k = k; b.id = 'preset-' + k;
+  b.addEventListener('click', () => { P = C.presetParams(k, P); syncControls(); changed(); });
+  presetsEl.appendChild(b);
+}
+const fmt = (it, v) => {
+  if (it.pct) return Math.round(v * 100) + '%';
+  const dec = it.step < 0.1 ? 2 : it.step < 1 ? (it.step < 0.5 ? 2 : 1) : 0;
+  return Number(v).toFixed(dec) + (it.u && it.u.length <= 3 ? ' ' + it.u : '');
+};
+const inputs = {};
+const groupsEl = $('groups');
+C.PARAM_SPEC.forEach((g, gi) => {
+  const d = document.createElement('details');
+  if (gi < 2) d.open = true;
+  const sm = document.createElement('summary');
+  sm.innerHTML = '<svg class="sprig" aria-hidden="true"><use href="#sprig"/></svg>';
+  sm.appendChild(document.createTextNode(g.group)); d.appendChild(sm);
+  const list = document.createElement('div'); list.className = 'ctl-list';
+  for (const it of g.items) {
+    if (it.k === 'filament') continue;   // shown as swatches at the top
+    const w = document.createElement('div'); w.className = 'ctl';
+    const id = 'p-' + it.k;
+    const lab = document.createElement('label'); lab.htmlFor = id; lab.textContent = it.label; w.appendChild(lab);
+    let inp, out;
+    if (it.type === 'bool') {
+      const sw = document.createElement('span'); sw.className = 'switch';
+      inp = document.createElement('input'); inp.type = 'checkbox'; inp.id = id; inp.setAttribute('role', 'switch');
+      sw.appendChild(inp); w.appendChild(sw);
+      inp.addEventListener('change', () => { P[it.k] = inp.checked; changed(); });
+    } else if (it.type === 'select') {
+      inp = document.createElement('select'); inp.id = id;
+      for (const [v, l] of it.options) { const o = document.createElement('option'); o.value = v; o.textContent = l; inp.appendChild(o); }
+      w.appendChild(inp);
+      inp.addEventListener('change', () => { P[it.k] = inp.value; changed(); });
+    } else {
+      out = document.createElement('output'); out.htmlFor = id; w.appendChild(out);
+      inp = document.createElement('input'); inp.type = 'range'; inp.id = id;
+      inp.min = it.min; inp.max = it.max; inp.step = it.step;
+      w.appendChild(inp);
+      inp.addEventListener('input', () => { P[it.k] = Number(inp.value); out.value = fmt(it, P[it.k]); changed(); });
+    }
+    if (it.hint) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = it.hint; w.appendChild(h); }
+    inputs[it.k] = { it, inp, out };
+    list.appendChild(w);
+  }
+  d.appendChild(list); groupsEl.appendChild(d);
+});
+const swatchEl = $('swatches');
+for (const [k, f] of Object.entries(C.FILAMENTS)) {
+  const b = document.createElement('button');
+  b.className = 'swatch'; b.id = 'fil-' + k; b.dataset.k = k;
+  const [line, code] = f.name.split(' · ')[1].split(' (');
+  b.innerHTML = `<i style="background:${f.hex}"></i><div><b>${line}</b><span>${f.preset.replace('Bambu ', '')} · ${code.replace(')', '')}</span></div>`;
+  b.addEventListener('click', () => { P.filament = k; syncControls(); changed(); });
+  swatchEl.appendChild(b);
+}
+function syncControls() {
+  for (const b of swatchEl.children) b.setAttribute('aria-pressed', String(b.dataset.k === P.filament));
+  for (const k in inputs) {
+    const { it, inp, out } = inputs[k];
+    if (!inp) continue;
+    if (it.type === 'bool') inp.checked = !!P[k];
+    else if (it.type === 'select') inp.value = String(P[k]);
+    else { inp.value = P[k]; out.value = fmt(it, P[k]); }
+  }
+  for (const b of presetsEl.children) b.setAttribute('aria-pressed', String(b.dataset.k === P.preset));
+}
+
+/* ------------------------------------------------------------ three.js scene */
+let renderer, scene, camera, controls, root, keyLight, glOK = true;
+const mats = {};
+try {
+  const canvas = $('vp');
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
+  camera.up.set(0, 0, 1);
+  controls = new THREE.OrbitControls(camera, canvas);
+  controls.enableDamping = true; controls.dampingFactor = 0.12;
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+  scene.add(new THREE.HemisphereLight(0xf3eee6, 0x2b2622, 0.55));
+  keyLight = new THREE.DirectionalLight(0xfff1dd, 1.25); keyLight.position.set(260, 180, 420);
+  keyLight.castShadow = true; keyLight.shadow.mapSize.set(2048, 2048); keyLight.shadow.bias = -0.0004; keyLight.shadow.normalBias = 0.6;
+  scene.add(keyLight); scene.add(keyLight.target);
+  const rim = new THREE.DirectionalLight(0xdfe7ff, 0.55); rim.position.set(-320, -260, 260); scene.add(rim);
+  const bounce = new THREE.DirectionalLight(0xffe9d0, 0.18); bounce.position.set(0, 0, -300); scene.add(bounce);
+  root = new THREE.Group(); scene.add(root);
+  mats.antler = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.0 });
+  mats.head = new THREE.MeshStandardMaterial({ color: 0x1c2a21, roughness: 0.9, transparent: true, opacity: 0.4, depthWrite: false });
+  mats.band = new THREE.MeshToonMaterial({ color: new THREE.Color('#6A4A2E').convertSRGBToLinear(), side: THREE.DoubleSide });
+} catch (e) { glOK = false; $('gl-err').hidden = false; }
+
+// Filament colour (Bambu hex codes) with a little cavity shading in the gutters and burr.
+// Wood PLA gets faint streaks, the way wood-filled filament prints.
+function hexRGB(h) { const n = parseInt(h.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255].map((c) => Math.pow(c, 2.2)); }
+function filamentColors(mesh) {
+  const fil = C.FILAMENTS[P.filament] || C.FILAMENTS.bone, base = hexRGB(fil.hex), wood = P.filament === 'oak';
+  const col = new Float32Array(mesh.positions.length), at = mesh.attr, pos = mesh.positions;
+  for (let i = 0; i < at.length; i++) {
+    let k = 1 - 0.28 * Math.min(1, at[i]);
+    if (wood) { const z = pos[i * 3 + 2], x = pos[i * 3]; k *= 1 + 0.045 * Math.sin(z * 1.9 + Math.sin(x * 0.21) * 2.5) + 0.025 * Math.sin(z * 7.3); }
+    col[i * 3] = base[0] * k; col[i * 3 + 1] = base[1] * k; col[i * 3 + 2] = base[2] * k;
+  }
+  return col;
+}
+
+let shown = null;      // { mesh, key, kind, geo }
+function setShown(mesh, key, kind) {
+  if (shown && shown.geo) shown.geo.dispose();
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(mesh.positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(filamentColors(mesh), 3));
+  geo.setIndex(new THREE.BufferAttribute(mesh.indices, 1));
+  geo.computeVertexNormals();
+  shown = { mesh, key, kind, geo, filament: P.filament };
+}
+function antlerObject() {
+  if (shown.filament !== P.filament) { shown.geo.setAttribute('color', new THREE.BufferAttribute(filamentColors(shown.mesh), 3)); shown.filament = P.filament; }
+  const m = new THREE.Mesh(shown.geo, mats.antler); m.castShadow = true; m.receiveShadow = true; return m;
+}
+
+function bedObject() {
+  const g = new THREE.Group();
+  const w = P.bedX, d = P.bedY;
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: 0x0b0a09, roughness: 0.95 }));
+  plate.position.z = -0.05; plate.receiveShadow = true; g.add(plate);
+  const grid = new THREE.GridHelper(Math.max(w, d), Math.round(Math.max(w, d) / 10), 0x2c2825, 0x1a1715);
+  grid.rotation.x = Math.PI / 2; grid.scale.set(w / Math.max(w, d), 1, d / Math.max(w, d)); g.add(grid);
+  const box = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w, d, P.bedZ)), new THREE.LineBasicMaterial({ color: 0x9a918a, transparent: true, opacity: 0.3 }));
+  box.position.z = P.bedZ / 2; g.add(box);
+  return g;
+}
+
+function wearObject() {
+  const g = new THREE.Group();
+  if (!faunGroup) faunGroup = buildFaun();
+  g.add(faunGroup);
+  const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+  const band = new THREE.Mesh(new THREE.CylinderGeometry(Rb, Rb, P.hbWidth, 96, 1, true, -1.95, 3.9), mats.band);
+  band.position.set(0, 0, cz); g.add(band);
+  if (!shown) return g;
+  g.add(antlerPair(C.buildSkeleton(P)));
+  return g;
+}
+// The pair as worn: each antler seated on the band at the chosen angle, left mirrored.
+function antlerPair(sk) {
+  const g = new THREE.Group();
+  const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+  const a = P.bandAngle * Math.PI / 180;
+  const n = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), t = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
+  const M = new THREE.Matrix4().makeBasis(t, new THREE.Vector3(0, 1, 0), n);
+  M.setPosition(new THREE.Vector3(Rb * Math.sin(a), 0, cz + Rb * Math.cos(a)).addScaledVector(n, -sk.mount.tunnelCZ));
+  const right = antlerObject(); right.applyMatrix4(M);
+  const left = antlerObject(); left.applyMatrix4(M); left.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+  g.add(right, left);
+  return g;
+}
+
+/* ------------------------------------------------------------ the faun (wear-view bust) */
+// Toon-shaded with inverted-hull outlines so it reads as a storybook character.
+// Only the antlers use the physically lit filament material.
+let faunGroup = null;
+function toonGradient() {
+  const t = new THREE.DataTexture(new Uint8Array([70, 150, 215, 255]), 4, 1, THREE.LuminanceFormat);
+  t.minFilter = t.magFilter = THREE.NearestFilter; t.generateMipmaps = false; t.needsUpdate = true;
+  return t;
+}
+function buildFaun() {
+  const grad = toonGradient();
+  const lin = (h) => new THREE.Color(h).convertSRGBToLinear();
+  const toon = (h, extra) => new THREE.MeshToonMaterial(Object.assign({ color: lin(h), gradientMap: grad }, extra || {}));
+  const M = {
+    fur: toon('#A5744B'), furDark: toon('#6E4A2F'), cream: toon('#EBDCC0'), ring: toon('#D7B48C'),
+    eye: toon('#1E1510'), shine: new THREE.MeshBasicMaterial({ color: 0xffffff }),
+    nose: toon('#2B1D16'), dark: new THREE.MeshBasicMaterial({ color: lin('#2A1D15') }),
+    blush: new THREE.MeshBasicMaterial({ color: lin('#D98C78'), transparent: true, opacity: 0.4, depthWrite: false }),
+    cloak: toon('#34503A'), collar: toon('#4F7048'), clasp: toon('#C9A75A'),
+  };
+  const line = new THREE.MeshBasicMaterial({ color: lin('#1A130E'), side: THREE.BackSide });
+  const sphere = new THREE.SphereGeometry(1, 40, 28);
+  const g = new THREE.Group();
+  const OL = 1.6;
+  function blob(mat, s, p, r, outline, nofit, parent) {
+    const host = parent || g;
+    const m = new THREE.Mesh(sphere, mat); m.scale.set(...s); m.position.set(...p); if (r) m.rotation.set(...r);
+    m.castShadow = true; m.receiveShadow = true;
+    if (nofit) m.userData.nofit = true;
+    if (outline) {
+      const o = new THREE.Mesh(sphere, line); o.scale.set(s[0] + OL, s[1] + OL, s[2] + OL); o.position.copy(m.position); o.rotation.copy(m.rotation);
+      if (nofit) o.userData.nofit = true;
+      host.add(o);
+    }
+    host.add(m);
+    return m;
+  }
+  function cone(mat, rad, h, p, r) {   // a soft fur tuft
+    const m = new THREE.Mesh(new THREE.ConeGeometry(rad, h, 16), mat); m.position.set(...p); m.rotation.set(...r); g.add(m);
+    const o = new THREE.Mesh(new THREE.ConeGeometry(rad + 1.4, h + 2.4, 16), line); o.position.copy(m.position); o.rotation.copy(m.rotation); g.add(o);
+  }
+  function arc(r, tube, p, mat) { // downward curve facing forward
+    const m = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 8, 24, Math.PI), mat);
+    m.rotation.set(-Math.PI / 2, 0, 0); m.position.set(...p); g.add(m); return m;
+  }
+  const onHead = (x, z, inset) => { // a point on the cranium surface (back half when y < 0)
+    const k = Math.max(0, 1 - (x / 74) ** 2 - (z / 92) ** 2);
+    return (y0) => [x, -6 + Math.sign(y0) * 92 * Math.sqrt(k) * inset, z];
+  };
+
+  // cranium (the band was fitted to this), jaw, and a snout that pushes forward
+  blob(M.fur, [74, 92, 92], [0, -6, 0], null, true);
+  blob(M.fur, [56, 58, 56], [0, 30, -40], null, true);
+  blob(M.fur, [27, 32, 24], [0, 70, -36], null, true);
+  blob(M.cream, [22, 17, 19], [0, 86, -40], null, false);          // pale snout tip
+  blob(M.cream, [27, 17, 18], [0, 50, -82], null, false);          // pale chin
+  blob(M.nose, [11, 7, 8], [0, 101, -27], [0.25, 0, 0], true);
+  blob(M.shine, [3, 1.5, 1.8], [-3.5, 107, -23], null, false);    // glint on the nose
+  arc(4.4, 1.3, [-4.4, 103.3, -45], M.dark); arc(4.4, 1.3, [4.4, 103.3, -45], M.dark);   // little "w" mouth
+
+  // big dark eyes in soft cream rings, each with a highlight
+  for (const sx of [-1, 1]) {
+    blob(M.ring, [15, 4, 17], [sx * 32, 73.5, 6], [0, 0, sx * 0.36], false);
+    blob(M.eye, [11.5, 5.5, 13.5], [sx * 32, 75.6, 6], [0, 0, sx * 0.36], true);
+    blob(M.shine, [3.2, 1.6, 3.4], [sx * 29, 80.4, 11], null, false);
+    blob(M.shine, [1.4, 1, 1.5], [sx * 35, 79.6, 1], null, false);
+  }
+  blob(M.blush, [10, 2.5, 6], [-44, 60, -30]); blob(M.blush, [10, 2.5, 6], [44, 60, -30]);
+  // fawn spots across the crown and nape
+  for (const [x, z, sz] of [[-40, 40, 7], [42, 34, 6], [-18, 62, 5.5], [22, 58, 6.5], [-50, 0, 6], [52, -8, 5.5], [0, 30, 6.5], [-28, -30, 5], [30, -40, 5.5]]) {
+    const p = onHead(x, z, 1 - (sz * 0.8) / 92)(-1);    // sunk in, so only a soft dot shows
+    blob(M.cream, [sz, sz, sz], p, null, false);
+  }
+  // cupped deer ears with dark tips
+  for (const sx of [-1, 1]) {
+    const ear = new THREE.Group();
+    blob(M.fur, [17, 6.5, 44], [0, 0, 0], null, true, false, ear);
+    blob(M.cream, [11.5, 3.4, 33], [0, 3.8, -2], null, false, false, ear);
+    blob(M.furDark, [10, 5.5, 11], [0, -0.5, 36], null, false, false, ear);
+    ear.position.set(sx * 70, -10, 14);
+    ear.rotation.set(-0.3, sx * -1.1, sx * 0.12);
+    g.add(ear);
+  }
+  // a sturdier neck leaning forward, a cream chest ruff, and a moss cloak with a brass clasp
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(38, 46, 110, 32), M.fur);
+  neck.rotation.x = Math.PI / 2 - 0.18; neck.position.set(0, -2, -112); neck.userData.nofit = true; g.add(neck);
+  const nl = new THREE.Mesh(new THREE.CylinderGeometry(39.6, 47.6, 108, 32), line);
+  nl.rotation.copy(neck.rotation); nl.position.copy(neck.position); nl.userData.nofit = true; g.add(nl);
+  blob(M.cream, [32, 20, 30], [0, 28, -126], null, true, true);
+  blob(M.cloak, [104, 62, 54], [0, -10, -196], null, true, true);
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(44, 11, 16, 48), M.collar);
+  collar.position.set(0, -4, -148); collar.userData.nofit = true; g.add(collar);
+  const cl = new THREE.Mesh(new THREE.TorusGeometry(44, 12.6, 16, 48), line);
+  cl.position.copy(collar.position); cl.userData.nofit = true; g.add(cl);
+  blob(M.clasp, [8, 4, 8], [0, 51, -148], null, true, true);
+  return g;
+}
+
+let lastFitKey = '';
+function rebuildScene() {
+  if (!glOK) return;
+  if (view === 'ar') { arRefreshPair(); return; }
+  while (root.children.length) root.remove(root.children[0]);
+  if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
+  else root.add(wearObject());
+  const fitKey = view + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
+  if (fitKey !== lastFitKey && shown) { fitCamera(); lastFitKey = fitKey; }
+}
+function fitCamera() {
+  const box = new THREE.Box3();
+  if (view === 'print') box.setFromObject(root.children[1] || root);
+  else {   // frame the head and antlers; the cloak can run off the bottom
+    root.updateMatrixWorld(true);
+    root.traverse((o) => { if (o.isMesh && !o.userData.nofit && !(o.parent && o.parent.userData.nofit)) box.expandByObject(o); });
+  }
+  const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
+  const r = Math.max(s.x, s.y, s.z) * 0.62;
+  const dist = r / Math.sin((camera.fov * Math.PI) / 360) * (view === 'print' ? 1.1 : 1.2);
+  const DIRS = { print: { '34': [0.75, -0.62, 0.32], front: [0, 1, 0.1], side: [1, 0, 0.1] }, wear: { '34': [0.45, 1, 0.3], front: [0, 1, 0.08], side: [1, 0, 0.08] } };
+  const dir = new THREE.Vector3(...DIRS[view][camView]);
+  camera.position.copy(c).addScaledVector(dir.normalize(), dist);
+  camera.near = dist / 50; camera.far = dist * 20; camera.updateProjectionMatrix();
+  controls.target.copy(c); controls.update();
+  const sc = keyLight.shadow.camera, rr = Math.max(s.x, s.y, s.z) * 0.8;
+  keyLight.target.position.copy(c); keyLight.position.copy(c).add(new THREE.Vector3(260, 180, 420).setLength(rr * 3));
+  sc.left = -rr; sc.right = rr; sc.top = rr; sc.bottom = -rr; sc.near = rr * 0.5; sc.far = rr * 6; sc.updateProjectionMatrix();
+}
+function resize() {
+  if (!glOK) return;
+  const el = $('vp'), w = el.clientWidth, h = el.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+function loop() { if (glOK) { controls.update(); renderer.render(scene, camera); } requestAnimationFrame(loop); }
+window.addEventListener('resize', resize);
+if (window.ResizeObserver) new ResizeObserver(resize).observe($('vp'));
+
+/* ------------------------------------------------------------ status + readouts */
+function updateReadout() {
+  const fresh = built && built.key === keyOf(P);
+  const fit = fresh ? built.report.fit : shown ? shown.fit : null;
+  const s = fit ? [fit.w, fit.d, fit.h] : null;
+  const fits = fit ? fit.fits : true;
+  const f = (x) => x.toFixed(0);
+  const fil = C.FILAMENTS[P.filament] || C.FILAMENTS.bone;
+  $('dims').innerHTML = s ? `<b>${f(s[0])} × ${f(s[1])} × ${f(s[2])}</b> mm · ${fit.scale.toFixed(2)}×<br>${fits ? 'one piece on the P2S' : '<span style="color:#E3A24A">too big for the P2S</span>'} · <span style="display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:-1px;background:${fil.hex}"></span> ${P.filament === 'oak' ? 'White Oak' : 'Bone White'}` : 'Shaping…';
+  const st = $('status');
+  const stale = !shown || shown.key !== keyOf(P);
+  if (building) { st.className = 'pill busy'; st.lastChild.textContent = 'Casting printable mesh…'; }
+  else if (fresh && built.report.watertight) { st.className = 'pill ok'; st.lastChild.textContent = 'Watertight · ready to print'; }
+  else if (fresh) { st.className = 'pill warn'; st.lastChild.textContent = 'Mesh check failed'; }
+  else if (stale) { st.className = 'pill busy'; st.lastChild.textContent = 'Growing…'; }
+  else { st.className = 'pill'; st.lastChild.textContent = 'Live preview'; }
+  updatePlate();
+  const r = fresh ? built.report : null;
+  $('checks').classList.toggle('empty', !r && window.innerWidth < 820);
+  $('c-tri').textContent = r ? (r.triangles / 1000).toFixed(0) + 'k' : '—';
+  $('c-open').textContent = r ? String(r.openEdges + r.nonManifoldEdges) : '—';
+  $('c-open').className = r ? (r.openEdges + r.nonManifoldEdges === 0 ? 'good' : 'bad') : '';
+  $('c-shell').textContent = r ? String(r.shells) : '—';
+  $('c-shell').className = r ? (r.shells === 1 ? 'good' : 'bad') : '';
+  $('c-g').textContent = r ? (r.volume / 1000 * 1.24).toFixed(0) + ' g' : '—';
+  const msg = $('msg');
+  const warns = [];
+  if (fit && !fits) warns.push(`Too big to print in one piece. Turn on "Shrink to fit the printer" or lower the scale.`);
+  const notes = [];
+  if (fit && fit.shrunk) notes.push(`Scaled from ${fit.requested.toFixed(2)}× to ${fit.scale.toFixed(2)}× so it prints in one piece.`);
+  if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate to fit.`);
+  if (P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least 6 mm wide.');
+  if (building) { msg.className = 'msg'; msg.textContent = 'Building the printable mesh…'; }
+  else if (warns.length) { msg.className = 'msg warn'; msg.textContent = warns.join(' '); }
+  else if (fresh) { msg.className = 'msg'; msg.textContent = r.watertight && r.shells === 1 ? `One closed solid, ${r.triangles.toLocaleString()} triangles. Ready to download. ${notes.join(' ')}` : 'The mesh failed its check. Try a finer resolution.'; }
+  else { msg.className = 'msg'; msg.textContent = (notes.join(' ') + ' The preview is a coarse version of the real mesh. Build it at full resolution when the shape looks right.').trim(); }
+  $('build').disabled = building;
+  $('build').textContent = fresh ? 'Rebuild mesh' : 'Build mesh';
+}
+
+/* ------------------------------------------------------------ change pipeline */
+let raf = 0;
+function changed() {
+  try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {}
+  for (const b of presetsEl.children) b.setAttribute('aria-pressed', String(b.dataset.k === P.preset));
+  if (raf) return;
+  raf = requestAnimationFrame(() => { raf = 0; requestPreview(); updateReadout(); });
+}
+
+/* ------------------------------------------------------------ meshing worker */
+// One worker, one job at a time. Newer preview requests replace older queued ones;
+// a build jumps the queue.
+let worker = null, running = null, queued = null, jobId = 0;
+function makeWorker() {
+  try {
+    const src = $('antler-core').textContent + `
+      self.onmessage = function (e) {
+        var j = e.data;
+        var sk = AntlerCore.buildSkeleton(j.params);
+        var mesh = AntlerCore.meshAntler(sk, j.res, j.kind === 'build' ? function (p) { self.postMessage({ type: 'progress', id: j.id, p: p }); } : null);
+        var report = j.kind === 'build' ? AntlerCore.validateMesh(mesh) : AntlerCore.meshBounds(mesh);
+        report.fit = sk.fit;
+        self.postMessage({ type: 'done', id: j.id, mesh: mesh, report: report }, [mesh.positions.buffer, mesh.indices.buffer, mesh.attr.buffer]);
+      };`;
+    const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+    w.onmessage = onWorker;
+    w.onerror = () => { worker = null; if (running) { const j = running; running = null; runInline(j); } };
+    return w;
+  } catch (e) { return null; }
+}
+function previewRes(p) {
+  const L = p.beamLength * p.scale;
+  return Math.max(0.8, Math.min(1.6, L / 150));
+}
+function requestPreview() {
+  const snap = JSON.parse(JSON.stringify(P));
+  if (queued && queued.kind === 'build') return;
+  queued = { kind: 'preview', params: snap, key: keyOf(snap), res: previewRes(snap) };
+  pump();
+}
+function pump() {
+  if (running || !queued) return;
+  running = queued; queued = null; running.id = ++jobId;
+  if (running.kind === 'build') { building = true; updateReadout(); }
+  if (!worker) worker = makeWorker();
+  if (worker) worker.postMessage({ id: running.id, kind: running.kind, params: running.params, res: running.res });
+  else runInline(running);
+}
+function runInline(j) {
+  running = j;
+  setTimeout(() => {
+    const sk = C.buildSkeleton(j.params);
+    const mesh = C.meshAntler(sk, j.res);
+    const rep = j.kind === 'build' ? C.validateMesh(mesh) : C.meshBounds(mesh); rep.fit = sk.fit;
+    finishJob(j, mesh, rep);
+  }, 20);
+}
+function onWorker(e) {
+  const d = e.data;
+  if (!running || d.id !== running.id) return;
+  if (d.type === 'progress') { $('prog').style.width = (d.p * 100).toFixed(1) + '%'; return; }
+  finishJob(running, d.mesh, d.report);
+}
+function finishJob(j, mesh, report) {
+  running = null;
+  if (j.kind === 'build') {
+    building = false; $('prog').style.width = '0';
+    built = { mesh, report, key: j.key, params: j.params };
+    if (j.key === keyOf(P)) { setShown(mesh, j.key, 'build'); shown.size = report.size; shown.fit = report.fit; }
+    else toast('Settings changed while building. Build again to include them.');
+    if (j.resolve) j.resolve(built);
+  } else if (!(built && built.key === keyOf(P))) {
+    setShown(mesh, j.key, 'preview'); shown.size = report.size; shown.fit = report.fit;
+  }
+  rebuildScene(); updateReadout();
+  pump();
+}
+function build() {
+  if (building || (queued && queued.kind === 'build')) return Promise.resolve(null);
+  const snap = JSON.parse(JSON.stringify(P));
+  return new Promise((resolve) => {
+    queued = { kind: 'build', params: snap, key: keyOf(snap), res: Number(snap.resolution), resolve };
+    pump();
+  });
+}
+
+/* ------------------------------------------------------------ files */
+let dlCap;
+async function getDownloads() {
+  if (dlCap !== undefined) return dlCap;
+  try { dlCap = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dlCap = null; }
+  return dlCap;
+}
+async function offerFile(name, data) {
+  const dl = await getDownloads();
+  if (dl) {
+    try { await dl.save({ filename: name, data }); toast('Saved ' + name); }
+    catch (e) {
+      if (e && e.code === 'declined') toast('Download cancelled');
+      else if (e && e.code === 'rate_limited') toast('A save prompt is already open');
+      else toast('This view can’t save files. Open the page in a browser tab.');
+    }
+    return;
+  }
+  if (window.claude) { toast('This view can’t save files. Open the page in a browser tab.'); return; }
+  const url = URL.createObjectURL(new Blob([data]));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+const slug = () => 'antlers-' + (P.preset || 'custom') + '-' + (C.FILAMENTS[P.filament] || C.FILAMENTS.bone).slug;
+$('download').addEventListener('click', async () => {
+  let b = built && built.key === keyOf(P) ? built : await build();
+  if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
+  if (!b.report.watertight || b.report.shells !== 1) { toast('Mesh failed its check, so nothing was exported.'); return; }
+  const base = slug();
+  const zip = C.makeZip([
+    { name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: b.report.fit.angle })) },
+    { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -b.report.fit.angle })) },
+    { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params: b.params }, null, 2) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), b.report, b.report.fit) },
+  ]);
+  offerFile(base + '.zip', zip);
+});
+$('build').addEventListener('click', () => build());
+$('save-design').addEventListener('click', () => offerFile(slug() + '-design.json', JSON.stringify({ app: 'antler-forge', version: 1, params: P }, null, 2)));
+$('load-design').addEventListener('click', () => $('file-in').click());
+$('file-in').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const j = JSON.parse(await f.text()); P = C.resolveParams(j.params || j); syncControls(); changed(); toast('Brought ' + f.name + ' back from the woods.'); }
+  catch (err) { toast('That file isn’t an Antler Forge design (expected .json).'); }
+  e.target.value = '';
+});
+$('reroll').addEventListener('click', () => { P.seed = 1 + Math.floor(Math.random() * 9998); if (P.jitter < 0.05) P.jitter = 0.08; syncControls(); changed(); toast(rackName(P) + ' grows in.'); });
+
+for (const [id, v] of [['v-print', 'print'], ['v-wear', 'wear'], ['v-ar', 'ar']]) {
+  $(id).addEventListener('click', () => {
+    const was = view;
+    view = v;
+    for (const b of ['v-print', 'v-wear', 'v-ar']) $(b).setAttribute('aria-pressed', String(b === id));
+    if (v === 'ar') { if (was !== 'ar') arEnter(); return; }
+    if (was === 'ar') arExit();
+    rebuildScene();
+  });
+}
+
+for (const [id, v] of [['cam-34', '34'], ['cam-front', 'front'], ['cam-side', 'side']]) {
+  $(id).addEventListener('click', () => {
+    camView = v;
+    for (const b of ['cam-34', 'cam-front', 'cam-side']) $(b).setAttribute('aria-pressed', String(b === id));
+    if (glOK && shown) fitCamera();
+  });
+}
+
+let tt;
+function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 2800); }
+
+/* ------------------------------------------------------------ try-on (AR) */
+// Face Mesh (MediaPipe, bundled locally in vendor/face_mesh) finds 468 face landmarks.
+// A head frame is fitted from four of them (forehead, chin, both face sides), and the
+// antler pair is placed exactly as on the headband view, in real millimetres.
+// Every frame stays on this device; nothing is uploaded.
+const AR = {
+  on: false, mode: null, renderer: null, scene: null, cam: null, bg: null, pair: null, occ: null,
+  video: null, stream: null, facing: 'user', photo: null, W: 0, H: 0, fm: null, fmReady: null,
+  busy: false, pose: null, found: false, fit: { size: 1, lift: 0 },
+};
+try { const f = JSON.parse(localStorage.getItem('antler-forge-fit') || 'null'); if (f) AR.fit = f; } catch (e) {}
+const FACE_W_MM = 145;       // landmarks 234 ↔ 454, side to side across the face
+const HEAD_BACK_MM = 28;     // head centre sits behind the face-side midpoint…
+const HEAD_UP_MM = 22;       // …and a little above it (room for hair under the band)
+
+function arSetup() {
+  if (AR.renderer) return;
+  const cv = $('ar');
+  AR.renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+  AR.renderer.outputEncoding = THREE.sRGBEncoding;
+  AR.renderer.toneMapping = THREE.ACESFilmicToneMapping; AR.renderer.toneMappingExposure = 1.05;
+  AR.scene = new THREE.Scene();
+  AR.cam = new THREE.OrthographicCamera(0, 1, 1, 0, -20000, 20000);
+  AR.cam.position.z = 10000;
+  AR.scene.add(new THREE.HemisphereLight(0xf3eee6, 0x3a332c, 0.75));
+  const key = new THREE.DirectionalLight(0xfff4e6, 1.0); key.position.set(0.3, 0.6, 1); AR.scene.add(key);
+  const fill = new THREE.DirectionalLight(0xdfe7ff, 0.35); fill.position.set(-0.6, -0.2, 0.6); AR.scene.add(fill);
+  AR.root = new THREE.Group(); AR.root.matrixAutoUpdate = false; AR.scene.add(AR.root);
+  // the photo/video, plus a blurred continuation above it so tall antlers have headroom
+  AR.media = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ toneMapped: false, depthWrite: false, depthTest: false }));
+  AR.media.renderOrder = -10;
+  AR.bgScene = new THREE.Scene();
+  AR.media.position.z = -5000; AR.bgScene.add(AR.media);
+  AR.room = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+    uniforms: { map: { value: null }, ov: { value: 0.1 } }, depthWrite: false, depthTest: false, transparent: true,
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'uniform sampler2D map; uniform float ov; varying vec2 vUv; void main(){ vec3 c = vec3(0.0);'
+      + ' float t = max(0.0, (vUv.y - ov) / (1.0 - ov)); float y = 0.985 - t * 0.03;'
+      + ' for (int i = -6; i <= 6; i++) { c += texture2D(map, vec2(clamp(vUv.x + float(i) * 0.014, 0.0, 1.0), y)).rgb; }'
+      + ' c /= 13.0; gl_FragColor = vec4(c * mix(1.0, 0.55, t), smoothstep(0.0, ov, vUv.y)); }',
+  }));
+  AR.room.position.z = -5000; AR.room.renderOrder = -9; AR.bgScene.add(AR.room);
+  AR.renderer.autoClear = false;   // backdrop pass, then the antlers on top
+  // depth-only head so antler parts behind the head are hidden by it
+  AR.occ = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), new THREE.MeshBasicMaterial({ colorWrite: false }));
+  AR.occ.scale.set(72, 90, 90); AR.occ.position.set(0, -6, 0); AR.occ.renderOrder = -1;
+  AR.root.add(AR.occ);
+}
+function arRefreshPair() {
+  if (!AR.root || !shown) return;
+  if (AR.pair) AR.root.remove(AR.pair);
+  AR.pair = antlerPair(C.buildSkeleton(P));
+  AR.root.add(AR.pair);
+  arRender();
+}
+const HEADROOM = 0.42;   // extra canvas above the picture, as a share of its height
+function arSize(W, H, tex) {
+  AR.W = W; AR.H = H;
+  const Ht = Math.round(H * (1 + HEADROOM));
+  AR.Ht = Ht;
+  AR.renderer.setPixelRatio(1);
+  AR.renderer.setSize(W, Ht, false);
+  AR.cam.left = 0; AR.cam.right = W; AR.cam.top = Ht; AR.cam.bottom = 0; AR.cam.updateProjectionMatrix();
+  AR.media.scale.set(W, H, 1); AR.media.position.set(W / 2, H / 2, -5000);
+  const lap = H * 0.06;   // feather the join over the top of the picture
+  AR.room.scale.set(W, Ht - H + lap, 1); AR.room.position.set(W / 2, H - lap + (Ht - H + lap) / 2, -5000);
+  AR.room.material.uniforms.ov.value = lap / (Ht - H + lap);
+  if (tex) { AR.media.material.map = tex; AR.media.material.needsUpdate = true; AR.room.material.uniforms.map.value = tex; }
+  arLayout();
+}
+function arLayout() {   // cover (camera) or contain (photo) inside the stage
+  if (!AR.W) return;
+  const st = document.querySelector('.stage'), sw = st.clientWidth, sh = st.clientHeight;
+  const k = Math.min(sw / AR.W, sh / AR.Ht);   // show the whole frame so the antlers never get cropped
+  const cv = $('ar'), w = AR.W * k, h = AR.Ht * k;
+  cv.style.width = w + 'px'; cv.style.height = h + 'px';
+  cv.style.left = (sw - w) / 2 + 'px'; cv.style.top = (sh - h) / 2 + 'px';
+  cv.style.transform = AR.mode === 'camera' && AR.facing === 'user' ? 'scaleX(-1)' : 'none';
+}
+window.addEventListener('resize', arLayout);
+
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('load ' + src)); document.head.appendChild(s); });
+}
+// Opened by double-clicking (file://), browsers block the tracker from reading its own
+// binary files. Each one also ships as a script (<name>.b64.js), which file:// pages may
+// load, and this shim answers the tracker's fetch/XHR calls from those instead.
+function installFileShim() {
+  if (window.__afShim) return; window.__afShim = true;
+  const base = 'vendor/face_mesh/';
+  const store = (window.__AF_ASSETS = window.__AF_ASSETS || {});
+  const nameOf = (u) => { const m = String(u || '').match(/vendor\/face_mesh\/([^?#\/]+\.wasm)(?:[?#]|$)/); return m ? m[1] : null; };
+  const bytes = async (n) => {
+    if (!store[n]) await loadScript(base + n + '.b64.js');
+    const b = atob(store[n]); const u = new Uint8Array(b.length);
+    for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return u;
+  };
+  const realFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const n = nameOf(typeof input === 'string' ? input : input && input.url);
+    if (!n) return realFetch(input, init);
+    return new Response(await bytes(n), { status: 200, headers: { 'Content-Type': 'application/wasm' } });
+  };
+  const RealXHR = window.XMLHttpRequest;
+  function ShimXHR() {
+    this.readyState = 0; this.status = 0; this.statusText = ''; this.response = null; this.responseType = '';
+    this.onload = this.onerror = this.onprogress = this.onreadystatechange = null; this._ls = {};
+  }
+  ShimXHR.prototype.open = function (m, u) { this._n = nameOf(u); this._u = u; this.readyState = 1; };
+  ShimXHR.prototype.setRequestHeader = function () {};
+  ShimXHR.prototype.overrideMimeType = function () {};
+  ShimXHR.prototype.getResponseHeader = function () { return null; };
+  ShimXHR.prototype.getAllResponseHeaders = function () { return ''; };
+  ShimXHR.prototype.abort = function () {};
+  ShimXHR.prototype.addEventListener = function (t, f) { (this._ls[t] = this._ls[t] || []).push(f); };
+  ShimXHR.prototype.removeEventListener = function (t, f) { this._ls[t] = (this._ls[t] || []).filter((g) => g !== f); };
+  ShimXHR.prototype._fire = function (t, e) { if (typeof this['on' + t] === 'function') this['on' + t](e); (this._ls[t] || []).forEach((f) => f.call(this, e)); };
+  ShimXHR.prototype.send = function () {
+    const self = this;
+    if (!self._n) {   // anything else on a file:// page goes to the real XHR
+      const x = new RealXHR(); x.open('GET', self._u); x.responseType = self.responseType || '';
+      x.onload = () => { self.status = x.status; self.response = x.response; self.readyState = 4; self._fire('readystatechange', {}); self._fire('load', {}); };
+      x.onerror = (e) => { self.readyState = 4; self._fire('error', e); };
+      try { x.send(); } catch (e) { self._fire('error', e); }
+      return;
+    }
+    bytes(self._n).then((u) => {
+      self.status = 200; self.statusText = 'OK'; self.readyState = 4;
+      self.response = self.responseType === 'blob' ? new Blob([u]) : u.buffer;
+      const ev = { lengthComputable: true, loaded: u.length, total: u.length };
+      self._fire('progress', ev); self._fire('readystatechange', ev); self._fire('load', ev); self._fire('loadend', ev);
+    }, (e) => { self.readyState = 4; self._fire('error', e); });
+  };
+  window.XMLHttpRequest = ShimXHR;
+  // the tracker adds its helper scripts in CORS mode, which file:// pages refuse; load them plainly
+  const mk = document.createElement.bind(document);
+  document.createElement = function (tag, opts) {
+    const el = mk(tag, opts);
+    if (String(tag).toLowerCase() === 'script') {
+      Object.defineProperty(el, 'crossOrigin', { configurable: true, get: () => null, set: () => {} });
+      const sa = el.setAttribute.bind(el);
+      el.setAttribute = (k, v) => { if (String(k).toLowerCase() !== 'crossorigin') sa(k, v); };
+    }
+    return el;
+  };
+}
+function webgl2() { try { return !!document.createElement('canvas').getContext('webgl2'); } catch (e) { return false; } }
+function trackerError(e) {
+  if (!webgl2()) return 'The face tracker needs WebGL 2, which this browser has turned off. Try Chrome, or a newer Safari.';
+  if (location.protocol === 'file:') return 'The face tracker couldn’t load from this folder. Keep the vendor folder next to index.html, or run node serve.js and open http://localhost:8080.';
+  return 'The face tracker couldn’t load (' + ((e && e.message) || 'unknown error').slice(0, 80) + '). Check your connection and tap Camera to try again.';
+}
+function arTracker() {
+  if (AR.fmReady) return AR.fmReady;
+  AR.fmReady = (async () => {
+    if (location.protocol === 'file:') installFileShim();
+    if (!window.FaceMesh) await loadScript('vendor/face_mesh/face_mesh.js');
+    // the two binary blobs ship with a .wasm suffix so every host serves them
+    const fm = new window.FaceMesh({ locateFile: (f) => 'vendor/face_mesh/' + (/\.(data|binarypb)$/.test(f) ? f + '.wasm' : f) });
+    fm.setOptions({ maxNumFaces: 1, refineLandmarks: false, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    fm.onResults(arOnResults);
+    await fm.initialize();
+    AR.fm = fm;
+    return fm;
+  })();
+  AR.fmReady.catch(() => { AR.fmReady = null; });
+  return AR.fmReady;
+}
+
+const V = (x, y, z) => new THREE.Vector3(x, y, z);
+function arOnResults(r) {
+  const l = r.multiFaceLandmarks && r.multiFaceLandmarks[0];
+  AR.found = !!l;
+  if (!l) { arStatus(AR.mode === 'photo' ? 'No face found. Try a well-lit photo, facing forward.' : 'Looking for your face…'); arRender(); return; }
+  const W = AR.W, H = AR.H;
+  const p = (i) => V(l[i].x * W, (1 - l[i].y) * H, -l[i].z * W);
+  const a = p(234), b = p(454), top = p(10), chin = p(152), nose = p(1);
+  const mid = a.clone().add(b).multiplyScalar(0.5);
+  const across = b.clone().sub(a), faceW = across.length();
+  const up0 = top.clone().sub(chin);
+  let fwd = across.clone().cross(up0).normalize();
+  if (fwd.dot(nose.clone().sub(mid)) < 0) fwd.negate();
+  const up = fwd.clone().cross(across).normalize();
+  if (up.dot(up0) < 0) up.negate();
+  const side = fwd.clone().cross(up).normalize();         // right-handed: side, fwd, up
+  const s = (faceW / FACE_W_MM) * AR.fit.size;
+  const centre = mid.clone().addScaledVector(fwd, -HEAD_BACK_MM * s).addScaledVector(up, (HEAD_UP_MM + AR.fit.lift) * s);
+  const next = { side, fwd, up, centre, s };
+  if (AR.pose && AR.mode === 'camera') {   // light smoothing so the antlers don't jitter
+    const k = 0.45, o = AR.pose;
+    next.side = o.side.clone().lerp(side, k).normalize(); next.fwd = o.fwd.clone().lerp(fwd, k).normalize();
+    next.up = next.side.clone().cross(next.fwd).normalize(); next.fwd = next.up.clone().cross(next.side).normalize();
+    next.centre = o.centre.clone().lerp(centre, k); next.s = o.s + (s - o.s) * k;
+  }
+  AR.pose = next;
+  arStatus('');
+  arRender();
+}
+function arApplyPose() {
+  const q = AR.pose;
+  if (!q) return;
+  const m = new THREE.Matrix4().makeBasis(q.side.clone().multiplyScalar(q.s), q.fwd.clone().multiplyScalar(q.s), q.up.clone().multiplyScalar(q.s));
+  m.setPosition(q.centre);
+  AR.root.matrix.copy(m); AR.root.matrixWorldNeedsUpdate = true;
+}
+function arRender() {
+  if (!AR.renderer || !AR.on) return;
+  if (AR.bg && AR.bg.isVideoTexture) AR.bg.needsUpdate = true;
+  AR.root.visible = AR.found && !!AR.pose;
+  arApplyPose();
+  AR.renderer.clear();
+  AR.renderer.render(AR.bgScene, AR.cam);
+  AR.renderer.clearDepth();
+  AR.renderer.render(AR.scene, AR.cam);
+}
+function arStatus(t) { const el = $('ar-note'); el.textContent = t; el.hidden = !t; }
+
+let arLoop = 0;
+function arTick() {
+  if (!AR.on || AR.mode !== 'camera') { arLoop = 0; return; }
+  const v = AR.video;
+  if (v.videoWidth && (v.videoWidth !== AR.W || v.videoHeight !== AR.H)) arSize(v.videoWidth, v.videoHeight, AR.bg);  // phone rotated
+  if (v.readyState >= 2 && AR.fm && !AR.busy) {
+    AR.busy = true;
+    AR.fm.send({ image: v }).catch(() => {}).then(() => { AR.busy = false; });
+  }
+  arRender();
+  arLoop = requestAnimationFrame(arTick);
+}
+function arStartLoop() { if (!arLoop) arLoop = requestAnimationFrame(arTick); }
+function arStopCamera() {
+  if (AR.stream) { AR.stream.getTracks().forEach((t) => t.stop()); AR.stream = null; }
+}
+async function arStartCamera() {
+  arSetup();
+  arStatus('Starting the camera…');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Use a photo, or open the standalone Antler Forge folder in your browser for live try-on.' : 'This browser can’t open the camera here. Live try-on needs https or localhost.');
+    return;
+  }
+  try {
+    arStopCamera();
+    AR.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: AR.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  } catch (e) {
+    arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Use a photo, or open the standalone Antler Forge folder in your browser for live try-on.'
+      : e && e.name === 'NotAllowedError' ? 'Camera access was declined. Allow it in your browser’s site settings, or use a photo.' : 'Couldn’t open a camera. Try a photo instead.');
+    return;
+  }
+  let v = AR.video;
+  if (!v) {
+    v = AR.video = document.createElement('video');
+    for (const a of ['playsinline', 'webkit-playsinline', 'muted', 'autoplay']) v.setAttribute(a, '');
+    v.muted = true; v.playsInline = true;
+    // iOS only decodes frames for a video that is in the page, so keep it there, invisibly
+    v.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(v);
+  }
+  v.srcObject = AR.stream;
+  try { await v.play(); } catch (e) { /* autoplay rules: the tap that got us here usually covers it */ }
+  if (!v.videoWidth) await new Promise((res) => { v.onloadedmetadata = res; setTimeout(res, 3000); });
+  AR.mode = 'camera'; AR.pose = null; AR.found = false;
+  if (AR.bg) AR.bg.dispose();
+  AR.bg = new THREE.VideoTexture(v); AR.bg.encoding = THREE.sRGBEncoding;
+  arSize(v.videoWidth || 1280, v.videoHeight || 720, AR.bg);
+  arShowBar();
+  arRefreshPair();
+  arStartLoop();                                  // show the live picture right away
+  if (!AR.fm) arStatus('Loading the face tracker. The first time takes a moment…');
+  try { await arTracker(); } catch (e) { console.error(e); arStatus(trackerError(e)); return; }
+  if (!AR.found) arStatus('Looking for your face…');
+}
+async function arUsePhoto(file) {
+  arSetup(); arStopCamera();
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  try { await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; }); }
+  catch (e) { arStatus('That file isn’t an image this browser can open.'); return; }
+  const k = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  URL.revokeObjectURL(url);
+  AR.mode = 'photo'; AR.photo = c; AR.pose = null; AR.found = false;
+  if (AR.bg) AR.bg.dispose();
+  AR.bg = new THREE.CanvasTexture(c); AR.bg.encoding = THREE.sRGBEncoding;
+  arSize(c.width, c.height, AR.bg);
+  arShowBar();
+  arStatus('Finding your face…');
+  arRender();
+  try { await arTracker(); } catch (e) { console.error(e); arStatus(inViewer() ? 'The face tracker couldn’t load inside this viewer. Use the Antler Forge folder from the download instead.' : trackerError(e)); return; }
+  arRefreshPair();
+  await AR.fm.send({ image: c });
+}
+function arShowBar() { $('ar-card').hidden = true; $('ar-bar').hidden = false; $('ar').hidden = false; arLayout(); }
+function inViewer() { return !!window.claude; }
+
+async function arSnapshot() {
+  if (!AR.renderer) return;
+  arRender();
+  const src = $('ar');
+  const out = document.createElement('canvas'); out.width = AR.W; out.height = AR.Ht;
+  const ctx = out.getContext('2d');
+  if (AR.mode === 'camera' && AR.facing === 'user') { ctx.translate(AR.W, 0); ctx.scale(-1, 1); }
+  ctx.drawImage(src, 0, 0);
+  const blob = await new Promise((r) => out.toBlob(r, 'image/png'));
+  offerFile(rackName(P).replace(/^The /, '').replace(/\s+/g, '-').toLowerCase() + '-try-on.png', new Uint8Array(await blob.arrayBuffer()));
+}
+
+function arEnter() {
+  AR.on = true;
+  document.querySelector('.stage').classList.add('ar-on');
+  $('ar-ui').hidden = false;
+  $('ar').hidden = !AR.mode;
+  if (!AR.mode) { $('ar-card').hidden = false; $('ar-bar').hidden = true; arStatus(''); }
+  else if (AR.mode === 'camera') arStartCamera(); else { arRefreshPair(); arRender(); }
+  $('ar-size').value = AR.fit.size; $('ar-lift').value = AR.fit.lift;
+}
+function arExit() {
+  AR.on = false; arStopCamera();
+  if (AR.mode === 'camera') AR.mode = null;
+  document.querySelector('.stage').classList.remove('ar-on');
+  $('ar').hidden = true; $('ar-ui').hidden = true;
+}
+$('ar-cam').addEventListener('click', arStartCamera);
+$('ar-cam2').addEventListener('click', arStartCamera);
+$('ar-photo').addEventListener('click', () => $('ar-file').click());
+$('ar-photo2').addEventListener('click', () => $('ar-file').click());
+$('ar-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) arUsePhoto(f); e.target.value = ''; });
+$('ar-flip').addEventListener('click', () => { AR.facing = AR.facing === 'user' ? 'environment' : 'user'; if (AR.mode === 'camera') arStartCamera(); });
+$('ar-snap').addEventListener('click', arSnapshot);
+for (const [id, k] of [['ar-size', 'size'], ['ar-lift', 'lift']]) {
+  $(id).addEventListener('input', (e) => {
+    AR.fit[k] = Number(e.target.value);
+    try { localStorage.setItem('antler-forge-fit', JSON.stringify(AR.fit)); } catch (err) {}
+    if (AR.mode === 'photo' && AR.fm && AR.photo) AR.fm.send({ image: AR.photo }); else arRender();
+  });
+}
+
+/* ------------------------------------------------------------ lore, names, wandering */
+const LORE = {
+  whitetail: 'The lyre of the eastern woods. Tines rise from the beam like candle flames.',
+  mule: 'Each branch splits and splits again, a doubled Y against the sagebrush dusk.',
+  elk: 'Long beams swept back over the shoulders, points reaching forward into the fog.',
+  reindeer: 'The winter crown: a sweeping arc and a palm that catches the first snow.',
+  stag: 'The royal of the old forest, with a cup of points gathered at the crown.',
+  moose: 'Broad palms like the leaves of some enormous water plant, fringed with points.',
+  spirit: 'Grown, not shed. Branches spiral outward the way roots find their way through stone.',
+  fawn: 'Velvet buttons, the first promise of a crown.',
+};
+const NAME_A = ['Mossbound', 'Hollow', 'Lantern', 'Thornlit', 'Silver-birch', 'Elder', 'Hushwood', 'Fernlight', 'Rimefrost', 'Wren', 'Barrow', 'Gloaming', 'Briar', 'Starwood', 'Lichen', 'Wildwood', 'Ashen', 'Duskfall', 'Old Oak', 'Deepfern'];
+const NAME_B = { default: ['Crown', 'Lyre', 'Candelabra', 'Bough', 'Diadem', 'Harp', 'Spire', 'Coronet', 'Branchwork', 'Tangle', 'Rack', 'Thicket'], moose: ['Palms', 'Fans', 'Shields', 'Leaves'], fawn: ['Buttons', 'Nubs', 'Buds'] };
+function rackName(p) {
+  let h = 2166136261;
+  for (const ch of p.preset + ':' + p.seed + ':' + Math.round(p.beamLength) + ':' + p.tineCount) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+  h >>>= 0;
+  const b = NAME_B[p.preset] || NAME_B.default;
+  return 'The ' + NAME_A[h % NAME_A.length] + ' ' + b[(h >>> 8) % b.length];
+}
+let lastPlate = '';
+function updatePlate() {
+  const label = (C.PRESETS[P.preset] || {}).label || 'Custom';
+  const name = rackName(P);
+  const key = name + label;
+  if (key === lastPlate) return;
+  lastPlate = key;
+  const el = $('plate');
+  el.innerHTML = '';
+  el.append(document.createTextNode(name));
+  const sm = document.createElement('small'); sm.textContent = label; el.append(sm);
+  $('lore').textContent = LORE[P.preset] || '';
+}
+// "Wander the woods": a new species and a new, still-balanced variation of it
+const WANDER = [
+  ['beamLength', 0.1, 'rel'], ['beamCurl', 14, 'abs'], ['beamSpread', 8, 'abs'], ['beamInCurl', 14, 'abs'],
+  ['tineLength', 0.14, 'rel'], ['tineAngle', 8, 'abs'], ['tineFan', 8, 'abs'], ['tineCurve', 10, 'abs'], ['crownLength', 0.15, 'rel'],
+];
+$('wander').addEventListener('click', () => {
+  const keys = Object.keys(C.PRESETS).filter((k) => k !== 'fawn' && k !== P.preset);
+  const pick = keys[Math.floor(Math.random() * keys.length)];
+  const next = C.presetParams(pick, P);
+  const r = () => Math.random() * 2 - 1;
+  for (const [k, amt, mode] of WANDER) next[k] = mode === 'rel' ? next[k] * (1 + amt * r()) : next[k] + amt * r();
+  if (next.tineCount > 1 && Math.random() < 0.4) next.tineCount += Math.random() < 0.5 ? -1 : 1;
+  next.tineCrest = 0.25 + Math.random() * 0.45;
+  next.tineInward = Math.max(0, next.tineInward + 8 * r());
+  next.jitter = 0.05 + Math.random() * 0.15;
+  next.wobble = Math.max(0.05, Math.min(0.45, next.wobble + 0.1 * r()));
+  next.seed = 1 + Math.floor(Math.random() * 9998);
+  P = C.resolveParams(next);
+  syncControls(); changed();
+  toast('You found ' + rackName(P) + '.');
+});
+
+/* ------------------------------------------------------------ fireflies */
+// A handful of fireflies drifting low over the ferns. Each one is mostly dark and
+// flashes on its own slow rhythm: a quick yellow-green swell, then a long fade.
+(function fireflies() {
+  const cv = $('motes'), ctx = cv.getContext('2d');
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const N = 9, flies = [];
+  let w = 0, h = 0, dpr = 1;
+  function size() { dpr = Math.min(2, window.devicePixelRatio || 1); w = cv.clientWidth; h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr; }
+  for (let i = 0; i < N; i++) flies.push({
+    x: Math.random(), y: 0.55 + Math.random() * 0.4,          // low, among the trees and ferns
+    hx: Math.random() * 6.28, hy: Math.random() * 6.28, sp: 0.04 + Math.random() * 0.05,
+    period: 3.5 + Math.random() * 4.5, t: Math.random() * 8, r: 1.1 + Math.random() * 0.9,
+  });
+  const flash = (u) => (u < 0.08 ? u / 0.08 : u < 0.5 ? Math.pow(1 - (u - 0.08) / 0.42, 2) : 0);
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!w) size();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    for (const f of flies) {
+      f.t += dt;
+      if (!still) {   // lazy looping wander
+        f.hx += dt * f.sp * 2.1; f.hy += dt * f.sp * 1.7;
+        f.x += Math.cos(f.hx) * dt * 0.012; f.y += Math.sin(f.hy) * dt * 0.008;
+        if (f.x < -0.03) f.x = 1.03; if (f.x > 1.03) f.x = -0.03;
+        f.y = Math.max(0.45, Math.min(0.97, f.y));
+      }
+      const u = (f.t % f.period) / f.period * (f.period / 1.6);   // flash lasts ~0.8 s of each period
+      const k = still ? 0.35 : flash(Math.min(1, u));
+      const x = f.x * w, y = f.y * h;
+      const glow = f.r * (6 + 6 * k);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, glow);
+      g.addColorStop(0, `rgba(226,244,140,${0.08 + 0.55 * k})`);
+      g.addColorStop(0.35, `rgba(196,228,96,${0.05 + 0.22 * k})`);
+      g.addColorStop(1, 'rgba(196,228,96,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, glow, 0, 6.283); ctx.fill();
+      ctx.fillStyle = `rgba(250,255,210,${0.12 + 0.85 * k})`;
+      ctx.beginPath(); ctx.arc(x, y, f.r * 0.8, 0, 6.283); ctx.fill();
+    }
+    if (!still) requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', size);
+  if (window.ResizeObserver) new ResizeObserver(size).observe(cv);
+  requestAnimationFrame(frame);
+})();
+
+/* ------------------------------------------------------------ boot */
+syncControls();
+resize(); rebuildScene(); requestPreview(); updateReadout(); loop();
+})();
+</script>

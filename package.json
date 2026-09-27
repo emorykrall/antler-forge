@@ -1,0 +1,17 @@
+{
+  "name": "antler-forge",
+  "version": "1.0.0",
+  "description": "Parametric 3D-printable cosplay antlers for a headband: a browser designer and a Node CLI that export watertight STLs.",
+  "private": true,
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node tools/build-page.js",
+    "build:stl": "node tools/build-antlers.js",
+    "serve": "node tools/build-page.js && node dist/site/serve.js 8080",
+    "samples": "node tools/build-samples.js",
+    "test": "node --test test/*.test.js"
+  }
+}
