@@ -199,6 +199,14 @@ Newest first within each section. Change one only when the owner asks.
   artist. Patterns apply at every Character. Species: whitetail and stag 0.9, mule and elk 0.85, fawn 0.7,
   reindeer 0.65, moose 0.55, forest spirit 0.3 (eerie). Designs saved before crowns had these keep
   0.5 / Band (their old look); designs saved with Sculpted s load as Character 0.5 + s/2.
+- **More patterns** (owner asked for more): *Tiara* (tines along the forward beams grow taller toward the
+  brow and lean in, with a tall centre spire), *Laurel* (flattened leaves in pairs lying along both beams,
+  pointing away from the antlers, largest near them; barbs at the horror end), *Briar* (two vines twisting
+  in a helix round each beam, with hooked thorns), *Sunburst* (alternately long and short rays all round,
+  longest at the front, fanning back toward the sides, plus a centre ray). All grow from the same two
+  beams and respond to Character. Fawn now uses Laurel. If even the smallest antlers can't make a crown
+  fit the bed, the crown's own tines, thorns, leaves and rays shorten in steps until it does (they never
+  scale with the antlers otherwise).
 - **Crowns are bold, not wispy** (owner): the crown's beams start at 75% of the antler's own base
   radius, so they visibly grow out of it, and taper less; sturdiness minimums raised to 6 mm strands
   and 6 mm tine bases, tines at most 12× their base radius.
