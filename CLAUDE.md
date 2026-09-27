@@ -91,6 +91,9 @@ The tests in `test/` cover the first five. If a change needs one of them to move
 
 ## Working here
 
+- **Read `docs/DECISIONS.md` before changing try-on, units, the library or the interface.** It records
+  settled decisions and why; add to it when the owner settles a new one.
+
 - **Run `npm test` before every commit.** Add or extend a test when you touch the engine.
 - A new parameter goes in `PARAM_SPEC` (UI and CLI pick it up) and `DEFAULTS`. Put it in the group
   and tier where people will look for it: `essentials` (always shown, keep it to ~9 controls),
