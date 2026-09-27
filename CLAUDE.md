@@ -86,4 +86,6 @@ The tests in `test/` cover the first five. If a change needs one of them to move
   survive a species change, add it to the keep-list in `presetParams`.
 - Keep page, CLI and engine behaviour identical: the page and the CLI must build the same mesh from
   the same `design.json`.
-- The deployed site (GitHub Pages) is `dist/site`, built by `.github/workflows/pages.yml`.
+- Repo: https://github.com/emorykrall/antler-forge (`main` blocks force pushes and deletion). Live site:
+  https://emorykrall.github.io/antler-forge/ (`dist/site`, deployed by `.github/workflows/pages.yml` on
+  every push to `main`). CI (`.github/workflows/ci.yml`) runs `npm test` on Node 20.
