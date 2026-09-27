@@ -67,6 +67,8 @@ Newest first within each section. Change one only when the owner asks.
   circumference). A smooth liner rests on it all the way round, with no texture; beams, tines and
   antlers sit outside it; anything inside the head surface is cut away with a soft edge; open ends
   are rounded and flare outward. The crown tilts front-up (Tilt, default 10°).
+- **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the
+  back of the crown is scaled to the crown's head size.
 - **It prints upright, as worn, on supports**, resting on a small flat foot at its lowest point.
   (An earlier flat-ring version was dropped: printing flat isn't required, comfort is.)
 - **Dynamic, not a circle.** The band dips to a point on the forehead (Brow dip), rises over the
@@ -94,4 +96,3 @@ Newest first within each section. Change one only when the owner asks.
 - Optional "Switch camera" (front/back) button for trying antlers on someone else.
 - Cross-device library sync with sign-in (see above), only if the owner asks.
 - Crown sizing from photos or a 3D head scan instead of a tape measure.
-- Crown try-on: check and refine placement on a real head (phase 2).
