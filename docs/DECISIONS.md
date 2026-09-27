@@ -132,7 +132,20 @@ Newest first within each section. Change one only when the owner asks.
   believable the scan asks to be redone rather than fitting a crown to it. Outline pairs are robust
   (Huber, pairs over 30 mm apart ignored). The last raw capture (outlines and landmark positions, no
   picture) stays on the device as `antler-forge-last-capture` for diagnosis.
-- **No "Shrunk from … to fit the printer" note** (owner): every view already shows the printed size. On synthetic heads
+- **No "Shrunk from … to fit the printer" note** (owner): every view already shows the printed size.
+- **FLAME scans: tape line above the brows, head upright, realistic shape** (owner, 2026-09-27: the
+  crown ran across the eyes and was shaped round the nose). The tape line was the widest slice 40–105
+  mm below the top; a FLAME head has a face and no hair, so that window reached the brow ridge, eyes
+  and nose. Now the tape line may go no lower than 28 mm above the eyes' centres (FLAME has eyeballs),
+  like a tape measure just above the eyebrows. Scans are stood upright in FLAME's natural head posture
+  (the tracker's forehead-to-chin "up" tilted the head ~9° back, flattening the crown's tilt). FLAME's
+  prior weight is 4, not 1: on a real capture weight 1 drove shape components to 5–7 SD (a lumpy
+  caricature); 4 keeps them within ~±3 SD and is as accurate on synthetic heads. (Synthetic truth heads
+  are measured with the same brow rule; earlier circumference comparisons were eye-level on both sides.)
+- **Open: calibration perspective bias.** Calibration measures face width (landmarks 234/454) against
+  the irises, which are ~45 mm nearer the camera; at ~12 in that makes the face width read ~12–16% small,
+  and every scan and try-on size with it (owner's Mac scan: face 130 mm, head 18.8 in above the brows).
+  Waiting for a tape measurement to confirm before changing calibration. On synthetic heads
   the circumference comes out within ~2% under mask noise, pose/scale jitter and missing views;
   the calibration's accuracy matters more than the fitting's.
 - **Try-on places crowns on the head** (checked on a real head, 2026-09-27): the head that hides the

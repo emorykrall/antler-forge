@@ -131,7 +131,7 @@ test('FLAME head-turn fit: realistic heads come back the right size, under hair,
   const buf = require('fs').readFileSync(require('path').join(__dirname, '../vendor/flame/flame_head.bin.wasm'));
   for (const [seed, hair] of [[1, null], [4, { t: 12 }], [5, { t: 6, top: 25 }]]) {
     const h = FL.flameHead(FL.gaussians(seed, 50));
-    const truth = HeadScan.build({ pos: Float32Array.from(h.mesh.pos), tri: Uint32Array.from(h.mesh.tri) }, { scale: 1, base: 'z-up' });
+    const truth = HeadScan.build({ pos: Float32Array.from(h.mesh.pos), tri: Uint32Array.from(h.mesh.tri) }, { scale: 1, base: 'z-up' }, h.eyeZ + 28);   // tape line above the brows
     const scan = HeadScan.headTurnScan(T.frames({ mesh: h.mesh, hair }), h.skin, buf);
     assert.equal(scan.model, 'flame');
     assert.ok(Math.abs(scan.circ - truth.circ) / truth.circ < 0.035, `seed ${seed}: circumference ${scan.circ.toFixed(1)} vs ${truth.circ.toFixed(1)}`);
@@ -151,5 +151,15 @@ test('a head turn with badly wrong skin points gives a believable head or an hon
       const s = HeadScan.headTurnScan(frames, h.skin.map((p) => p.map((v) => v * k)), buf);
       assert.ok(HeadScan.plausible(s), `x${k}: ${s.circ.toFixed(0)} mm is believable`);
     } catch (e) { assert.match(e.message, /believable head size/); }
+  }
+});
+
+test('a FLAME scan puts the tape line above the eyebrows, not across the eyes and nose', () => {
+  const T = require('./fixtures/make-turn.js'), FL = require('./fixtures/make-flame.js');
+  const buf = require('fs').readFileSync(require('path').join(__dirname, '../vendor/flame/flame_head.bin.wasm'));
+  for (const seed of [1, 3]) {
+    const h = FL.flameHead(FL.gaussians(seed, 50)), scan = HeadScan.headTurnScan(T.frames({ mesh: h.mesh, hair: { t: 12 } }), h.skin, buf);
+    const tapeZ = scan.c[2] + 0.38 * scan.fit[2];   // RING_SEAT of the way up the fitted ellipsoid, in the camera's head frame
+    assert.ok(tapeZ > h.eyeZ + 18, `seed ${seed}: tape line ${(tapeZ - h.eyeZ).toFixed(0)} mm above the eyes`);
   }
 });

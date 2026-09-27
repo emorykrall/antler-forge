@@ -188,10 +188,13 @@
   function slice(p, z, half) { const out = []; for (let i = 0; i < p.length; i += 3) if (Math.abs(p[i + 2] - z) <= half) out.push([p[i], p[i + 1]]); return out; }
 
   // Everything the engine needs, from a transformed mesh (positions in mm, head frame).
-  function measure(mesh, pos) {
+  // minZ (optional): the lowest the tape line may go, e.g. just above the eyebrows when the eyes are known.
+  // Without it, a head with a face and no hair can measure widest across the brow ridge, eyes and nose.
+  function measure(mesh, pos, minZ) {
     const top = percentileZ(pos, 0.999);
     let best = null;
-    for (let d = 40; d <= 105; d += 2) {   // the tape line: the widest cross-section below the top
+    const dMax = minZ == null ? 105 : Math.min(105, top - minZ);
+    for (let d = 40; d <= dMax; d += 2) {   // the tape line: the widest cross-section below the top
       const s = slice(pos, top - d, 1.5);
       if (s.length < 12) continue;
       const h = hull2(s), c = perim(h);
@@ -270,8 +273,8 @@
   }
 
   // The whole pipeline, for a mesh and an orientation (from guessOrientation, or adjusted by hand).
-  function build(mesh, o) {
-    const pos0 = transform(mesh, o), m = measure(mesh, pos0);
+  function build(mesh, o, minZ) {
+    const pos0 = transform(mesh, o), m = measure(mesh, pos0, minZ);
     const pos = new Float32Array(pos0.length);   // centre on the head frame's origin
     for (let i = 0; i < pos0.length; i += 3) { pos[i] = pos0[i] - m.c[0]; pos[i + 1] = pos0[i + 1] - m.c[1]; pos[i + 2] = pos0[i + 2] - m.c[2]; }
     const r = radialMap(mesh, pos, [0, 0, 0], m.fit);
@@ -500,7 +503,11 @@
   }
   // K shape components; outline and skin-point noise (mm); outline pairs per view that count as independent;
   // how far pitch may stray from level (°); iterations. Tuned on synthetic FLAME heads with hair and noise.
-  const FL_OPT = { K: 30, sigSil: 2, sigSkin: 1.5, nRef: 40, sigPitch: 8, iters: 22 };
+  const FL_OPT = { K: 30, sigSil: 2, sigSkin: 1.5, nRef: 40, sigPitch: 8, iters: 22, prior: 4 };
+  // prior: FLAME's pull toward realistic heads. 1 is the textbook weight and fits synthetic FLAME heads
+  // best, but a real capture (scale error, uneven hair) then drove shape components to 5–7 SD, a
+  // caricature; 4 keeps real fits within about ±3 SD at little cost on synthetic heads.
+  const FL_BROW = 28;   // the tape line goes no lower than this far above the eyes' centres (just above the brows)
   function fromHeadTurnFlame(frames, skin, model, opt) {
     const O = Object.assign({}, FL_OPT, opt || {}), K = Math.min(O.K, model.K), N = K + 6, iT = K, iH = K + 3, iH2 = K + 4, iP = K + 5;   // hair: at the sides (iH) and on top (iH2); iP: pitch step
     const pfs = frames.filter((f) => f.mask && f.mask.w).map(prepFrame).filter((pf) => pf.area > 20);
@@ -605,10 +612,10 @@
           row([[bi, 1]], n, -(n[0] * s[0] + n[1] * s[1] + n[2] * s[2]), hub / (O.sigSkin * O.sigSkin));
           Wh[bi] = save; for (let e = 0; e < 3; e++) D[3 * bi + e] = d0[e];
         }
-        for (let k = 0; k < K; k++) { JtJ[k * N + k] += 1; Jtr[k] += 0; }   // FLAME's prior: beta ~ N(0, 1)
+        for (let k = 0; k < K; k++) { JtJ[k * N + k] += O.prior; Jtr[k] += 0; }   // FLAME's prior: beta ~ N(0, 1), weighted
         const pw = 1 / ((O.sigPitch * Math.PI) / 180) ** 2, pr0 = (pitch * Math.PI) / 180;   // a gentle pull toward level
         JtJ[iP * N + iP] += pw; Jtr[iP] += pw * pr0;
-        let pr = pw * pr0 * pr0; for (let k = 0; k < K; k++) pr += x[k] * x[k];
+        let pr = pw * pr0 * pr0; for (let k = 0; k < K; k++) pr += O.prior * x[k] * x[k];
         obj = E + pr;
         for (let a = K; a < N; a++) JtJ[a * N + a] += 1e-6;
         for (const h of face ? [] : [iH, iH2]) { for (let a = 0; a < N; a++) { JtJ[h * N + a] = JtJ[a * N + h] = 0; } JtJ[h * N + h] = 1; Jtr[h] = 0; }
@@ -622,19 +629,24 @@
     const x0 = () => { const x = new Array(N).fill(0); x[iT] = T0[0]; x[iT + 1] = T0[1]; x[iT + 2] = T0[2]; x[iH] = x[iH2] = face ? 6 : 0; return x; };
     const best = run(0, x0(), O.iters);
     best.pitch = Math.round(best.pitch * 10) / 10;
-    // the fitted head, without hair, as a mesh measured like any scan
-    const shp = flameShape(model, best.x.slice(0, K)), cp = Math.cos((best.pitch * Math.PI) / 180), sp = Math.sin((best.pitch * Math.PI) / 180);
-    const pos = new Float32Array(3 * V);
-    for (let i = 0; i < V; i++) {
+    // the fitted head, without hair, as a mesh measured like any scan. It's stood upright in FLAME's own
+    // (natural) head posture rather than the face tracker's, so the crown's tilt is relative to the head;
+    // the fitted pitch is kept for placing it on the camera picture.
+    const shp = flameShape(model, best.x.slice(0, K)), pos = new Float32Array(3 * V);
+    for (let i = 0; i < V; i++) for (let a = 0; a < 3; a++) pos[3 * i + a] = shp[3 * i + a] + best.x[iT + a];
+    let eyeZ = 0; for (let i = V; i < model.V; i++) eyeZ += shp[3 * i + 2] + best.x[iT + 2];
+    eyeZ /= model.V - V;
+    const mesh = { pos, tri: Uint32Array.from(tris) }, scan = build(mesh, { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false }, eyeZ + FL_BROW);
+    const cp = Math.cos((best.pitch * Math.PI) / 180), sp = Math.sin((best.pitch * Math.PI) / 180), cam = new Float32Array(3 * V);
+    for (let i = 0; i < V; i++) {   // the fitted surface as the camera saw it (pitched), for tests; not stored
       const y = shp[3 * i + 1], z = shp[3 * i + 2];
-      pos[3 * i] = shp[3 * i] + best.x[iT]; pos[3 * i + 1] = y * cp - z * sp + best.x[iT + 1]; pos[3 * i + 2] = y * sp + z * cp + best.x[iT + 2];
+      cam[3 * i] = pos[3 * i]; cam[3 * i + 1] = y * cp - z * sp + best.x[iT + 1]; cam[3 * i + 2] = y * sp + z * cp + best.x[iT + 2];
     }
-    const mesh = { pos, tri: Uint32Array.from(tris) }, scan = build(mesh, { scale: 1, base: 'z-up', yaw: 0, pitch: 0, roll: 0, flip: false });
-    Object.defineProperty(scan, 'mesh', { value: mesh });   // the fitted surface, for tests (not stored)
+    Object.defineProperty(scan, 'mesh', { value: { pos: cam, tri: mesh.tri } });
     const r1 = (v) => Math.round(v * 10) / 10;
     return Object.assign(scan, {
       source: 'head-turn', model: 'flame', frames: pfs.length, hair: r1(best.x[iH]), hairTop: r1(best.x[iH2]),
-      flame: { beta: best.x.slice(0, K).map((v) => Math.round(v * 1000) / 1000), pitch: best.pitch, T: best.x.slice(iT, iT + 3).map(r1) },   // to rebuild the head
+      flame: { beta: best.x.slice(0, K).map((v) => Math.round(v * 1000) / 1000), pitch: best.pitch, T: best.x.slice(iT, iT + 3).map(r1), upright: true },   // to rebuild the head
     });
   }
 

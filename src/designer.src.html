@@ -1869,7 +1869,7 @@ let flameBustCache = { id: null, obj: null };
 function flameBustObject(p) {
   if (flameBustCache.id === p.headScan) return flameBustCache.obj;
   const sc = scanMeta(p.headScan), f = sc.flame, shp = HS.flameShape(flameM, f.beta);
-  const a = (f.pitch * Math.PI) / 180, cp = Math.cos(a), sp = Math.sin(a), pos = new Float32Array(shp.length);
+  const a = f.upright ? 0 : (f.pitch * Math.PI) / 180, cp = Math.cos(a), sp = Math.sin(a), pos = new Float32Array(shp.length);   // upright: built without the pitch
   for (let i = 0; i < shp.length; i += 3) {
     const y = shp[i + 1], z = shp[i + 2];
     pos[i] = shp[i] + f.T[0]; pos[i + 1] = y * cp - z * sp + f.T[1]; pos[i + 2] = y * sp + z * cp + f.T[2];

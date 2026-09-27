@@ -34,6 +34,8 @@ function flameHead(beta) {
     }
     return [pos[3 * bi], pos[3 * bi + 1], pos[3 * bi + 2]];
   });
-  return { mesh: { pos, tri }, skin };
+  let eyeZ = 0; for (let i = MAIN; i < M.V; i++) eyeZ += p[3 * i + 2] - o[2];
+  eyeZ /= M.V - MAIN;   // the eyes' centres, for measuring the true head's tape line above the brows
+  return { mesh: { pos, tri }, skin, eyeZ };
 }
 module.exports = { M, MAIN, flameHead, gaussians };
