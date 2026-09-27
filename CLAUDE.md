@@ -74,9 +74,10 @@ The tests in `test/` cover the first five. If a change needs one of them to move
 - **Published claude.ai artifact pages** block the camera and all non-script network fetches, so
   try-on there is photo only. `dist/antler-forge.html` is the body-only page for the Artifact publisher.
   Downloads there go through `window.claude.use('downloads')`.
-- **Try-on real size** comes from the face width (landmarks 234 ↔ 454) in mm: a saved ruler
-  measurement (`antler-forge-scale`), else the iris estimate (`refineLandmarks: true`, 11.7 mm
-  irises), else 145 mm. Don't ask people to hold up ID or bank cards for scale.
+- **Try-on real size** comes from the face width (landmarks 234 ↔ 454) in mm: a saved one-tap eye
+  calibration (`antler-forge-scale`, median of close, face-on frames), else the live iris estimate
+  (`refineLandmarks: true`, 11.7 mm irises), else 145 mm. Keep calibration one step with no manual
+  marking; don't ask people to hold up ID or bank cards.
 - **`dist/site` must work both from a double-clicked `file://` page and over https.** Browsers block
   `file://` pages from fetching the tracker's binaries, so each `.wasm` also ships as a `.b64.js` script,
   and `installFileShim()` answers the tracker's fetch/XHR calls from those. Keep the `.data.wasm`

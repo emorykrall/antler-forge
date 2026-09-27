@@ -125,17 +125,6 @@ button,input,select{font:inherit;color:inherit}
 .ar-row input[type=range]{flex:1;min-width:90px;accent-color:var(--vp-active)}
 .ar-scale{margin:0;display:flex;flex-wrap:wrap;gap:2px 12px;justify-content:center;align-items:baseline;font-size:12.5px}
 .ar-scale span{opacity:.85}
-/* ruler calibration: two draggable markers over the frozen frame, and a panel */
-.ar-cal{position:absolute;inset:0;pointer-events:none}
-.ar-cal>*{pointer-events:auto}
-.ar-cal svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.ar-cal line{stroke:var(--vp-active);stroke-width:2;stroke-dasharray:6 4}
-.cal-dot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;padding:0;border-radius:50%;border:2px solid var(--vp-active);background:rgba(10,16,12,.15);box-shadow:0 0 0 1px rgba(0,0,0,.55),inset 0 0 0 1px rgba(0,0,0,.55);cursor:grab;touch-action:none}
-.cal-dot::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:var(--vp-active);box-shadow:0 0 0 1px rgba(0,0,0,.6)}
-.cal-dot:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.cal-panel{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:min(520px,calc(100% - 32px));display:grid;gap:8px;background:var(--vp-chip);border:1px solid var(--vp-edge);border-radius:16px;padding:12px 14px;color:var(--vp-ink);backdrop-filter:blur(8px)}
-.cal-panel p{margin:0;font-size:13.5px;line-height:1.4}
-.cal-panel input[type=number]{width:84px;background:rgba(255,255,255,.08);border:1px solid var(--vp-edge);border-radius:8px;padding:4px 8px;color:var(--vp-ink);font:500 13px var(--f-mono)}
 .chipbtn{border:1px solid var(--vp-edge);background:rgba(255,255,255,.05);color:var(--vp-ink);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:13.5px}
 .chipbtn:hover{background:rgba(255,255,255,.1)}
 .chipbtn.snap{background:var(--vp-active);color:#1D1A12;border-color:transparent;font-weight:700}
@@ -145,6 +134,7 @@ button,input,select{font:inherit;color:inherit}
 .libbtn{display:inline-flex;align-items:center;gap:7px;background:var(--vp-chip);backdrop-filter:blur(6px)}
 .libbtn[disabled]{opacity:.6;cursor:default}
 .libbtn svg{width:14px;height:14px;flex:none}
+
 .ar-note{position:absolute;left:50%;top:92px;transform:translateX(-50%);margin:0;background:rgba(12,18,14,.8);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:12px;padding:8px 14px;font:italic 400 15px/1.3 var(--f-fell);max-width:calc(100% - 32px);text-align:center}
 .err{position:absolute;inset:auto 16px 60px 16px;color:var(--vp-ink);font-size:13px}
 
@@ -303,16 +293,6 @@ details[open] summary::after{transform:rotate(-135deg)}
           <label for="ar-lift">Height</label><input type="range" id="ar-lift" min="-30" max="45" step="1">
         </div>
         <p class="ar-scale" id="ar-scale"></p>
-      </div>
-      <div class="ar-cal" id="ar-cal" hidden>
-        <svg aria-hidden="true"><line id="cal-seg"/></svg>
-        <button class="cal-dot" id="cal-a" aria-label="First ruler mark (arrow keys to nudge)"></button>
-        <button class="cal-dot" id="cal-b" aria-label="Second ruler mark (arrow keys to nudge)"></button>
-        <div class="cal-panel">
-          <p id="cal-text"></p>
-          <div class="ar-row" id="cal-mmrow"><label for="cal-mm">Distance between the marks</label><input type="number" id="cal-mm" min="10" max="400" step="1" value="100"><span>mm</span></div>
-          <div class="ar-row"><button class="chipbtn" id="cal-cancel">Cancel</button><button class="chipbtn snap" id="cal-ok">Use this measurement</button></div>
-        </div>
       </div>
       <p class="ar-note" id="ar-note" hidden></p>
       <input type="file" id="ar-file" accept="image/*" hidden>
@@ -1035,12 +1015,13 @@ const AR = {
 };
 try { const f = JSON.parse(localStorage.getItem('antler-forge-fit') || 'null'); if (f) AR.fit = f; } catch (e) {}
 // Real size comes from the width of the face (landmarks 234 ↔ 454) in millimetres, which is fixed
-// for each person. Best source first: a ruler measurement (saved), then the irises, then an average.
+// for each person. Best source first: a saved calibration (a few seconds of good, close, face-on
+// frames measured against the irises), then the live iris estimate, then an average face.
 const FACE_W_MM = 145;       // an average face, used until something better is known
 const IRIS_MM = 11.7;        // visible iris diameter: close to the same in everyone from their teens on
 const SCALE_KEY = 'antler-forge-scale';
-AR.cal = null; AR.irisFace = null; AR.faceWpx = 0; AR.lm = null;
-try { const c = JSON.parse(localStorage.getItem(SCALE_KEY) || 'null'); if (c && c.faceMM > 0) AR.cal = c; } catch (e) {}
+AR.cal = null; AR.irisFace = null; AR.faceWpx = 0; AR.lm = null; AR.calib = null; AR.calPending = false;
+try { const c = JSON.parse(localStorage.getItem(SCALE_KEY) || 'null'); if (c && c.method === 'eyes' && c.faceMM > 0) AR.cal = c; } catch (e) {}
 const faceMM = () => (AR.cal ? AR.cal.faceMM : AR.irisFace || FACE_W_MM);
 const HEAD_BACK_MM = 28;     // head centre sits behind the face-side midpoint…
 const HEAD_UP_MM = 22;       // …and a little above it (room for hair under the band)
@@ -1217,11 +1198,19 @@ function arOnResults(r) {
   if (up.dot(up0) < 0) up.negate();
   const side = fwd.clone().cross(up).normalize();         // right-handed: side, fwd, up
   AR.faceWpx = faceW; AR.lm = l;
+  if (AR.calPending && AR.mode === 'camera') calStart();
   if (l.length >= 478) {   // iris rings: 469–472 and 474–477, opposite points two apart
-    let iris = 0;
-    for (const [i, j, k, m] of [[469, 471, 470, 472], [474, 476, 475, 477]]) iris += (p(i).distanceTo(p(j)) + p(k).distanceTo(p(m))) / 4;
+    let iris = 0, round = 1;
+    for (const [i, j, k, m] of [[469, 471, 470, 472], [474, 476, 475, 477]]) {
+      const h = p(i).distanceTo(p(j)), v = p(k).distanceTo(p(m));
+      iris += (h + v) / 4; round = Math.min(round, Math.min(h, v) / Math.max(h, v));
+    }
     const est = (faceW / iris) * IRIS_MM;
     if (est > 100 && est < 190) AR.irisFace = AR.irisFace && AR.mode === 'camera' ? AR.irisFace + (est - AR.irisFace) * 0.08 : est;
+    if (AR.calib) {
+      const lid = (t, b, i, o) => p(t).distanceTo(p(b)) / p(i).distanceTo(p(o));   // eye openness
+      calSample(est, { iris, round, frontal: fwd.z, open: Math.min(lid(159, 145, 33, 133), lid(386, 374, 362, 263)) });
+    }
   }
   arScaleNote();
   const s = (faceW / faceMM()) * AR.fit.size;
@@ -1234,7 +1223,7 @@ function arOnResults(r) {
     next.centre = o.centre.clone().lerp(centre, k); next.s = o.s + (s - o.s) * k;
   }
   AR.pose = next;
-  arStatus('');
+  arStatus(AR.calib ? AR.calib.msg : '');
   arRender();
 }
 function arApplyPose() {
@@ -1324,7 +1313,7 @@ async function arUsePhoto(file) {
 }
 async function arUseCanvas(c) {
   arSetup(); arStopCamera();
-  AR.mode = 'photo'; AR.photo = c; AR.pose = null; AR.found = false; AR.irisFace = null;
+  AR.mode = 'photo'; AR.photo = c; AR.pose = null; AR.found = false; AR.irisFace = null; AR.calib = null; AR.calPending = false;
   if (AR.bg) AR.bg.dispose();
   AR.bg = new THREE.CanvasTexture(c); AR.bg.encoding = THREE.sRGBEncoding;
   arSize(c.width, c.height, AR.bg);
@@ -1360,7 +1349,7 @@ function arEnter() {
   $('ar-size').value = AR.fit.size; $('ar-lift').value = AR.fit.lift;
 }
 function arExit() {
-  calClose();
+  AR.calib = null; AR.calPending = false;
   AR.on = false; arStopCamera();
   if (AR.mode === 'camera') AR.mode = null;
   document.querySelector('.stage').classList.remove('ar-on');
@@ -1373,107 +1362,61 @@ $('ar-photo2').addEventListener('click', () => $('ar-file').click());
 $('ar-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) arUsePhoto(f); e.target.value = ''; });
 $('ar-flip').addEventListener('click', () => { AR.facing = AR.facing === 'user' ? 'environment' : 'user'; if (AR.mode === 'camera') arStartCamera(); });
 $('ar-snap').addEventListener('click', arSnapshot);
-// One line in the try-on bar says what the sizing is based on, with a way to measure.
+// One line in the try-on bar says what the sizing is based on, with a way to calibrate.
 let scaleNote = '';
 function arScaleNote() {
-  const mm = Math.round(faceMM()), key = (AR.cal ? 'r' : AR.irisFace ? 'i' : 'a') + mm;
+  const mm = Math.round(faceMM()), cam = AR.mode === 'camera';
+  const key = (AR.calib ? 'c' : AR.cal ? 'k' : AR.irisFace ? 'i' : 'a') + mm + AR.mode;
   if (key === scaleNote) return;
   scaleNote = key;
   const el = $('ar-scale'); el.innerHTML = '';
   const span = document.createElement('span');
-  span.textContent = AR.cal ? `True size from your ruler · face ${mm} mm across` : AR.irisFace ? `Sized from your eyes · face ≈ ${mm} mm across` : 'Sized for an average face';
   const link = (text, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.textContent = text; b.addEventListener('click', fn); return b; };
-  el.append(span, link(AR.cal ? 'Measure again' : 'Measure with a ruler', calOpen));
-  if (AR.cal) el.append(link('Use my eyes instead', () => { AR.cal = null; try { localStorage.removeItem(SCALE_KEY); } catch (e) {} arRefit(); }));
+  if (AR.calib) { span.textContent = 'Calibrating from your eyes…'; el.append(span, link('Cancel', calCancel)); return; }
+  span.textContent = AR.cal ? `Calibrated · face ${mm} mm across` : AR.irisFace ? `Sized from your eyes · face ≈ ${mm} mm across` : 'Sized for an average face';
+  el.append(span, link(AR.cal ? 'Recalibrate' : cam ? 'Calibrate' : 'Calibrate with the camera', calStart));
+  if (AR.cal) el.append(link('Clear', () => { AR.cal = null; try { localStorage.removeItem(SCALE_KEY); } catch (e) {} arRefit(); }));
 }
 function arRefit() {   // re-place the pair after the scale source changed
   scaleNote = ''; arScaleNote();
   if (AR.mode === 'photo' && AR.fm && AR.photo) AR.fm.send({ image: AR.photo }); else arRender();
 }
 
-// Ruler calibration: freeze a frame with a ruler held flat across the forehead, drag two markers
-// onto two marks on it, and enter their distance. That gives millimetres per pixel at the face.
-const CAL = { state: null, drag: null, 'cal-a': [0, 0], 'cal-b': [0, 0] };
-function calOpen() {
-  if (AR.mode === 'camera') calShow('aim');
-  else if (AR.mode === 'photo' && AR.found) calShow('mark');
-  else arStatus('Take a photo with a ruler held flat across your forehead first.');
+// One-tap calibration: a few seconds of close, face-on, eyes-open frames, each measuring the face
+// against the irises. Bad frames are skipped with a hint; the median of the good ones is saved.
+const CALIB_N = 45, CALIB_MS = 15000;
+function calStart() {
+  if (AR.mode !== 'camera') { AR.calPending = true; arStartCamera(); return; }   // starts once a face is found
+  AR.calPending = false;
+  AR.calib = { samples: [], t0: Date.now(), msg: 'Bring your face close to the camera, about 30 cm, and look straight at it.' };
+  arStatus(AR.calib.msg); scaleNote = ''; arScaleNote();
 }
-function calShow(state) {
-  CAL.state = state;
-  const aim = state === 'aim';
-  $('ar-bar').hidden = true; $('ar-cal').hidden = false;
-  for (const id of ['cal-a', 'cal-b']) $(id).hidden = aim;
-  $('cal-seg').style.display = aim ? 'none' : '';
-  $('cal-mmrow').hidden = aim;
-  $('cal-text').innerHTML = aim
-    ? '<b>Hold a ruler or tape measure flat across your forehead</b>, facing the camera, with your whole face in view. Then tap Capture.'
-    : '<b>Drag the two markers onto two marks on the ruler</b>, as far apart as you can see clearly, then enter the distance between those marks.';
-  $('cal-ok').textContent = aim ? 'Capture' : 'Use this measurement';
-  if (!aim) calPlace();
+function calCancel() { AR.calib = null; arStatus(''); scaleNote = ''; arScaleNote(); }
+function calSample(est, q) {
+  const c = AR.calib;
+  let hint = '';
+  if (q.iris < 20) hint = 'Come a little closer to the camera.';
+  else if (q.frontal < 0.94) hint = 'Look straight at the camera.';
+  else if (q.open < 0.18) hint = 'Keep your eyes open.';
+  else if (q.round < 0.8 || !(est > 100 && est < 190)) hint = 'Hold still.';
+  else c.samples.push(est);
+  c.msg = hint || `Calibrating… hold still (${Math.round((100 * c.samples.length) / CALIB_N)}%)`;
+  if (c.samples.length >= CALIB_N || Date.now() - c.t0 > CALIB_MS) calFinish();
 }
-function calClose() {
-  if (!CAL.state) return;
-  CAL.state = null; CAL.drag = null;
-  $('ar-cal').hidden = true; if (AR.mode) $('ar-bar').hidden = false;
-}
-async function calCapture() {
-  const v = AR.video;
-  if (!v || !v.videoWidth) return;
-  const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
-  const ctx = c.getContext('2d');
-  if (AR.facing === 'user') { ctx.translate(c.width, 0); ctx.scale(-1, 1); }   // keep the mirror view people just saw
-  ctx.drawImage(v, 0, 0);
-  CAL.state = null;
-  await arUseCanvas(c);
-  if (!AR.found) { calClose(); arStatus('No face found in that frame. Try again with your whole face in view.'); return; }
-  calShow('mark');
-}
-function calToStage(x, y) {   // image pixels → position inside the stage
-  const r = $('ar').getBoundingClientRect(), st = document.querySelector('.stage').getBoundingClientRect();
-  return [r.left - st.left + (x * r.width) / AR.W, r.top - st.top + ((AR.Ht - AR.H + y) * r.height) / AR.Ht];
-}
-function calSet(id, at) {
-  const r = $('ar').getBoundingClientRect(), st = document.querySelector('.stage').getBoundingClientRect();
-  const x = Math.min(Math.max(at[0], r.left - st.left), r.right - st.left), y = Math.min(Math.max(at[1], r.top - st.top), r.bottom - st.top);
-  CAL[id] = [x, y]; $(id).style.left = x + 'px'; $(id).style.top = y + 'px';
-  const seg = $('cal-seg'), [a, b] = [CAL['cal-a'], CAL['cal-b']];
-  seg.setAttribute('x1', a[0]); seg.setAttribute('y1', a[1]); seg.setAttribute('x2', b[0]); seg.setAttribute('y2', b[1]);
-}
-function calPlace() {   // start the markers across the forehead, just above the brows
-  const l = AR.lm;
-  const y = l ? l[151].y * AR.H : AR.H * 0.3;
-  calSet('cal-a', calToStage(l ? l[70].x * AR.W : AR.W * 0.35, y));
-  calSet('cal-b', calToStage(l ? l[300].x * AR.W : AR.W * 0.65, y));
-}
-function calApply() {
-  if (CAL.state === 'aim') { calCapture(); return; }
-  const mm = Number($('cal-mm').value);
-  const r = $('ar').getBoundingClientRect(), [a, b] = [CAL['cal-a'], CAL['cal-b']];
-  const px = (Math.hypot(a[0] - b[0], a[1] - b[1]) * AR.W) / r.width;   // marker distance in image pixels
-  if (!(mm >= 10) || px < 20) { toast('Move the markers further apart and enter the distance in millimetres.'); return; }
-  const face = (AR.faceWpx * mm) / px;
-  if (face < 90 || face > 210) { toast(`That makes your face ${Math.round(face)} mm across, which looks off. Check the markers and the distance.`); return; }
-  AR.cal = { faceMM: Math.round(face * 10) / 10, method: 'ruler', at: Date.now() };
+function calFinish() {
+  const s = AR.calib.samples.slice().sort((a, b) => a - b);
+  AR.calib = null; arStatus('');
+  const at = (f) => s[Math.floor(f * (s.length - 1))];
+  if (s.length < 15 || (at(0.75) - at(0.25)) / at(0.5) > 0.08) {
+    scaleNote = ''; arScaleNote();
+    toast('Couldn’t get a steady reading. Try again closer to the camera, in good light, looking straight at it.');
+    return;
+  }
+  AR.cal = { faceMM: Math.round(at(0.5) * 10) / 10, method: 'eyes', at: Date.now() };
   try { localStorage.setItem(SCALE_KEY, JSON.stringify(AR.cal)); } catch (e) {}
-  calClose(); arRefit();
-  toast(`Measured: your face is ${Math.round(face)} mm across. The antlers now show at true size.`);
+  arRefit();
+  toast(`Calibrated: your face is ${Math.round(AR.cal.faceMM)} mm across. The antlers now show at true size.`);
 }
-for (const id of ['cal-a', 'cal-b']) {
-  const el = $(id);
-  el.addEventListener('pointerdown', (e) => { el.setPointerCapture(e.pointerId); CAL.drag = { id, dx: CAL[id][0] - e.clientX, dy: CAL[id][1] - e.clientY }; e.preventDefault(); });
-  el.addEventListener('pointermove', (e) => { if (CAL.drag && CAL.drag.id === id) calSet(id, [e.clientX + CAL.drag.dx, e.clientY + CAL.drag.dy]); });
-  el.addEventListener('pointerup', () => { CAL.drag = null; });
-  el.addEventListener('keydown', (e) => {   // arrow keys nudge a marker by a pixel (shift: 10)
-    const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
-    if (!d) return;
-    e.preventDefault(); const k = e.shiftKey ? 10 : 1;
-    calSet(id, [CAL[id][0] + d[0] * k, CAL[id][1] + d[1] * k]);
-  });
-}
-$('cal-ok').addEventListener('click', calApply);
-$('cal-cancel').addEventListener('click', calClose);
-window.addEventListener('resize', () => { if (CAL.state === 'mark') calPlace(); });
 
 for (const [id, k] of [['ar-size', 'size'], ['ar-lift', 'lift']]) {
   $(id).addEventListener('input', (e) => {
