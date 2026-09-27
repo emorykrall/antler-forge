@@ -43,7 +43,7 @@ The panel runs in the order you work: pick a species (or **Surprise me** for a n
 
 ## Try on (camera or photo)
 
-The **Try on** view places the pair on your head, at the size it will print. MediaPipe Face Mesh, bundled in `vendor/face_mesh`, finds your face, and a head frame is fitted from the forehead, chin and both sides of the face. Everything runs on your device, and no image leaves it. Use the Size and Height sliders to fine-tune the fit (for example, for thick hair). "Save picture" exports a PNG.
+The **Try on** view places the pair on your head, at the size it will print. MediaPipe Face Mesh, bundled in `vendor/face_mesh`, finds your face, and a head frame is fitted from the forehead, chin and both sides of the face. Everything runs on your device, and no image leaves it. The pair is shown at real size. By default the size comes from your irises, which are about 11.7 mm across in almost everyone; for a closer check, tap **Measure with a ruler**, hold a ruler or tape measure flat across your forehead, capture, drag two markers onto two marks on it and enter their distance. The measurement is saved in the browser and reused. Use the Fine-tune and Height sliders for small adjustments (for example, for thick hair). "Save picture" exports a PNG.
 
 - **Inside the Claude viewer:** the camera is blocked there, so use **Use a photo** with a front-facing selfie.
 - **Live camera on this computer:** run `npm run build`, then double-click `dist/site/index.html`, or run `npm run serve` and open http://localhost:8080. Keep the `vendor` folder next to `index.html`. When the page is opened from disk, it reads the tracker from the `.b64.js` copies, because browsers block `file://` pages from loading the binary files directly.
