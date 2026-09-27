@@ -164,6 +164,18 @@ Newest first within each section. Change one only when the owner asks.
   mule forked tines; elk tines swept back; stag clusters; reindeer a forward shovel; moose one heavy
   band with paddles; forest spirit curling tendrils; fawn a plain band with buttons.
 - References the owner shared were for general direction only; don't reproduce any of them.
+- **Sculpted crowns** (owner, 2026-09-27): keep the continuous, grown-bone look but make the crown read
+  as elegantly sculpted, elven work; the antlers themselves are unchanged. A **Sculpted** slider (0 =
+  wild grown bone, 1 = elven) smooths the crown pieces (no antler gutters or pearling), calms the
+  wander, gives crisper joins, slims secondary strands, and makes tines steadier, flame-like and swept
+  with the flow; the brow point becomes a leaf-shaped drop with a flame crest. **Pattern** (species
+  decide, owner's choice): stag and elk an *almond lattice* (fuller leaf-shaped openings), whitetail and
+  mule *calligraphic loops* (open loops above the band behind the antlers, sweeps ending in a curl),
+  forest spirit *woven filigree* (strands braid over and under the band), moose, reindeer and fawn the
+  plain *band*. Designs saved earlier default to Sculpted 0 / Band, so they keep their look.
+- **Crowns must survive printing and handling** (owner): crown strands are at least 4.6 mm thick
+  (radius 2.3) except where a free end fines to its tip; band tines and brow pieces at least 4.4 mm at
+  the base and no longer than 14× their base radius. Tested for every pattern, grown and sculpted.
 
 ## Faun bust (wear view)
 

@@ -81,7 +81,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   Only antlers scale.
 - **Crowns are comfortable:** nothing reaches inside the head ellipsoid (`skel.head`, cut away in
   `meshAntler`), the liner that touches the head is smooth, and decoration stays outside it.
-- **Printed tip radius is at least 1.5 mm** (`MIN_R`).
+- **Printed tip radius is at least 1.5 mm** (`MIN_R`); crown strands at least 2.3 mm radius and band
+  tines at least 2.2 mm at the base (`STRAND_MIN`, `TINE_BASE_MIN`), so crowns don't snap.
 - **Each antler, or each crown, fits the Bambu P2S (256 × 256 × 256 mm) as one part**, with a 6 mm brim margin
   (`BED_MARGIN`), when autoFit is on. It is never split into pieces.
 - **Preview colours come from the Bambu hex codes** in `FILAMENTS`: PLA Matte Bone White 11103

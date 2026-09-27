@@ -107,3 +107,17 @@ test('tape measurements: the head shape is recovered exactly, and measured crown
     assert.ok(r.watertight && r.shells === 1 && sk.fit.fits, `arcs ${fb}/${ee}`);
   }
 });
+
+test('every crown pattern, grown or sculpted, is one sturdy watertight solid that fits', () => {
+  for (const ringPattern of ['band', 'lattice', 'loops', 'weave']) for (const ringSculpt of [0, 1]) for (const ringBase of ['closed', 'openBack']) {
+    const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, ringSculpt, ringBase });
+    const sk = Core.buildSkeleton(P), r = Core.validateMesh(Core.meshAntler(sk, 1.6));
+    const tag = `${ringPattern} ${ringSculpt} ${ringBase}`;
+    assert.ok(r.watertight && r.shells === 1 && r.volume > 0, `${tag}: one watertight solid`);
+    assert.ok(sk.fit.fits, `${tag}: fits the P2S`);
+    for (const br of sk.branches) {   // printed and worn: no thin strands, no spindly tines
+      if (br.kind === 'ring') br.rad.forEach((rr, i) => { if (br.ss[i] < 0.8 || br.ss[i] === 0.2) assert.ok(rr >= 2.3 - 1e-9, `${tag}: strand radius ${rr.toFixed(2)} mm`); });
+      if (br.kind === 'tine' && br.sculpt != null) assert.ok(br.rad[0] >= 2.2 - 1e-9, `${tag}: tine base ${br.rad[0].toFixed(2)} mm`);   // band tines and brow pieces
+    }
+  }
+});
