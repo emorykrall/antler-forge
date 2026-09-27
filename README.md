@@ -41,6 +41,10 @@ The 3D view normally shows a coarse preview mesh. **Build final mesh** builds th
 
 The panel runs in the order you work: pick a species (or **Surprise me** for a new variation of it) and a filament, set the **Essentials** (size, beam, tines, base style and headband width), then open **Shape details** for fine sculpting or **Advanced** for headband fit and printer settings.
 
+## Crown style
+
+Switch **Style** to **Crown** for a one-piece antler crown: a band shaped to your head with two antlers rising at the temples, closed or open at the back or front. Enter your head circumference (a tape measure round your forehead). The band dips to a point on the forehead and rises over the temples, built from branching beams that the species shape. For comfort, a smooth liner rests on the head and everything decorative sits outside it; nothing reaches inside the head surface. Crowns print upright, as worn, on supports, and always fit the P2S as one part (only the antlers shrink). The download is a single STL.
+
 ## Try on (camera)
 
 The **Try on** view places the pair on your head with the camera, at the size it will print. MediaPipe Face Mesh, bundled in `vendor/face_mesh`, finds your face, and a head frame is fitted from the forehead, chin and both sides of the face. Everything runs on your device, and no image leaves it. **Mirror image** switches between a mirror view and the view others see; "Save picture" exports a PNG.

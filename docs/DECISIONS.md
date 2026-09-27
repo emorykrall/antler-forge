@@ -56,6 +56,28 @@ Newest first within each section. Change one only when the owner asks.
 - **The viewport always says whether it shows the coarse preview or the final mesh.**
 - **Surprise me** gives a new variation of the current species (keeps Size, headband, printer).
 
+## Crown style
+
+- **A crown is one printed piece**: a band sized to the head plus two mirrored antlers rising at the
+  temples (Antler position, default 50° from the front). Bases: closed, open at the back, open at
+  the front (Opening sets the gap). The band never scales; only the antlers shrink to fit the P2S.
+- **Sized from head circumference** (tape measure round the forehead, default 22.5 in) plus a
+  comfort allowance. Better sizing from photos or 3D scans is wanted later (see backlog).
+- **Comfort first.** The head is modelled as an ellipsoid (the faun's skull shape, scaled from the
+  circumference). A smooth liner rests on it all the way round, with no texture; beams, tines and
+  antlers sit outside it; anything inside the head surface is cut away with a soft edge; open ends
+  are rounded and flare outward. The crown tilts front-up (Tilt, default 10°).
+- **It prints upright, as worn, on supports**, resting on a small flat foot at its lowest point.
+  (An earlier flat-ring version was dropped: printing flat isn't required, comfort is.)
+- **Dynamic, not a circle.** The band dips to a point on the forehead (Brow dip), rises over the
+  temples and settles lower at the back. It's built from antler beams: the band, a sweep from the
+  brow up past each antler ending as a swept-back tine, and a lower beam forming open loops
+  (Beams 1–3, Loops). Tines follow the beams' flow and grow near the antlers.
+- **Species shape the band**, not just the antlers: whitetail upswept spikes and a brow point;
+  mule forked tines; elk tines swept back; stag clusters; reindeer a forward shovel; moose one heavy
+  band with paddles; forest spirit curling tendrils; fawn a plain band with buttons.
+- References the owner shared were for general direction only; don't reproduce any of them.
+
 ## Faun bust (wear view)
 
 - Simple and cartoony so the antlers stay the focus, but refined: one smooth blended head, not
@@ -67,3 +89,5 @@ Newest first within each section. Change one only when the owner asks.
 
 - Optional "Switch camera" (front/back) button for trying antlers on someone else.
 - Cross-device library sync with sign-in (see above), only if the owner asks.
+- Crown sizing from photos or a 3D head scan instead of a tape measure.
+- Crown try-on: check and refine placement on a real head (phase 2).

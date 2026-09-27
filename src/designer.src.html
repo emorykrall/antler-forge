@@ -182,6 +182,7 @@ summary .sprig{width:16px;height:16px;color:var(--gold);flex:none}
 summary::after{content:"";margin-left:auto;width:8px;height:8px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);margin-right:4px;transition:transform .15s}
 details[open] summary::after{transform:rotate(-135deg)}
 .ctl-list{display:grid;gap:15px;padding:2px 18px 18px}
+.ctl[hidden],details[hidden]{display:none}
 .ctl{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
 .ctl label{font-size:14.5px;color:var(--ink)}
 .ctl output{font:500 12px/1 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--muted);min-width:64px;text-align:right}
@@ -328,7 +329,12 @@ details[open] summary::after{transform:rotate(-135deg)}
   <aside class="panel">
     <div class="scroll">
       <div class="sect">
-        <p class="label">Species</p>
+        <p class="label">Style</p>
+        <div class="presets" id="styles" role="group" aria-label="Style">
+          <button class="chip" data-style="headband" aria-pressed="true">Headband antlers</button>
+          <button class="chip" data-style="crown" aria-pressed="false">Crown</button>
+        </div>
+        <p class="label" style="margin-top:18px">Species</p>
         <div class="presets" id="presets"></div>
         <p class="lore" id="lore"></p>
         <div class="row-actions">
@@ -403,6 +409,7 @@ const inputs = {};
 C.PARAM_SPEC.forEach((g) => {
   const d = document.createElement('details');
   d.open = g.tier === 'essentials';
+  if (g.only) d.dataset.only = g.only;
   const sm = document.createElement('summary');
   sm.innerHTML = '<svg class="sprig" aria-hidden="true"><use href="#sprig"/></svg>';
   sm.appendChild(document.createTextNode(g.group)); d.appendChild(sm);
@@ -410,7 +417,7 @@ C.PARAM_SPEC.forEach((g) => {
   d.appendChild(list);
   $({ essentials: 'tier-essentials', details: 'tier-details' }[g.tier] || 'tier-advanced').appendChild(d);
   for (const it of g.items) {
-    if (it.k === 'filament') continue;   // shown as swatches at the top
+    if (it.k === 'filament' || it.k === 'style') continue;   // shown as swatches / chips at the top
     const w = document.createElement('div'); w.className = 'ctl';
     const id = 'p-' + it.k;
     const lab = document.createElement('label'); lab.htmlFor = id; lab.textContent = it.label; w.appendChild(lab);
@@ -433,7 +440,7 @@ C.PARAM_SPEC.forEach((g) => {
       inp.addEventListener('input', () => { P[it.k] = Number(inp.value); out.value = fmt(it, P[it.k]); changed(); });
     }
     if (it.hint) { const h = document.createElement('div'); h.className = 'hint'; h.textContent = it.hint; w.appendChild(h); }
-    inputs[it.k] = { it, inp, out };
+    inputs[it.k] = { it, inp, out, wrap: w };
     list.appendChild(w);
   }
 });
@@ -456,7 +463,18 @@ function syncControls() {
     else { inp.value = P[k]; out.value = fmt(it, P[k]); }
   }
   for (const b of presetsEl.children) b.setAttribute('aria-pressed', String(b.dataset.k === P.preset));
+  applyStyle();
 }
+// Show only the controls that apply to this style (and the crown's Opening only when it's open).
+function applyStyle() {
+  for (const b of $('styles').children) b.setAttribute('aria-pressed', String(b.dataset.style === P.style));
+  for (const k in inputs) {
+    const { it, wrap } = inputs[k];
+    wrap.hidden = !!(it.only && it.only !== P.style) || (k === 'ringGap' && P.ringBase === 'closed');
+  }
+  for (const d of document.querySelectorAll('details[data-only]')) d.hidden = d.dataset.only !== P.style;
+}
+for (const b of $('styles').children) b.addEventListener('click', () => { P.style = b.dataset.style; syncControls(); changed(); });
 
 /* ------------------------------------------------------------ three.js scene */
 let renderer, scene, camera, controls, root, keyLight, glOK = true;
@@ -529,17 +547,30 @@ function bedObject() {
 function wearObject() {
   const g = new THREE.Group();
   if (!faunGroup) faunGroup = buildFaun();
+  const crown = P.style === 'crown';
+  faunGroup.scale.setScalar(crown ? crownFit(P).f : 1);   // the faun's head is sized to the crown
   g.add(faunGroup);
-  const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(Rb, Rb, P.hbWidth, 96, 1, true, -1.95, 3.9), mats.band);
-  band.position.set(0, 0, cz); g.add(band);
+  if (!crown) {
+    const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(Rb, Rb, P.hbWidth, 96, 1, true, -1.95, 3.9), mats.band);
+    band.position.set(0, 0, cz); g.add(band);
+  }
   if (!shown) return g;
   g.add(antlerPair(C.buildSkeleton(P)));
   return g;
 }
+// Where a crown sits: it is built around a head ellipsoid sized from the head circumference, which
+// is the faun's skull scaled by f. Its print-frame mesh was lowered by ring.shift onto the bed.
+function crownFit(p, sk) {
+  const g = sk ? sk.ring : C.ringSpec(p), f = g.head.r[1] / 92;
+  const M = new THREE.Matrix4().makeTranslation(0, -6 * f, sk ? -sk.ring.shift : 0);
+  return { f, M };
+}
 // The pair as worn: each antler seated on the band at the chosen angle, left mirrored.
+// A crown is one piece, placed whole.
 function antlerPair(sk) {
   const g = new THREE.Group();
+  if (sk.params.style === 'crown') { const c = antlerObject(); c.applyMatrix4(crownFit(sk.params, sk).M); g.add(c); return g; }
   const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
   const a = P.bandAngle * Math.PI / 180;
   const n = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), t = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
@@ -771,7 +802,7 @@ function rebuildScene() {
   while (root.children.length) root.remove(root.children[0]);
   if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
   else root.add(wearObject());
-  const fitKey = view + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
+  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
   if (fitKey !== lastFitKey && shown) { fitCamera(); lastFitKey = fitKey; }
 }
 function fitCamera() {
@@ -842,6 +873,7 @@ let raf = 0;
 function changed() {
   try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {}
   for (const b of presetsEl.children) b.setAttribute('aria-pressed', String(b.dataset.k === P.preset));
+  applyStyle();
   if (raf) return;
   raf = requestAnimationFrame(() => { raf = 0; requestPreview(); updateReadout(); if (view === 'library') libMark(); });
 }
@@ -868,6 +900,7 @@ function makeWorker() {
   } catch (e) { return null; }
 }
 function previewRes(p) {
+  if (p.style === 'crown') return 1.3;
   const L = p.beamLength * p.scale;
   return Math.max(0.8, Math.min(1.6, L / 150));
 }
@@ -957,17 +990,21 @@ async function offerFile(name, data) {
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
-const slug = () => 'antlers-' + (P.preset || 'custom') + '-' + (C.FILAMENTS[P.filament] || C.FILAMENTS.bone).slug;
+const slug = () => (P.style === 'crown' ? 'crown-' : 'antlers-') + (P.preset || 'custom') + '-' + (C.FILAMENTS[P.filament] || C.FILAMENTS.bone).slug;
 async function downloadSTLs() {
   let b = built && built.key === keyOf(P) ? built : await build();
   if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
   if (!b.report.watertight || b.report.shells !== 1) { toast('Mesh failed its check, so nothing was exported.'); return; }
   const base = slug();
+  const angle = b.report.fit.angle, stls = b.params.style === 'crown'
+    ? [{ name: base + '.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base, rotZ: angle })) }]   // one piece
+    : [{ name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: angle })) },
+      { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -angle })) }];
+  const notesReport = Object.assign({}, b.report, { size: C.plateSize(b.mesh, angle) });   // size as it sits on the plate
   const zip = C.makeZip([
-    { name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: b.report.fit.angle })) },
-    { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -b.report.fit.angle })) },
+    ...stls,
     { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params: b.params }, null, 2) },
-    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), b.report, b.report.fit, { units: 'in' }) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), notesReport, b.report.fit, { units: 'in' }) },
   ]);
   offerFile(base + '.zip', zip);
 }
@@ -1061,6 +1098,8 @@ function arSetup() {
 function arRefreshPair() {
   if (!AR.root || !shown) return;
   if (AR.pair) AR.root.remove(AR.pair);
+  const f = P.style === 'crown' ? crownFit(P).f : 1;   // the head that hides the back of a crown is sized to it
+  AR.occ.scale.set(72 * f, 90 * f, 90 * f); AR.occ.position.set(0, -6 * f, 0);
   AR.pair = antlerPair(C.buildSkeleton(P));
   AR.root.add(AR.pair);
   arRender();
@@ -1543,7 +1582,7 @@ function libCard(d) {
   const body = el('div', 'card-body');
   const name = el('h3', 'card-name', d.name);
   const meta = el('p', 'card-meta'); const dot = el('i'); dot.style.background = fil.hex;
-  meta.append(dot, `${(C.PRESETS[p.preset] || {}).label || 'Custom'} · ${p.filament === 'oak' ? 'White Oak' : 'Bone White'}`);
+  meta.append(dot, `${(C.PRESETS[p.preset] || {}).label || 'Custom'}${p.style === 'crown' ? ' crown' : ''} · ${p.filament === 'oak' ? 'White Oak' : 'Bone White'}`);
   const dims = el('p', 'card-dims');
   if (d.size) dims.append(`${d.size.map((x) => inch(x, 1)).join(' × ')} in · `);
   dims.append(d.fits === false ? Object.assign(el('span', 'over'), { textContent: 'too big for the P2S' }) : 'one piece on the P2S');

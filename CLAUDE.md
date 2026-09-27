@@ -38,8 +38,10 @@ npm run samples                            # samples/*.stl, one per preset at 0.
 ## Architecture (engine pipeline)
 
 1. **Skeleton** (`buildAt`, `buildSkeleton`): params → a beam plus tines, brow, crown, forks and palm as
-   centre-line samples with radii, built in the head frame, then scaled and rotated into the print
-   frame. The fit loop shrinks the antler until it fits the bed and picks the plate rotation.
+   centre-line samples with radii, built in the head frame. Headband style: scaled and rotated onto
+   a pedicle. Crown style (`placeCrown`): the antler twice (mirrored) on a band of beams built round
+   a head ellipsoid (`ringSpec`, `ringBand`, `ringTines`). The fit loop shrinks antlers until the
+   part fits the bed (bisection if slow) and picks the plate rotation.
 2. **Signed distance field** (`meshAntler` → `fillLayer`): round-cone segments with oval sections,
    gutters and pearling, smooth-unioned (`smin`) with the flared pedicle, burr and palm. The headband
    channel is subtracted and the field is clipped at Z = 0, one Z layer at a time.
@@ -57,10 +59,13 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   (`tunnel`, `clip`, `flat`, `none`). The mirrored left STL must have positive volume too.
 - **Antler angles are in the head frame** (0° spread = straight up from the crown), so moving the
   base along the band (`bandAngle`) doesn't change how the antlers stand.
-- **Headband dimensions never scale.** `mountSpec` uses `hbWidth`, `hbThick`, `clearance`, `wall` and
-  `hbRadius` unscaled; only the antler (and the pedicle radius that follows the beam) scales.
+- **Headband dimensions and the crown's band never scale.** `mountSpec` uses `hbWidth`, `hbThick`,
+  `clearance`, `wall` and `hbRadius` unscaled; a crown's band comes from `ringSpec` (head size).
+  Only antlers scale.
+- **Crowns are comfortable:** nothing reaches inside the head ellipsoid (`skel.head`, cut away in
+  `meshAntler`), the liner that touches the head is smooth, and decoration stays outside it.
 - **Printed tip radius is at least 1.5 mm** (`MIN_R`).
-- **Each antler fits the Bambu P2S (256 × 256 × 256 mm) as one part**, with a 6 mm brim margin
+- **Each antler, or each crown, fits the Bambu P2S (256 × 256 × 256 mm) as one part**, with a 6 mm brim margin
   (`BED_MARGIN`), when autoFit is on. It is never split into pieces.
 - **Preview colours come from the Bambu hex codes** in `FILAMENTS`: PLA Matte Bone White 11103
   `#CBC6B8`, PLA Wood White Oak 13106 `#D6CCA3`.

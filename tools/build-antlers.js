@@ -9,6 +9,7 @@
  *   node tools/build-antlers.js design.json --res 0.35       # finer mesh
  *   node tools/build-antlers.js --preset elk --scale 0.7     # no design file needed
  *   node tools/build-antlers.js design.json --side right --out ./stl
+ *   node tools/build-antlers.js --preset elk --style crown --ringBase openBack --headCirc 571.5
  *   node tools/build-antlers.js --list-presets
  *
  * Any parameter can be overridden: --beamLength 260 --mount clip --hbWidth 15
@@ -59,7 +60,8 @@ function main() {
   const side = String(args.side || 'both');
   const outDir = path.resolve(String(args.out || '.'));
   const fil = Core.FILAMENTS[P.filament] || Core.FILAMENTS.bone;
-  const base = String(args.name || `antler-${P.preset || 'custom'}-${fil.slug}`);
+  const crown = P.style === 'crown';
+  const base = String(args.name || `${crown ? 'crown' : 'antler'}-${P.preset || 'custom'}-${fil.slug}`);
   fs.mkdirSync(outDir, { recursive: true });
 
   const t0 = Date.now();
@@ -71,11 +73,12 @@ function main() {
   });
   if (process.stderr.isTTY) process.stderr.write('\n');
   const rep = Core.validateMesh(mesh);
+  rep.size = Core.plateSize(mesh, skel.fit.angle);   // as it sits on the plate
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
 
   const f1 = (x) => x.toFixed(1);
   const fit = skel.fit;
-  console.log(`design     ${(Core.PRESETS[P.preset] || {}).label || 'Custom'} · scale ${fit.scale.toFixed(2)}${fit.shrunk ? ` (shrunk from ${P.scale} to fit)` : ''} · base ${P.mount} · voxel ${res} mm`);
+  console.log(`design     ${(Core.PRESETS[P.preset] || {}).label || 'Custom'} · scale ${fit.scale.toFixed(2)}${fit.shrunk ? ` (shrunk from ${P.scale} to fit)` : ''} · ${crown ? `crown ${P.ringBase}, head ${P.headCirc} mm` : `base ${P.mount}`} · voxel ${res} mm`);
   console.log(`filament   ${fil.name}`);
   console.log(`size       ${f1(rep.size[0])} × ${f1(rep.size[1])} × ${f1(rep.size[2])} mm`);
   console.log(`mesh       ${rep.triangles.toLocaleString()} triangles, ${rep.vertices.toLocaleString()} vertices (${dt}s)`);
@@ -86,8 +89,9 @@ function main() {
   console.log(`watertight ${rep.watertight ? 'YES' : 'NO'}`);
 
   const written = [];
-  if (side === 'both' || side === 'right') { const f = path.join(outDir, `${base}-right.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: base + ' right', rotZ: fit.angle }))); written.push(f); }
-  if (side === 'both' || side === 'left') { const f = path.join(outDir, `${base}-left.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { mirror: true, name: base + ' left', rotZ: -fit.angle }))); written.push(f); }
+  if (crown) { const f = path.join(outDir, `${base}.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: base, rotZ: fit.angle }))); written.push(f); }   // one piece
+  else if (side === 'both' || side === 'right') { const f = path.join(outDir, `${base}-right.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: base + ' right', rotZ: fit.angle }))); written.push(f); }
+  if (!crown && (side === 'both' || side === 'left')) { const f = path.join(outDir, `${base}-left.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { mirror: true, name: base + ' left', rotZ: -fit.angle }))); written.push(f); }
   if (args.notes !== 'false') { const f = path.join(outDir, `${base}-print-notes.txt`); fs.writeFileSync(f, Core.printNotes(P, rep, fit)); written.push(f); }
   for (const f of written) console.log(`wrote      ${path.relative(process.cwd(), f) || f}`);
   return rep.watertight && rep.shells === 1 ? 0 : 1;
