@@ -145,7 +145,7 @@
     ] },
     { group: 'Crown shape', tier: 'details', only: 'crown', items: [
       { k: 'ringCharacter', label: 'Character', min: 0, max: 1, step: 0.05, u: '', hint: '0 biomechanical horror (ribbed, clawed, visceral) · ½ natural antler · 1 refined, flowing elven' },
-      { k: 'ringPattern', label: 'Pattern', type: 'select', options: [['band', 'Band'], ['lattice', 'Almond lattice'], ['loops', 'Calligraphic loops'], ['weave', 'Woven filigree'], ['tiara', 'Tiara'], ['laurel', 'Laurel'], ['briar', 'Briar'], ['sunburst', 'Sunburst']], hint: 'How the band’s strands part, meet and branch' },
+      { k: 'ringPattern', label: 'Pattern', type: 'select', options: [['band', 'Band'], ['lattice', 'Almond lattice'], ['loops', 'Calligraphic loops'], ['weave', 'Woven filigree'], ['tiara', 'Tiara'], ['laurel', 'Laurel'], ['briar', 'Briar'], ['sunburst', 'Sunburst'], ['circlet', 'Circlet'], ['spines', 'Crown of spines']], hint: 'How the band’s strands part, meet and branch' },
       { k: 'ringDip', label: 'Brow dip', min: 0, max: 35, step: 1, u: 'mm', hint: 'How far the band comes down to a point on the forehead' },
       { k: 'ringRise', label: 'Temple rise', min: 0, max: 30, step: 1, u: 'mm', hint: 'How high the band lifts where the antlers stand' },
       { k: 'ringDrop', label: 'Back drop', min: 0, max: 30, step: 1, u: 'mm', hint: 'How low the band settles at the back' },
@@ -208,13 +208,13 @@
 
   // Tuned for silhouette first: a smooth curl, tine tips on one arch, calm surfaces.
   const PRESETS = {
-    whitetail: { label: 'Whitetail', p: { ringCharacter: 0.9, ringPattern: 'loops' } },
-    mule: { label: 'Mule deer', p: { ringCharacter: 0.85, ringPattern: 'loops', ringStrands: 3, ringWeave: 1, ringDip: 14, ringLoopDepth: 10, ringTines: 6, ringTineStyle: 'fork', ringTineLength: 30, ringFront: 'none', beamLength: 260, baseDia: 28, beamTaper: 0.34, tipDia: 5, beamLean: -14, beamCurl: 34, curlBias: 1.2, beamSpread: 56, beamInCurl: -62, tineCount: 0, browTine: true, browDir: 'up', browLength: 28, browAngle: 62, browPos: 0.08, forkDepth: 2, forkAngle: 50, tineCurve: 8, tineInward: 4, fillet: 3, scale: 0.64 } },
-    elk: { label: 'Elk', p: { ringCharacter: 0.85, ringPattern: 'lattice', ringStrands: 2, ringWeave: 1, ringDip: 12, ringRise: 12, ringSweepReach: 75, ringTineLean: 1, ringTines: 6, ringTineStyle: 'sweep', ringTineLength: 40, ringFront: 'none', beamLength: 420, baseDia: 34, beamTaper: 0.42, tipDia: 6, beamLean: -46, beamCurl: 80, curlBias: 1.6, beamSpread: 44, beamInCurl: -52, wobble: 0.15, tineCount: 4, tineDir: 'forward', tineStart: 0.16, tineEnd: 0.74, tineLength: 150, tineCrest: 0.55, tineTaper: 0.35, tineRhythm: 0.95, tineAngle: 60, tineFan: 18, tineCurve: 34, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 130, browAngle: 80, browPos: 0.045, ovality: 0.16, grooveDepth: 0.55, pearling: 0.55, burrSize: 4.5, scale: 0.5 } },
-    reindeer: { label: 'Reindeer', p: { ringCharacter: 0.65, ringPattern: 'band', ringStrands: 3, ringWeave: 2, ringDip: 8, ringSweepLift: 26, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 22, ringFront: 'shovel', beamLength: 380, baseDia: 25, beamTaper: 0.32, tipDia: 5, beamLean: -50, beamCurl: 150, curlBias: 1.5, beamSpread: 40, beamInCurl: -58, wobble: 0.15, tineCount: 2, tineDir: 'alternate', tineStart: 0.3, tineEnd: 0.52, tineLength: 70, tineCrest: 0.5, tineTaper: 0.2, tineAngle: 58, tineFan: 0, tineCurve: 20, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 90, browAngle: 95, browPos: 0.07, crownCount: 4, crownShape: 'fan', crownLength: 55, palmation: 0.3, ovality: 0.26, grooveDepth: 0.35, pearling: 0.3, burrSize: 3.2, scale: 0.56 } },
-    stag: { label: 'Red stag', p: { ringCharacter: 0.9, ringPattern: 'lattice', ringStrands: 3, ringWeave: 2, ringDip: 20, ringRise: 14, ringTines: 4, ringTineStyle: 'cluster', ringTineLength: 24, ringFront: 'point', beamLength: 360, baseDia: 32, beamTaper: 0.4, tipDia: 5.5, beamLean: -34, beamCurl: 70, curlBias: 1.3, beamSpread: 46, beamInCurl: -58, tineCount: 2, tineDir: 'forward', tineStart: 0.12, tineEnd: 0.4, tineLength: 110, tineCrest: 0.2, tineTaper: 0.2, tineAngle: 66, tineFan: 8, tineCurve: 36, tineInward: 8, tineThick: 0.72, browTine: true, browDir: 'forward', browLength: 112, browAngle: 82, browPos: 0.05, crownCount: 4, crownShape: 'cup', crownLength: 70, palmation: 0, ovality: 0.14, grooveDepth: 0.55, pearling: 0.6, burrSize: 4.5, scale: 0.53 } },
+    whitetail: { label: 'Whitetail', p: { ringCharacter: 0.9, ringPattern: 'circlet' } },
+    mule: { label: 'Mule deer', p: { ringCharacter: 0.85, ringPattern: 'circlet', ringStrands: 3, ringWeave: 1, ringDip: 14, ringLoopDepth: 10, ringTines: 6, ringTineStyle: 'fork', ringTineLength: 30, ringFront: 'none', beamLength: 260, baseDia: 28, beamTaper: 0.34, tipDia: 5, beamLean: -14, beamCurl: 34, curlBias: 1.2, beamSpread: 56, beamInCurl: -62, tineCount: 0, browTine: true, browDir: 'up', browLength: 28, browAngle: 62, browPos: 0.08, forkDepth: 2, forkAngle: 50, tineCurve: 8, tineInward: 4, fillet: 3, scale: 0.64 } },
+    elk: { label: 'Elk', p: { ringCharacter: 0.85, ringPattern: 'circlet', ringStrands: 2, ringWeave: 1, ringDip: 12, ringRise: 12, ringSweepReach: 75, ringTineLean: 1, ringTines: 6, ringTineStyle: 'sweep', ringTineLength: 40, ringFront: 'none', beamLength: 420, baseDia: 34, beamTaper: 0.42, tipDia: 6, beamLean: -46, beamCurl: 80, curlBias: 1.6, beamSpread: 44, beamInCurl: -52, wobble: 0.15, tineCount: 4, tineDir: 'forward', tineStart: 0.16, tineEnd: 0.74, tineLength: 150, tineCrest: 0.55, tineTaper: 0.35, tineRhythm: 0.95, tineAngle: 60, tineFan: 18, tineCurve: 34, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 130, browAngle: 80, browPos: 0.045, ovality: 0.16, grooveDepth: 0.55, pearling: 0.55, burrSize: 4.5, scale: 0.5 } },
+    reindeer: { label: 'Reindeer', p: { ringCharacter: 0.65, ringPattern: 'circlet', ringStrands: 3, ringWeave: 2, ringDip: 8, ringSweepLift: 26, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 22, ringFront: 'shovel', beamLength: 380, baseDia: 25, beamTaper: 0.32, tipDia: 5, beamLean: -50, beamCurl: 150, curlBias: 1.5, beamSpread: 40, beamInCurl: -58, wobble: 0.15, tineCount: 2, tineDir: 'alternate', tineStart: 0.3, tineEnd: 0.52, tineLength: 70, tineCrest: 0.5, tineTaper: 0.2, tineAngle: 58, tineFan: 0, tineCurve: 20, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 90, browAngle: 95, browPos: 0.07, crownCount: 4, crownShape: 'fan', crownLength: 55, palmation: 0.3, ovality: 0.26, grooveDepth: 0.35, pearling: 0.3, burrSize: 3.2, scale: 0.56 } },
+    stag: { label: 'Red stag', p: { ringCharacter: 0.9, ringPattern: 'circlet', ringStrands: 3, ringWeave: 2, ringDip: 20, ringRise: 14, ringTines: 4, ringTineStyle: 'cluster', ringTineLength: 24, ringFront: 'point', beamLength: 360, baseDia: 32, beamTaper: 0.4, tipDia: 5.5, beamLean: -34, beamCurl: 70, curlBias: 1.3, beamSpread: 46, beamInCurl: -58, tineCount: 2, tineDir: 'forward', tineStart: 0.12, tineEnd: 0.4, tineLength: 110, tineCrest: 0.2, tineTaper: 0.2, tineAngle: 66, tineFan: 8, tineCurve: 36, tineInward: 8, tineThick: 0.72, browTine: true, browDir: 'forward', browLength: 112, browAngle: 82, browPos: 0.05, crownCount: 4, crownShape: 'cup', crownLength: 70, palmation: 0, ovality: 0.14, grooveDepth: 0.55, pearling: 0.6, burrSize: 4.5, scale: 0.53 } },
     moose: { label: 'Moose', p: { ringCharacter: 0.55, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 4, ringDrop: 4, ringTaper: 0.2, ringWander: 0.15, ringThick: 12, ringTines: 6, ringTineStyle: 'paddle', ringTineLength: 24, ringFront: 'none', beamLength: 170, baseDia: 32, beamTaper: 0.15, tipDia: 6, beamLean: -12, beamCurl: 25, curlBias: 1, beamSpread: 72, beamInCurl: -5, wobble: 0.1, tineCount: 1, tineDir: 'forward', tineStart: 0.22, tineEnd: 0.22, tineLength: 55, tineCrest: 0.5, tineTaper: 0, tineAngle: 70, tineFan: 0, tineCurve: 20, tineInward: 0, tineThick: 0.7, browTine: false, crownCount: 8, crownShape: 'fan', crownLength: 115, palmation: 1, ovality: 0.4, grooveDepth: 0.3, pearling: 0.3, burrSize: 4, fillet: 6, scale: 0.55 } },
-    spirit: { label: 'Forest spirit', p: { ringCharacter: 0.3, ringPattern: 'weave', ringStrands: 3, ringWeave: 3, ringDip: 22, ringLoopDepth: 18, ringWander: 0.75, ringAsym: 0.3, ringTines: 10, ringTineStyle: 'tendril', ringTineLength: 34, ringFront: 'none', beamLength: 320, baseDia: 25, beamTaper: 0.52, tipDia: 4, beamLean: -10, beamCurl: 64, curlBias: 1.6, beamSpread: 52, beamInCurl: -96, wobble: 0.45, tineCount: 7, tineDir: 'spiral', tineStart: 0.14, tineEnd: 0.9, tineLength: 90, tineCrest: 0.35, tineTaper: 0.55, tineRhythm: 0.85, tineAngle: 50, tineFan: 20, tineCurve: 42, tineInward: 12, tineThick: 0.72, browTine: false, forkDepth: 1, forkAngle: 28, forkTines: true, jitter: 0.3, seed: 21, ovality: 0.08, grooveDepth: 0.3, pearling: 0.15, fillet: 6, scale: 0.55 } },
+    spirit: { label: 'Forest spirit', p: { ringCharacter: 0.3, ringPattern: 'spines', ringStrands: 3, ringWeave: 3, ringDip: 22, ringLoopDepth: 18, ringWander: 0.75, ringAsym: 0.3, ringTines: 10, ringTineStyle: 'tendril', ringTineLength: 34, ringFront: 'none', beamLength: 320, baseDia: 25, beamTaper: 0.52, tipDia: 4, beamLean: -10, beamCurl: 64, curlBias: 1.6, beamSpread: 52, beamInCurl: -96, wobble: 0.45, tineCount: 7, tineDir: 'spiral', tineStart: 0.14, tineEnd: 0.9, tineLength: 90, tineCrest: 0.35, tineTaper: 0.55, tineRhythm: 0.85, tineAngle: 50, tineFan: 20, tineCurve: 42, tineInward: 12, tineThick: 0.72, browTine: false, forkDepth: 1, forkAngle: 28, forkTines: true, jitter: 0.3, seed: 21, ovality: 0.08, grooveDepth: 0.3, pearling: 0.15, fillet: 6, scale: 0.55 } },
     fawn: { label: 'Fawn nubs', p: { ringCharacter: 0.7, ringPattern: 'laurel', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 3, ringDrop: 3, ringTaper: 0.1, ringWander: 0.15, ringTines: 12, ringTineStyle: 'button', ringTineLength: 8, ringFront: 'none', beamLength: 20, baseDia: 30, beamTaper: 0.3, tipDia: 18, baseHeight: 10, baseFlare: 1.6, beamLean: -10, beamCurl: 15, curlBias: 1, beamSpread: 30, beamInCurl: 0, wobble: 0.1, tineCount: 0, browTine: false, grooveDepth: 0.6, grooveCount: 11, pearling: 0.7, burrSize: 3, scale: 0.8 } },
   };
 
@@ -584,7 +584,10 @@
   const elvenOf = (P) => clamp((P.ringCharacter - 0.5) * 2, 0, 1), gigerOf = (P) => clamp((0.5 - P.ringCharacter) * 2, 0, 1);
   const headN = (g, p) => (g.head.kind === 'scan' ? g.head.normal(p) : norm([p[0] / g.head.r[0] ** 2, p[1] / g.head.r[1] ** 2, (p[2] - g.head.c[2]) / g.head.r[2] ** 2]));
   const RIB = 6.5;   // mm between the vertebra-like ribs along a biomechanical beam
-  const DECOR = ['tiara', 'laurel', 'briar', 'sunburst'];   // patterns carried by what grows from the two beams
+  const DECOR = ['tiara', 'laurel', 'briar', 'sunburst', 'spines'];   // patterns carried by what grows from the two beams
+  // Circlet: a strap band STRAP_H mm tall (plus a rim along each edge), STRAP_T thick, and small copies of the
+  // species' antler (MOTIF of its full size) set along its top edge
+  const STRAP_H = 12, STRAP_T = 4.4, MOTIF = 0.28;
 
   // The band's shape, right half (the left is its mirror image): ring angle t runs from the front
   // (0) to the back (π). It dips to a point on the forehead, rises over the temples where the
@@ -689,6 +692,27 @@
   //  weave:   the upper beam crosses the forward beam once on its way, then lifts off
   function sculptedBand(P, g, c) {
     const { path, so, hs, he, SC, GG, pat, out } = c, tr = g.tr, rs = g.rs;
+    if (pat === 'circlet') {   // a crafted strap band with a rim along each edge; the motifs are set on it in placeCrown
+      const hh = STRAP_H / 2, lift = STRAP_T / 2 + 0.8;   // standing on the head, its inner face just clear of it
+      const strap = path(hs, he, () => 0, () => hh, 'ring', { radial: lift - OUTER - hh, ribbon: 1 - STRAP_T / 2 / hh });
+      strap.smooth = true; out[out.length - 1].smooth = true;   // a made band: no antler grain (ribbed when biomechanical)
+      for (const w of [-1, 1]) {
+        path(hs, he, () => 0, () => STRAND_MIN, 'ring', { radial: lift - OUTER - STRAND_MIN, w: w * hh });
+        out[out.length - 1].smooth = out[out.length - 2].smooth = SC > 0;
+      }
+      g.main = strap; g.hosts = [strap];
+      g.strap = { hh, lift };
+      const sites = [[tr * 0.45, 0.7], [tr + 0.6, 0.85], [tr + 1.2, 0.7], [tr + 1.8, 0.55]];   // (angle, size): graduated away from the antlers
+      g.motifs = sites.filter(([t]) => t > hs + 0.15 && t < he - 0.2).map(([t, k]) => ({ t, k }));
+      return out;
+    }
+    if (pat === 'spines') {   // a slim circlet of twisted twig: an even core with a strand spiralling round it
+      const rc = Math.max(STRAND_MIN, rs * 1.4), rt = STRAND_MIN, len = ((he - hs) * g.inner) / (2 * Math.PI), f = len / 45;
+      g.main = path(hs, he, (u, t, side) => sideNoise(P, side, u * 3 + so, 4.4, 2.2) * P.ringWander * 4 * (1 - SC), () => rc, 'ring', { ov: 0.1 });
+      path(hs, he, (u) => rc * 0.8 * Math.sin(2 * Math.PI * f * u), () => rt, 'ring', { radialF: (u) => rc - rt + rc * 0.8 * Math.cos(2 * Math.PI * f * u) });
+      g.hosts = [g.main];
+      return out;
+    }
     const W8 = P.ringWander * 8 * (1 - SC) * (1 + 1.5 * GG);
     const noise = (k) => (u, t, side) => sideNoise(P, side, u * 3 + so + k, 4.4 + k, 2.2) * W8;
     const root = Math.max(rs * 1.55, 0.75 * (g.rootR || 0), STRAND_MIN * 1.3);   // at the antler: a good share of the antler's own base, so it grows out of it
@@ -825,6 +849,24 @@
           const up = i % 2 ? 0.9 : 0.1;
           tine(add(a.sp.p, mul(a.O, a.sp.r * 0.6)), norm(add(add(mul(a.O, 0.45), mul(U, up + 0.2)), mul(a.back, 0.6))), L * (0.7 + 0.3 * rnd()), a.sp.r * 0.75, { curve: 10 - 30 * GG, tip: 0.25 });   // more up and back than out, to fit the bed
         }
+      } else if (pat === 'spines') {   // a ring of tall spines, tallest flanking the antlers, each forking once; berries at the base
+        const k = Math.max(6, n + 5), Ls = Math.max(L, 30 * (P._decor || 1));
+        for (let i = 0; i < k; i++) {
+          const a = at(g.main, 0.05 + (0.9 * (i + 0.5)) / k + jit(0.01));
+          if (Math.abs(a.ang - g.tr) < 10 * DEG) continue;
+          // tall and many, tallest flanking the antlers; a thick base lets them stand tall and still print
+          const near = Math.exp(-(((a.ang - g.tr) / 0.9) ** 2)), l = Ls * (1.4 + 1.6 * near) * (1 + jit(0.1)), rb = 5;
+          const base = add(a.sp.p, mul(U, a.sp.r * 0.6));
+          const sp = tine(base, norm(add(add(U, mul(a.back, 0.18 + 0.2 * Math.abs(a.ang) / Math.PI)), mul(a.O, 0.12))), l, rb, { curve: 8, tip: 0.5 });
+          const s2 = sampleAt(sp, 0.6);   // a twig forking off, toward the outside
+          tine(s2.p, norm(add(s2.t, mul(a.O, 0.9))), l * 0.35, rb * 0.72, { curve: 10, tip: 0.4 });
+          if (GG < 0.6) for (const [du, dw] of [[-1, 0.4], [1, 0.4], [0, -0.6]]) {   // a cluster of berries at the base
+            const c0 = add(add(a.sp.p, mul(a.O, a.sp.r + 2.2)), add(mul(a.sp.t, du * 4.2), mul(U, dw * 4.2)));
+            const br = { pts: [c0, add(c0, mul(a.O, 0.5))], rad: [3.4, 3.4], ss: [0, 1], n: 1, length: 0.5, kind: 'tine', F: U, ov: 0, sculpt: 1, giger: 0 };
+            parallelFrames(br);
+            if (side > 0) { out.push(br); out2.push(br); } else out.push(mirrorX(br));
+          }
+        }
       } else if (pat === 'sunburst') {   // rays out of the band all round, longest at the front
         const k = Math.max(3, n + 2);
         for (const host of hs2) for (let i = 0; i < k; i++) {
@@ -873,6 +915,11 @@
       else if (style === 'button') tine(base, dir(0.15, lean * 0.2, 1), Math.min(l, 10) * (1 + jit(0.2)), sp.r * 0.95, { tip: 0.2, keep: 0.55 });
     }
     }
+    if (pat === 'circlet' && g.strap && P.ringBase !== 'openFront') {   // a domed boss set at the brow, the focal point
+      const f = pathFrame(g, 0, (t) => bandH(P, g, t)), c0 = add(f.Q, mul(f.N, g.strap.lift + 2)), rb = 6.5 + 1.5 * SC;
+      const br = { pts: [c0, add(c0, mul(f.N, 1.5))], rad: [rb, rb * 0.9], ss: [0, 1], n: 1, length: 1.5, kind: 'tine', F: f.N, ov: 0.35, sculpt: 1, giger: GG };
+      parallelFrames(br); out.push(br);
+    }
     if ((pat === 'tiara' || pat === 'sunburst') && P.ringBase !== 'openFront') {   // a centre spire (tiara) or centre ray (sunburst) from the brow
       const f = pathFrame(g, 0, (t) => bandH(P, g, t)), rb = Math.max(TINE_BASE_MIN, (g.rootR || g.rs) * 0.55);
       const base = add(f.Q, mul(f.N, OUTER + rb)), d0 = norm(add(mul(f.N, pat === 'tiara' ? 0.12 : 0.45), U));
@@ -880,7 +927,7 @@
         (u) => Math.max(MIN_R, rb * (1 - 0.25 * u) * ogive(u, 0.5)));
       br.kind = 'tine'; br.F = f.N; br.ov = 0.15; br.sculpt = SC; br.giger = GG; parallelFrames(br); out.push(br);
     }
-    if (P.ringFront !== 'none' && P.ringBase !== 'openFront') {   // the brow piece, at the band's lowest point
+    if (P.ringFront !== 'none' && P.ringBase !== 'openFront' && pat !== 'circlet') {   // the brow piece, at the band's lowest point (a circlet has its boss)
       const f = pathFrame(g, 0, (t) => bandH(P, g, t)), base = add(f.Q, mul(f.N, OUTER + g.rs)), rsB = Math.max(g.rs, STRAND_MIN);   // sturdy at the base
       if (P.ringFront === 'point') {   // a point that runs down the forehead, plus a small crest above it
         const leaf = (u) => 1 + 0.35 * SC * Math.sin(Math.PI * Math.min(1, u / 0.7));   // sculpted: swells a little, then fines to a point
@@ -932,6 +979,23 @@
         const rm = P.burrSize * 0.55 * Math.max(0.6, S / 0.6), R0 = beam.rad[0] * 0.97 + rm * 0.3;
         burrs.push({ c: beam.pts[1], T: beam.T[0], N: beam.N[0], B: beam.B[0], R: R0, rm, amp: rm * 0.85,
           beads: Math.max(8, Math.round((2 * Math.PI * R0) / (rm * 1.7))), wild: 0.2 + 0.8 * P.jitter });
+      }
+    }
+    if (g.motifs) {   // circlet: small copies of the antler set along the strap's top edge, mirrored
+      const SC = elvenOf(P), GG = gigerOf(P);
+      for (const mo of g.motifs) {
+        const f = pathFrame(g, mo.t, (t) => bandH(P, g, t) + g.strap.hh), R = add(f.Q, mul(f.N, g.strap.lift));
+        const m = MOTIF * mo.k * (P._decor || 1), c = Math.cos(mo.t - tr), s = Math.sin(mo.t - tr);
+        const turn = (v) => [v[0] * c + v[1] * s, -v[0] * s + v[1] * c, v[2]];   // from the antler's place (tr) round to mo.t
+        for (const side of [1, -1]) for (const b0 of A.branches) {
+          const F = turn(b0.F || [1, 0, 0]);
+          const br = Object.assign({}, b0, {
+            pts: b0.pts.map((v) => { const q = turn(v); return [side * (q[0] * m + R[0]), q[1] * m + R[1], q[2] * m + R[2]]; }),
+            rad: b0.rad.map((r, i) => Math.max(r * m, MIN_R + (STRAND_MIN - MIN_R) * (1 - (b0.ss ? b0.ss[i] : 0)))),   // sturdy where it's set
+            length: b0.length * m, F: [side * F[0], F[1], F[2]], sculpt: SC, giger: GG,
+          });
+          parallelFrames(br); branches.push(br);
+        }
       }
     }
     for (const br of band) branches.push(br);

@@ -199,6 +199,19 @@ Newest first within each section. Change one only when the owner asks.
   artist. Patterns apply at every Character. Species: whitetail and stag 0.9, mule and elk 0.85, fawn 0.7,
   reindeer 0.65, moose 0.55, forest spirit 0.3 (eerie). Designs saved before crowns had these keep
   0.5 / Band (their old look); designs saved with Sculpted s load as Character 0.5 + s/2.
+- **Crafted crowns: Circlet and Crown of spines** (owner, 2026-09-28: the crowns still didn't read as
+  purposefully made; look at LOTR and other respected fantasy prop design). Studied Weta Workshop's
+  Thranduil crown (Daniel Falconer: a slim circlet with a ring of tall spines, berries gathered at the
+  band) and Game of Thrones' Renly Baratheon antler crown (a clean strap band with matching antlers set
+  round it). What makes them read as made: a clearly crafted base with finished edges, one motif
+  repeated in rhythm, symmetry with a focal point at the brow, and contrast between the made band and the
+  organic parts. *Circlet*: a strap band (12 mm plus a rim on each edge) with small copies of the
+  species' own antler (0.28 of its size, graduated away from the temples) set along its top edge and a
+  domed boss at the brow (no brow point or crest). *Crown of spines*: a slim twisted-twig circlet with a
+  ring of tall forking spines (thick bases so they can stand ~60 mm), tallest flanking the antlers, and
+  berry clusters at the band (gone toward the horror end). Both respond to Character. Species now wear
+  Circlet (whitetail, mule, elk, stag, reindeer) or Crown of spines (forest spirit); the older organic
+  patterns stay available until the owner decides which to retire.
 - **More patterns** (owner asked for more): *Tiara* (tines along the forward beams grow taller toward the
   brow and lean in, with a tall centre spire), *Laurel* (flattened leaves in pairs lying along both beams,
   pointing away from the antlers, largest near them; barbs at the horror end), *Briar* (two vines twisting
