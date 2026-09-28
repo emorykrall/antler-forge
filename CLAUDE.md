@@ -46,9 +46,10 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   every `vendor/<lib>/` and `serve.js` into `site/`, and generates the `*.wasm.b64.js` copies
   (keyed `lib/file`; the page's file:// shim answers fetch/XHR for them).
 - `tools/build-antlers.js`: CLI builder. Exits with code 1 unless the mesh is one watertight solid.
-- `tools/silhouettes.js out.png preset:pattern:character[:crown][:object] ...`: worn-silhouette contact
+- `tools/silhouettes.js [--shaded] out.png preset:pattern:character[:crown][:object] ...`: worn-silhouette contact
   sheets (front, ¾, side, back, top; the head hides what's behind it) with area/height metrics, for judging a
-  crown's composition. Use it before and after any crown design change.
+  crown's composition; `--shaded` renders lit form instead, to check the form reads as well as the silhouette.
+  Use it before and after any crown design change.
 - `tools/build-samples.js`, `tools/serve.js`, `vendor/face_mesh/` and `vendor/selfie_segmentation/`
   (MediaPipe, Apache-2.0, see NOTICE; binary model files renamed `*.wasm` so every host serves them),
   `vendor/flame/` (FLAME 2023 Open, CC BY 4.0, see NOTICE).
@@ -125,8 +126,11 @@ The tests in `test/` cover the first five. If a change needs one of them to move
 - **Run `npm test` before every commit.** Add or extend a test when you touch the engine.
 - A new parameter goes in `PARAM_SPEC` (UI and CLI pick it up) and `DEFAULTS`. Put it in the group
   and tier where people will look for it: `essentials` (always shown, keep it to ~9 controls),
-  `details` (collapsed sculpting groups) or `advanced` (headband fit and printer). If it should
-  survive a species change, add it to the keep-list in `presetParams`.
+  `details` (collapsed sculpting groups), `advanced` (headband fit and printer) or `hidden` (set by
+  the species and design files, a CLI flag, no page control). Prefer folding it into a combined control
+  (Tine length, Thickness, Wildness, Texture, Ornament size: relative, ×1 = the species, in
+  `applyMacros`) over adding a slider. If it should survive a species change, add it to the keep-list
+  in `presetParams`.
 - Page hierarchy: header = title, Save to library + Library, view switch; panel = Start (species,
   Surprise me, filament) → Essentials (open) → Shape details → Advanced (collapsed); footer = one
   status line + one primary button that reads Build final mesh, then Download STLs. Don't add a

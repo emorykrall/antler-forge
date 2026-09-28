@@ -55,6 +55,8 @@ Newest first within each section. Change one only when the owner asks.
 - **One place per action.** The owner found the interface crowded when actions were duplicated.
 - **The viewport always says whether it shows the coarse preview or the final mesh.**
 - **Surprise me** gives a new variation of the current species (keeps Size, headband, printer).
+- **Fewer, combined controls** (2026-09-28): see Crown style → Controls review. Before adding a control,
+  check it makes a visible difference and isn't better as part of an existing combined control.
 
 ## Crown style
 
@@ -258,6 +260,32 @@ Newest first within each section. Change one only when the owner asks.
 - **Crowns must survive printing and handling** (owner): crown strands are at least 6 mm thick
   (radius 3) except where a free end fines to its tip; band tines and brow pieces at least 6 mm at
   the base and no longer than 12× their base radius. Tested for every pattern, grown and sculpted.
+- **Controls review (owner, 2026-09-28: "too many… some have very little effect… some could be combined").**
+  The page has 63 settings instead of 95 (37 moved off the page, 5 combined ones added); crown mode shows
+  12 essentials and headband mode 9, and Shape details went from 58 controls to 27. Essentials: Size, head
+  size (crown), Crown design, Character, Antler length, Spread, Curl, Points, **Tine length**, Brow tine, base
+  style and headband width (headband). Shape details: Antler form (Thickness, Taper, Lean, Tip curl, Wildness),
+  Tines & points, Surface (Texture, Burr), Crown (base, opening, antler position, Ornament size, band thickness,
+  dip, rise, drop, asymmetry). Five **combined controls** are relative (×1 = the species' design, so every
+  saved design and every headband STL is unchanged): Tine length scales tineLength, browLength and
+  crownLength; Thickness baseDia and tipDia; Wildness wobble, jitter and ringWander; Texture grooveDepth and
+  pearling; Ornament size the crown's tines, sweep and loop lift, the Fleur composition and the circlet
+  motifs (`applyMacros`, applied once in `buildSkeleton`). The 37 values they stand for, and the ones that
+  made too little visible difference (tine arch, spacing rhythm, inward lean, tine thickness, brow angle and
+  height, fork angle, ovality, gutter count, burr size, fillet, smoothing, seed, the band's strand, weave,
+  tine style and brow piece settings), stay in PARAM_SPEC under tier `hidden`: set by each species, kept in
+  design files, validated, and still CLI flags.
+- **Six crown designs** (same review): Fleur, Almond lattice, Circlet, Crown of spines, Briar, Plain band.
+  Retired: Tiara, Lyre, Whiplash and Kokoshnik (the Fleur does their job better), Laurel, Sunburst, Loops,
+  Weave. Designs saved with a retired one open with the nearest remaining (`RETIRED` in `resolveParams`).
+  Fawn wears the Plain band.
+- **Nothing at the brow reads as a weapon** (owner: "smaller spiky central brow pieces seem dangerous,
+  weapon like"): brow pieces are short and round-ended (a drop of at most 14 mm and a bud above it, or a
+  round-ended paddle); the Fleur's centre is an openwork lancet framing a pendant drop, not a solid blade
+  (owner found the old one "disturbing").
+- **The elven end is smooth and sculpted** (owner: "still many blobby shapes and bumpy textures"): no gutters
+  or pearling on the crown from Character ≈ 0.87 up; Crown of spines loses its twist strand, side twigs and
+  berries (clean spires); Briar's twist lengthens and its thorns thin out; brow pieces are polished.
 
 ## Faun bust (wear view)
 

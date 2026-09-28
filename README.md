@@ -41,7 +41,9 @@ Any parameter can be overridden with `--name value`. The exit code is 1 if the m
 
 The 3D view normally shows a coarse preview mesh. **Build final mesh** builds the exact mesh that will print at the chosen resolution and checks it; the status bar says which one you're looking at, and the button then becomes **Download STLs**.
 
-The panel runs in the order you work: pick a species (or **Surprise me** for a new variation of it) and a filament, set the **Essentials** (size, beam, tines, base style and headband width), then open **Shape details** for fine sculpting or **Advanced** for headband fit and printer settings.
+The panel runs in the order you work: pick a species (or **Surprise me** for a new variation of it) and a filament, set the **Essentials** (size, antler length, spread, curl, points, tine length, and the base style and headband width, or for a crown your head size, the crown's design and its Character), then open **Shape details** for fine sculpting (antler form, tines, surface, and the crown's shape) or **Advanced** for fit and printer settings.
+
+Several controls are combined, relative handles where ×1 is the species' own design: **Tine length** (every tine, brow and crown point together), **Thickness** (the whole beam), **Wildness** (kinks, wander and irregularity), **Texture** (gutters and pearling) and **Ornament size** (the crown's decoration). The finer values behind them come from the species; a design file or the CLI can still set any of them (`--tineLength 120`).
 
 ## Crown style
 
@@ -71,13 +73,13 @@ Each antler is always exported as one complete part for the Bambu P2S (256 × 25
 
 The defaults aim for a balanced, sculptural silhouette rather than a naturalistic one:
 
-- Tine tips follow a smooth arch that peaks at "Longest tine at".
+- Tine tips follow a smooth arch whose peak each species sets.
 - Spacing tightens toward the tip, and the tines fan and lean slightly inward.
 - Beams sweep out and back in, so the pair reads as a lyre from the front.
 - Variation and wander are low, gutters and pearling are quiet, and the burr is a regular beaded ring.
 - A Taubin smoothing pass removes voxel ripple without shrinking the form. It only moves vertices, so the mesh stays watertight.
 
-Raise "Kinks & wander" and "Natural variation" for a wilder, more naturalistic look.
+Raise **Wildness** (under Shape details → Antler form) for a wilder, more naturalistic look.
 
 ## Anatomy the generator models
 

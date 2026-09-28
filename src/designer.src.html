@@ -448,6 +448,7 @@ const fmt = (it, v) => {
 const inputs = {};
 // Every group is a collapsible section in its tier; only Essentials starts open.
 C.PARAM_SPEC.forEach((g) => {
+  if (g.tier === 'hidden') return;   // species settings: set by the species and the combined controls
   const d = document.createElement('details');
   d.open = g.tier === 'essentials';
   if (g.only) d.dataset.only = g.only;

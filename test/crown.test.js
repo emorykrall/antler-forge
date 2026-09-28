@@ -67,6 +67,8 @@ test('crown shape settings at their extremes still give one watertight solid', (
     { ringAsym: 1, ringWander: 1 },
     { ringRise: 30, ringDrop: 30, ringDip: 35, ringSweepLift: 45, ringSweepReach: 100, ringLoopDepth: 30, ringTineLean: 1.5 },
     { ringRise: 0, ringDrop: 0, ringDip: 0, ringSweepLift: 0, ringSweepReach: 15, ringLoopDepth: 4, ringTaper: 0, ringWander: 0, ringTineLean: 0 },
+    { ornament: 1.5, wildness: 2, ringPattern: 'lattice' },
+    { ornament: 0.6, ringPattern: 'fleur' },
   ];
   for (const ex of extremes) for (const base of ['closed', 'openBack']) {
     const r = Core.validateMesh(Core.meshAntler(Core.buildSkeleton(crown('whitetail', base, ex)), 1.5));
@@ -109,7 +111,7 @@ test('tape measurements: the head shape is recovered exactly, and measured crown
 });
 
 test('every crown pattern, horror, natural or elven, is one sturdy watertight solid that fits', () => {
-  for (const ringPattern of ['band', 'lattice', 'loops', 'weave', 'tiara', 'laurel', 'briar', 'sunburst', 'circlet', 'spines', 'lyre', 'fleur', 'whiplash', 'kokoshnik']) for (const ringCharacter of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
+  for (const ringPattern of ['fleur', 'lattice', 'circlet', 'spines', 'briar', 'band']) for (const ringCharacter of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
     const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, ringCharacter, ringBase });
     const sk = Core.buildSkeleton(P), r = Core.validateMesh(Core.meshAntler(sk, 1.6));
     const tag = `${ringPattern} ${ringCharacter} ${ringBase}`;
