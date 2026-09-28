@@ -109,7 +109,7 @@ test('tape measurements: the head shape is recovered exactly, and measured crown
 });
 
 test('every crown pattern, horror, natural or elven, is one sturdy watertight solid that fits', () => {
-  for (const ringPattern of ['band', 'lattice', 'loops', 'weave', 'tiara', 'laurel', 'briar', 'sunburst', 'circlet', 'spines']) for (const ringCharacter of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
+  for (const ringPattern of ['band', 'lattice', 'loops', 'weave', 'tiara', 'laurel', 'briar', 'sunburst', 'circlet', 'spines', 'lyre', 'fleur']) for (const ringCharacter of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
     const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, ringCharacter, ringBase });
     const sk = Core.buildSkeleton(P), r = Core.validateMesh(Core.meshAntler(sk, 1.6));
     const tag = `${ringPattern} ${ringCharacter} ${ringBase}`;

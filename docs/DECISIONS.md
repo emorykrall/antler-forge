@@ -199,6 +199,24 @@ Newest first within each section. Change one only when the owner asks.
   artist. Patterns apply at every Character. Species: whitetail and stag 0.9, mule and elk 0.85, fawn 0.7,
   reindeer 0.65, moose 0.55, forest spirit 0.3 (eerie). Designs saved before crowns had these keep
   0.5 / Band (their old look); designs saved with Sculpted s load as Character 0.5 + s/2.
+- **Formal composition review → Fleur** (owner, 2026-09-28: the crafted patterns weren't clearly better;
+  evaluate formally, as abstracted silhouettes from several angles, for hierarchy and how the eye is led;
+  compare with the references, jewellery and fine art). Tool: `tools/silhouettes.js` renders worn
+  silhouettes (head occludes) front / ¾ / side / back / top with area and height metrics. Findings:
+  (1) no single primary line: band plus parallel strands read as static (Hogarth); (2) empty centre: the
+  antlers dominate the sides and nothing at the brow holds the composition, so the eye rises up the
+  antlers and has nothing to return to; (3) the back competed with the front; (4) flat, ungraduated
+  detail (the circlet's motifs a jumble, the spines a picket fence); (5) under-scale: antler : crown
+  height was ~3.3:1, where the references are ~1.5–2:1 (near the golden ratio). Precedent: Lalique's horn
+  tiara combs (one calm primary line, a dominant centre, flanking subdominants, graduated, radial, odd
+  groupings), kokoshnik tiaras (graduated to the centre), reference 4 (a V at the brow with heart-lobed
+  arches rising into the antlers, i.e. a fleur-de-lis). *Fleur* is built as a jeweller's flat template
+  wrapped onto the head (`flatStroke`, strokes in s/h mm, standing off the head above a height): a V at the
+  brow, a broad leaf-blade centre petal (≈0.55 of the antler height) standing up like a tiara's centre,
+  heart-lobed side petals (≈0.3) sweeping down tangentially into the antler bases, a quiet back; every size
+  a fraction of the antlers' height, so crown : antler is ≈1 : 2.1. Eye path: blade → lobes → antlers →
+  their inward curve → blade. Fleur is now the default for stag, elk, whitetail and mule deer. (Lyre, a
+  single gull-wing line with a small fleur, was a step on the way.)
 - **Crafted crowns: Circlet and Crown of spines** (owner, 2026-09-28: the crowns still didn't read as
   purposefully made; look at LOTR and other respected fantasy prop design). Studied Weta Workshop's
   Thranduil crown (Daniel Falconer: a slim circlet with a ring of tall spines, berries gathered at the

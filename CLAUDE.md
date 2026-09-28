@@ -46,6 +46,9 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   every `vendor/<lib>/` and `serve.js` into `site/`, and generates the `*.wasm.b64.js` copies
   (keyed `lib/file`; the page's file:// shim answers fetch/XHR for them).
 - `tools/build-antlers.js`: CLI builder. Exits with code 1 unless the mesh is one watertight solid.
+- `tools/silhouettes.js out.png preset:pattern:character[:crown][:object] ...`: worn-silhouette contact
+  sheets (front, ¾, side, back, top; the head hides what's behind it) with area/height metrics, for judging a
+  crown's composition. Use it before and after any crown design change.
 - `tools/build-samples.js`, `tools/serve.js`, `vendor/face_mesh/` and `vendor/selfie_segmentation/`
   (MediaPipe, Apache-2.0, see NOTICE; binary model files renamed `*.wasm` so every host serves them),
   `vendor/flame/` (FLAME 2023 Open, CC BY 4.0, see NOTICE).
