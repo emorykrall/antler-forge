@@ -145,7 +145,7 @@
     ] },
     { group: 'Crown shape', tier: 'details', only: 'crown', items: [
       { k: 'ringCharacter', label: 'Character', min: 0, max: 1, step: 0.05, u: '', hint: '0 biomechanical horror (ribbed, clawed, visceral) · ½ natural antler · 1 refined, flowing elven' },
-      { k: 'ringPattern', label: 'Pattern', type: 'select', options: [['band', 'Band'], ['lattice', 'Almond lattice'], ['loops', 'Calligraphic loops'], ['weave', 'Woven filigree'], ['tiara', 'Tiara'], ['laurel', 'Laurel'], ['briar', 'Briar'], ['sunburst', 'Sunburst'], ['circlet', 'Circlet'], ['spines', 'Crown of spines'], ['lyre', 'Lyre'], ['fleur', 'Fleur']], hint: 'How the band’s strands part, meet and branch' },
+      { k: 'ringPattern', label: 'Pattern', type: 'select', options: [['band', 'Band'], ['lattice', 'Almond lattice'], ['loops', 'Calligraphic loops'], ['weave', 'Woven filigree'], ['tiara', 'Tiara'], ['laurel', 'Laurel'], ['briar', 'Briar'], ['sunburst', 'Sunburst'], ['circlet', 'Circlet'], ['spines', 'Crown of spines'], ['lyre', 'Lyre'], ['fleur', 'Fleur'], ['whiplash', 'Whiplash'], ['kokoshnik', 'Kokoshnik']], hint: 'How the band’s strands part, meet and branch' },
       { k: 'ringDip', label: 'Brow dip', min: 0, max: 35, step: 1, u: 'mm', hint: 'How far the band comes down to a point on the forehead' },
       { k: 'ringRise', label: 'Temple rise', min: 0, max: 30, step: 1, u: 'mm', hint: 'How high the band lifts where the antlers stand' },
       { k: 'ringDrop', label: 'Back drop', min: 0, max: 30, step: 1, u: 'mm', hint: 'How low the band settles at the back' },
@@ -584,7 +584,7 @@
   const elvenOf = (P) => clamp((P.ringCharacter - 0.5) * 2, 0, 1), gigerOf = (P) => clamp((0.5 - P.ringCharacter) * 2, 0, 1);
   const headN = (g, p) => (g.head.kind === 'scan' ? g.head.normal(p) : norm([p[0] / g.head.r[0] ** 2, p[1] / g.head.r[1] ** 2, (p[2] - g.head.c[2]) / g.head.r[2] ** 2]));
   const RIB = 6.5;   // mm between the vertebra-like ribs along a biomechanical beam
-  const DECOR = ['tiara', 'laurel', 'briar', 'sunburst', 'spines', 'lyre', 'fleur'];   // (fleur: its strokes are all it has)   // patterns carried by what grows from the two beams
+  const DECOR = ['tiara', 'laurel', 'briar', 'sunburst', 'spines', 'lyre', 'fleur', 'whiplash', 'kokoshnik'];   // (fleur: its strokes are all it has)   // patterns carried by what grows from the two beams
   // Circlet: a strap band STRAP_H mm tall (plus a rim along each edge), STRAP_T thick, and small copies of the
   // species' antler (MOTIF of its full size) set along its top edge
   const STRAP_H = 12, STRAP_T = 4.4, MOTIF = 0.28;
@@ -634,39 +634,139 @@
     return [a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]];
   });
   function flatStroke(g, pts2, rad, o) {
-    const Rs = g.inner / (2 * Math.PI), pts = [], Fp = [];
+    const Rs = g.inner / (2 * Math.PI), pts = [], Fp = [], nP = pts2.length - 1;
     pts2.forEach(([sArc, h], i) => {
       const hb = o.stand == null ? h : Math.min(h, o.stand), f = pathFrame(g, sArc / Rs, () => hb);
-      let p = add(f.Q, mul(f.N, (o.lift == null ? 0.8 : o.lift) + rad[i]));
+      const lift = (o.lift == null ? 0.8 : o.lift) + (o.liftF ? o.liftF(i / nP) : 0);   // liftF: relief along the stroke (one line over another)
+      let p = add(f.Q, mul(f.N, lift + rad[i]));
       if (o.stand != null && h > o.stand) p = add(p, mul(norm(add(mul(f.W, 0.45), [0, 0, 1])), h - o.stand));
       pts.push(p); Fp.push(f.N);
     });
-    let len = 0; for (let i = 1; i < pts.length; i++) len += vlen(sub(pts[i], pts[i - 1]));
-    const br = { pts, rad: rad.map((r) => Math.max(MIN_R, r)), ss: pts.map((_, i) => (o.free ? i / (pts.length - 1) : 0.2)), n: pts.length - 1, length: len, kind: 'ring', F: [0, 0, 1], ov: o.ov || 0.12, sculpt: o.SC || 0, giger: o.GG || 0 };
-    if (o.blade) { br.Fp = Fp; br.ov = o.blade; }   // a blade: wide across the face, thin front to back
+    let len = 0; const acc = [0]; for (let i = 1; i < pts.length; i++) { len += vlen(sub(pts[i], pts[i - 1])); acc.push(len); }
+    const GGr = o.GG || 0;   // biomechanical: vertebra-like rings along the stroke
+    if (GGr > 0 && !o.noRib) rad = rad.map((r, i) => r * (1 + 0.3 * GGr * Math.pow(0.5 + 0.5 * Math.cos((2 * Math.PI * acc[i]) / RIB), 6)));
+    const floor = (i) => (o.free ? STRAND_MIN + (MIN_R - STRAND_MIN) * sstep((i / nP - 0.8) / 0.2) : STRAND_MIN);   // sturdy, fining only at a free tip
+    const br = { pts, rad: rad.map((r, i) => Math.max(floor(i), r)), ss: pts.map((_, i) => (o.free ? i / (pts.length - 1) : 0.2)), n: pts.length - 1, length: len, kind: 'ring', F: [0, 0, 1], ov: o.ov || 0.12, sculpt: o.SC || 0, giger: o.GG || 0 };
+    if (o.blade) { br.Fp = Fp; br.ov = o.blade; br.keel = o.keel || 0; }   // a blade: wide across the face, thin front to back; keel: a midrib
     parallelFrames(br);
     return br;
   }
-  // Fleur: a fleur-de-lis spanning the forehead. Its side petals are two heart-lobed arches rising from a V at the
-  // brow and sweeping down into the antlers' bases; its centre petal rises through the middle. The band behind the
-  // antlers is quiet. Sizes are fractions of the antlers' height (Ha), so the crown holds its own against them.
-  function fleurBand(P, g, SC, GG, out) {
+  // ---- drawing in the template (s, h mm) ----
+  // A fair curve through knots: centripetal Catmull-Rom (no cusps or overshoot), then resampled by arc length,
+  // so strokes are smooth and evenly sampled. Optional end tangents (unit 2D vectors) pin how it starts and ends.
+  function fair(knots, step, t0, t1) {
+    const K = knots.slice(), n = K.length, dense = [];
+    const d2 = (a, b) => Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const P = [t0 ? [K[0][0] - t0[0] * d2(K[0], K[1]), K[0][1] - t0[1] * d2(K[0], K[1])] : [2 * K[0][0] - K[1][0], 2 * K[0][1] - K[1][1]]]
+      .concat(K, [t1 ? [K[n - 1][0] + t1[0] * d2(K[n - 2], K[n - 1]), K[n - 1][1] + t1[1] * d2(K[n - 2], K[n - 1])] : [2 * K[n - 1][0] - K[n - 2][0], 2 * K[n - 1][1] - K[n - 2][1]]]);
+    for (let i = 1; i < P.length - 2; i++) {
+      const [p0, p1, p2, p3] = [P[i - 1], P[i], P[i + 1], P[i + 2]];
+      const a = Math.sqrt(d2(p0, p1)) || 1e-6, b = Math.sqrt(d2(p1, p2)) || 1e-6, c = Math.sqrt(d2(p2, p3)) || 1e-6;
+      const m1 = [0, 1].map((k) => ((p1[k] - p0[k]) / a - (p2[k] - p0[k]) / (a + b) + (p2[k] - p1[k]) / b) * b);
+      const m2 = [0, 1].map((k) => ((p2[k] - p1[k]) / b - (p3[k] - p1[k]) / (b + c) + (p3[k] - p2[k]) / c) * b);
+      for (let j = i === 1 ? 0 : 1; j <= 20; j++) {
+        const u = j / 20, h00 = 2 * u ** 3 - 3 * u * u + 1, h10 = u ** 3 - 2 * u * u + u, h01 = -2 * u ** 3 + 3 * u * u, h11 = u ** 3 - u * u;
+        dense.push([0, 1].map((k) => h00 * p1[k] + h10 * m1[k] + h01 * p2[k] + h11 * m2[k]));
+      }
+    }
+    return resample(dense, step || 2);
+  }
+  function resample(pl, step) {
+    const out = [pl[0]]; let acc = 0;
+    for (let i = 1; i < pl.length; i++) {
+      let a = pl[i - 1]; const b = pl[i]; let seg = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      while (acc + seg >= step) { const f = (step - acc) / seg; a = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f]; out.push(a); seg = Math.hypot(b[0] - a[0], b[1] - a[1]); acc = 0; }
+      acc += seg;
+    }
+    if (Math.hypot(out[out.length - 1][0] - pl[pl.length - 1][0], out[out.length - 1][1] - pl[pl.length - 1][1]) > step * 0.3) out.push(pl[pl.length - 1]);
+    return out;
+  }
+  // A scroll: a logarithmic spiral leaving p along dir, curling to side sgn (+1 left of travel), tightening to
+  // `shrink` of its radius per turn: the classic Art Nouveau terminal.
+  function scroll(p, dir, r0, turns, sgn, shrink) {
+    const b = Math.log(1 / (shrink || 0.4)) / (2 * Math.PI), dl = Math.hypot(dir[0], dir[1]), d = [dir[0] / dl, dir[1] / dl];
+    const nrm = [-d[1] * sgn, d[0] * sgn], c = [p[0] + nrm[0] * r0, p[1] + nrm[1] * r0], v0 = [p[0] - c[0], p[1] - c[1]], pts = [];
+    for (let th = 0; th <= 2 * Math.PI * turns + 1e-9; th += 0.08) {
+      const r = Math.exp(-b * th), cs = Math.cos(sgn * th), sn = Math.sin(sgn * th);
+      pts.push([c[0] + r * (v0[0] * cs - v0[1] * sn), c[1] + r * (v0[0] * sn + v0[1] * cs)]);
+    }
+    return resample(pts, 2);
+  }
+  const tangentAt = (pl, i) => { const a = pl[Math.max(0, i - 1)], b = pl[Math.min(pl.length - 1, i + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
+
+  // Template compositions (see docs/crown-design-brief.md). All share the band (a V at the brow rising into the
+  // antlers, quiet behind) and are proportioned to the antlers' height Ha, so the crown holds its own against them.
+  //  fleur:     a fleur-de-lis spanning the brow: heart-lobed side petals flowing into the antler bases, a
+  //             midribbed centre blade standing up, and small sepal scrolls tying them at its base.
+  //  whiplash:  Art Nouveau whiplash lines spring from each antler base, sweep down to cross at the brow (one
+  //             passing over the other) and end in tightening scrolls; a small finial rises from the knot.
+  //  kokoshnik: radial balance: a fan of standing flame blades graduated from a tall centre, the antlers as the
+  //             outermost rays.
+  function templateBand(P, g, SC, GG, out, pat) {
     const Rs = g.inner / (2 * Math.PI), tr = g.tr, sa = tr * Rs, Ha = Math.max(90, (g.antlerH || 150) * (P._decor || 1));
-    const root = Math.max(g.rs * 1.55, 0.75 * (g.rootR || 0), STRAND_MIN * 1.3), hB = (t) => bandH(P, g, t), hc = hB(0);
-    const dh = (s) => (hB((s + 1) / Rs) - hB((s - 1) / Rs)) / 2;   // the band's slope in the template
-    const push = (br, mirror) => { out.push(br); if (mirror) out.push(mirrorX(br)); return br; };
-    // side petal: out of the V, up over a lobe, down into the band just before the antler (meeting it tangentially)
-    const Hl = Math.max(26, 0.3 * Ha), se = 0.9 * sa, he = hB(se / Rs), k = 0.14 * sa, sl = dh(se);
-    const pk = [0.4 * sa, hc + Hl];
-    const lobe = bezier([0, hc], [0.03 * sa, hc + 0.6 * Hl], [0.2 * sa, hc + Hl], pk, 14).concat(bezier(pk, [0.62 * sa, hc + Hl], [se - k, he - k * sl], [se, he], 16).slice(1));
-    const rl = lobe.map((_, i) => root * (0.5 + 0.28 * Math.sin((Math.PI * i) / (lobe.length - 1)) + 0.25 * (i / (lobe.length - 1)) ** 2));
-    g.arch = push(flatStroke(g, lobe, rl, { stand: hc + 0.75 * Hl, SC, GG }), true);
-    // centre petal: straight up from the V, swelling like a leaf, standing off the forehead above its base
-    const Hc = Math.max(45, 0.55 * Ha), cp = Array.from({ length: 25 }, (_, i) => [0, hc + (Hc * i) / 24]);
-    // a leaf blade: broad across the face for weight (the focal point), thin front to back
-    const rc = cp.map((_, i) => { const u = i / 24; return Math.max(TINE_BASE_MIN * (1 - u), root * 0.85 * (1 + 0.75 * Math.sin(Math.PI * Math.pow(u, 0.7))) * ogive(u, 0.6)); });
-    push(flatStroke(g, cp, rc, { stand: hc + 10, SC, GG, free: true, blade: 0.45 }), false);
-    g.hosts = [g.arch];
+    const root = Math.max(g.rs * 1.55, 0.75 * (g.rootR || 0), STRAND_MIN * 1.3), hB = (s2) => bandH(P, g, s2 / Rs), hc = hB(0);
+    const slope = (s2) => (hB(s2 + 1) - hB(s2 - 1)) / 2;
+    const nrm2 = (v) => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+    const mk = (pl, rf, o) => flatStroke(g, pl, pl.map((_, i) => rf(i / (pl.length - 1))), Object.assign({ SC, GG }, o));
+    const both = (br) => { out.push(br, mirrorX(br)); return br; };
+    const leaf = (u, w0, sw) => w0 * (1 + sw * Math.pow(Math.sin(Math.PI * Math.pow(u, 0.7)), 1.1)) * ogive(u, 0.62);
+    const Hc = Math.max(45, 0.55 * Ha), Hl = Math.max(26, 0.3 * Ha), sec = { blade: 0.32, keel: 0.12 };
+    if (pat === 'fleur') {
+      // side petals: secondary lines, so thinner and flatter than the band; they leave the band just beside the V
+      // (not from the V itself, which would pile five strokes into one blob) and meet it again before the antler
+      const se = 0.9 * sa, he = hB(se), sl0 = 0.05 * sa, hl0 = hB(sl0);
+      const lobe = fair([[sl0, hl0], [0.1 * sa, hc + 0.62 * Hl], [0.26 * sa, hc + 0.97 * Hl], [0.46 * sa, hc + Hl], [0.69 * sa, hc + 0.68 * Hl], [se, he]], 2, nrm2([0.35, 1]), nrm2([1, slope(se)]));
+      // Character reshapes, not just refinishes: elven = flat blades with a midrib; natural = rounder sections;
+      // biomechanical = ribbed strokes, hooked barbs along the lobes, a serrated blade and clawed sepals
+      const flat = 0.2 + 0.25 * SC, rib = 0.05 + 0.1 * SC;
+      g.arch = both(mk(lobe, (u) => root * (0.36 + 0.22 * Math.pow(Math.sin(Math.PI * u), 0.8) + 0.4 * u * u), { stand: hc + 0.72 * Hl, blade: flat, keel: rib }));
+      if (GG > 0.15) {   // hooked barbs along the lobe's upper edge, pointing back toward the antler
+        const nb = Math.round(2 + 4 * GG);
+        for (let i = 0; i < nb; i++) {
+          const j = Math.round(((0.2 + (0.6 * (i + 0.5)) / nb)) * (lobe.length - 1)), p0 = lobe[j], t2 = tangentAt(lobe, j), up2 = [-t2[1], t2[0]].map((v) => v * (t2[0] >= 0 ? 1 : -1));
+          const Lb = (6 + 10 * GG) * (P._decor || 1), barb = fair([p0, [p0[0] + up2[0] * Lb * 0.6 + t2[0] * Lb * 0.35, p0[1] + Math.abs(up2[1]) * Lb * 0.6], [p0[0] + t2[0] * Lb, p0[1] + Lb * 0.55]], 1.5);
+          both(mk(barb, (u) => Math.max(MIN_R, root * 0.42 * (1 - 0.75 * u)), { stand: hc + 0.72 * Hl, free: true, noRib: true }));
+        }
+      }
+      // the centre blade: the focal point, a broad thin leaf with a midrib, standing up off the forehead
+      const blade = fair([[0, hc], [0, hc + 0.5 * Hc], [0, hc + Hc]], 2);
+      out.push(mk(blade, (u) => Math.max(TINE_BASE_MIN * (1 - u), leaf(u, root * 1.05, 1.15)), { stand: hc + 10, free: true, blade: 0.35 + 0.2 * SC, keel: 0.1 + 0.1 * SC }));   // about 1:3, a leaf, not a lance
+      if (GG > 0.15) for (const side of [1, -1]) {   // a serrated blade: saw teeth up both edges
+        const nt = Math.round(2 + 3 * GG);
+        for (let i = 0; i < nt; i++) {
+          const u0 = 0.18 + (0.55 * (i + 0.5)) / nt, h0 = hc + u0 * Hc, w = leaf(u0, root * 1.05, 1.15) * 0.8, Lt = (5 + 8 * GG) * (P._decor || 1);
+          const tooth = fair([[side * w * 0.6, h0], [side * (w + Lt * 0.7), h0 + Lt * 0.45], [side * (w + Lt * 0.9), h0 + Lt]], 1.5);
+          out.push(mk(tooth, (u) => Math.max(MIN_R, root * 0.4 * (1 - 0.75 * u)), { stand: hc + 10, free: true, noRib: true }));
+        }
+      }
+      // sepals: tie the three petals partway up the blade, curling out and down like the band of a fleur-de-lis
+      const b0 = [0, hc + 0.16 * Hc], stem = fair([b0, [0.12 * sa, hc + 0.14 * Hc], [0.22 * sa, hc + 0.2 * Hc]], 2, nrm2([1, -0.1]));   // out past the blade's edge
+      // curling up and in like a lily's petals; toward biomechanical the curl opens into a hooked claw
+      const sp = stem.concat(scroll(stem[stem.length - 1], tangentAt(stem, stem.length - 1), 9 - 3 * GG, 1.1 - 0.65 * GG, 1, 0.42 - 0.2 * GG).slice(1));
+      both(mk(sp, (u) => Math.max(MIN_R, root * 0.5 * (1 - 0.55 * u)), { free: true, stand: hc + 0.2 * Hc, blade: 0.35, keel: 0.08 }));
+      g.hosts = [g.arch];
+    } else if (pat === 'whiplash') {
+      const s0 = 0.95 * sa, h0 = hB(s0);
+      const whip = fair([[s0, h0], [0.72 * sa, hc + 0.95 * Hl], [0.42 * sa, hc + 0.9 * Hl], [0.14 * sa, hc + 0.42 * Hl], [0, hc + 0.16 * Hl], [-0.14 * sa, hc + 0.02 * Hl]], 2, nrm2([-0.5, 1]));
+      const tip = whip[whip.length - 1], full = whip.concat(scroll(tip, tangentAt(whip, whip.length - 1), 7, 1.1, 1, 0.42).slice(1));
+      const iX = whip.findIndex((q) => q[0] <= 0), nF = full.length - 1;
+      const rf = (u) => { const i = u * nF; return Math.max(i > whip.length ? MIN_R : STRAND_MIN * 0.9, root * (0.95 - 0.45 * Math.min(1, i / whip.length)) * (i > whip.length ? 1 - 0.7 * (i - whip.length) / (nF - whip.length) : 1)); };
+      const over = (u) => 3.2 * Math.exp(-(((u * nF - iX) / 6) ** 2));   // the right line passes over the left at the knot
+      out.push(mk(full, rf, Object.assign({ free: true, liftF: over }, sec)));
+      out.push(mk(full.map(([a, b]) => [-a, b]), rf, Object.assign({ free: true }, sec)));
+      const fin = fair([[0, hc + 0.16 * Hl], [0, hc + 0.16 * Hl + 0.55 * Hc]], 2);
+      out.push(mk(fin, (u) => Math.max(TINE_BASE_MIN * (1 - u), leaf(u, root * 0.6, 0.6)), { stand: hc + 0.16 * Hl + 6, free: true, blade: 0.45, keel: 0.14 }));
+      g.arch = out[out.length - 3]; g.hosts = [g.main];
+    } else if (pat === 'kokoshnik') {
+      const k = 5, fan = (x) => 0.35 * x;
+      for (let i = 0; i <= k; i++) {   // i = 0 is the centre blade (built once); sizes and spacing graduate by 0.82
+        const x = i / (k + 0.6), s1 = x * 0.88 * sa, hb = hB(s1), H = Hc * Math.pow(0.82, i) * (i ? 0.92 : 1), lean = fan(x);
+        const bl = fair([[s1, hb], [s1 + lean * 0.3 * H, hb + 0.45 * H], [s1 + lean * 0.6 * H, hb + H]], 2);
+        const br = mk(bl, (u) => Math.max(TINE_BASE_MIN * (1 - u), leaf(u, root * 0.6 * Math.pow(H / Hc, 0.5), 0.5)), { stand: hb + 6, free: true, blade: 0.42, keel: 0.14 });
+        if (i === 0) out.push(br); else both(br);
+      }
+      g.hosts = [g.main];
+    }
     return out;
   }
 
@@ -677,7 +777,7 @@
     // biomechanical (GG) the beams are ribbed like vertebrae, the grain deepens and the lines grow restless.
     // The pattern decides how the strands part and meet.
     const SC = elvenOf(P), GG = gigerOf(P), pat = P.ringPattern || 'band', slim = 1 - 0.25 * SC;
-    if (pat === 'fleur') {   // its band line: a V at the brow, rising in an S into the antlers, settling lower behind
+    if (pat === 'fleur' || pat === 'whiplash' || pat === 'kokoshnik') {   // its band line: a V at the brow, rising in an S into the antlers, settling lower behind
       const D = P.ringBase === 'openFront' ? 0 : P.ringDip * 1.1, R = P.ringRise * 1.3, tr0 = g.tr;
       g.bandFn = (t) => -D * Math.exp(-Math.abs(t) / 0.3) + R * Math.exp(-(((t - tr0) / 0.55) ** 2)) - P.ringDrop * sstep((t - tr0) / (Math.PI - tr0));
     }
@@ -747,11 +847,11 @@
   //  weave:   the upper beam crosses the forward beam once on its way, then lifts off
   function sculptedBand(P, g, c) {
     const { path, so, hs, he, SC, GG, pat, out } = c, tr = g.tr, rs = g.rs;
-    if (pat === 'fleur') {   // the band: thick at the antlers, finer to the V and quiet behind; then the fleur's strokes
+    if (pat === 'fleur' || pat === 'whiplash' || pat === 'kokoshnik') {   // the band: thick at the antlers, finer to the V and quiet behind; then the fleur's strokes
       const rootR = Math.max(rs * 1.55, 0.75 * (g.rootR || 0), STRAND_MIN * 1.3);
       g.main = path(hs, tr, () => 0, (u) => rootR * (0.5 + 0.5 * Math.pow(u, 1.3)), 'ring', { ov: 0.12 });
       g.back = path(tr, he, () => 0, (u) => Math.max(STRAND_MIN, rootR * (0.6 - 0.22 * u)), 'ring', { ov: 0.12 });
-      return fleurBand(P, g, SC, GG, out);
+      return templateBand(P, g, SC, GG, out, pat);
     }
     if (pat === 'lyre') {   // one gull-wing line per side, cusp to antler; the back arc thin, low and plain
       const rootR = Math.max(rs * 1.55, 0.75 * (g.rootR || 0), STRAND_MIN * 1.3);
@@ -1029,7 +1129,7 @@
         br.kind = 'tine'; br.F = f.N; br.ov = 0.3 + 0.2 * SC; br.sculpt = SC; parallelFrames(br); out.push(br);
         const cr = sweep(base, (u) => norm(add(mul(f.N, 0.25 - 0.2 * SC * u), U)), L * 0.8 * (1 + 0.25 * SC), (u) => Math.max(MIN_R, rsB * leaf(u) * ogive(u, 0.4 - 0.15 * SC)));
         cr.kind = 'tine'; cr.F = f.N; cr.ov = P.ovality; cr.sculpt = SC; parallelFrames(cr);
-        if (pat !== 'fleur') out.push(cr);   // the fleur's blade is the crest
+        if (!['fleur', 'whiplash', 'kokoshnik'].includes(pat)) out.push(cr);   // these have their own centre
       } else {   // shovel: a forward paddle over the brow
         const br = sweep(base, () => norm(add(f.N, mul(U, 0.35))), L * 1.25, (u) => Math.max(MIN_R, rsB * 1.35 * (1 - 0.3 * u) * ogive(u, 0.55)));
         br.kind = 'tine'; br.F = U; br.ov = 0.45; br.sculpt = SC; parallelFrames(br); out.push(br);
@@ -1075,8 +1175,10 @@
       }
       if (P.burr) {
         const rm = P.burrSize * 0.55 * Math.max(0.6, S / 0.6), R0 = beam.rad[0] * 0.97 + rm * 0.3;
-        burrs.push({ c: beam.pts[1], T: beam.T[0], N: beam.N[0], B: beam.B[0], R: R0, rm, amp: rm * 0.85,
-          beads: Math.max(8, Math.round((2 * Math.PI * R0) / (rm * 1.7))), wild: 0.2 + 0.8 * P.jitter });
+        // on a crown the burr is where the antler is set into the piece: toward elven it smooths into a collar
+        const smooth = 1 - 0.85 * elvenOf(P);
+        burrs.push({ c: beam.pts[1], T: beam.T[0], N: beam.N[0], B: beam.B[0], R: R0, rm, amp: rm * 0.85 * smooth,
+          beads: Math.max(8, Math.round((2 * Math.PI * R0) / (rm * 1.7))), wild: (0.2 + 0.8 * P.jitter) * smooth });
       }
     }
     if (g.motifs) {   // circlet: small copies of the antler set along the strap's top edge, mirrored

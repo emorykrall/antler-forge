@@ -199,6 +199,20 @@ Newest first within each section. Change one only when the owner asks.
   artist. Patterns apply at every Character. Species: whitetail and stag 0.9, mule and elk 0.85, fawn 0.7,
   reindeer 0.65, moose 0.55, forest spirit 0.3 (eerie). Designs saved before crowns had these keep
   0.5 / Band (their old look); designs saved with Sculpted s load as Character 0.5 + s/2.
+- **Crown iteration log (following docs/crown-design-brief.md, 2026-09-28).** Toolkit added for execution:
+  fair curves (centripetal Catmull-Rom, arc-length resampled), per-stroke thickness profiles, blade/leaf
+  sections with a midrib (`blade`, `keel`), relief (`liftF`, one line over another), log-spiral scroll
+  terminals, vertebral ribs on template strokes toward horror, sturdiness floors on template strokes.
+  Concepts scored in worn silhouette: *Fleur* strongest (one figure, dominant centre, lobes hand the eye to
+  the antlers, quiet back); *Whiplash* elegant but weak focal and under-scale; *Kokoshnik* a picket fence.
+  Fleur execution passes: (1) the brow junction was a blob of five strokes, so the lobes now leave the band
+  beside the V; (2) line weights separated (band > lobes, blade the focal); (3) the blade widened from a
+  1:4 lance to a ~1:3 leaf with a midrib; (4) sepals were hidden inside the blade, then read as drips, and
+  now reach past it and curl up and in as spiral scrolls; (5) the antler burr at the crown joint smooths
+  into a collar toward elven (crowns only; headbands unchanged); (6) Character now changes the silhouette:
+  horror gets a serrated blade, hooked barbs on the lobes, clawed sepals and ribbed strokes. Next weakest
+  points: the antlers' own brow tines crowd the lobe-antler junction from ¾; Whiplash could become good
+  with a bigger knot; the older patterns should be retired once the owner has judged Fleur.
 - **Formal composition review → Fleur** (owner, 2026-09-28: the crafted patterns weren't clearly better;
   evaluate formally, as abstracted silhouettes from several angles, for hierarchy and how the eye is led;
   compare with the references, jewellery and fine art). Tool: `tools/silhouettes.js` renders worn
