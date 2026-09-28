@@ -117,6 +117,8 @@ The tests in `test/` cover the first five. If a change needs one of them to move
 
 ## Working here
 
+- **Read `docs/crown-design-brief.md` before designing or changing a crown pattern**: the owner's standard
+  for crowns (composition, execution, process, what to avoid).
 - **Read `docs/DECISIONS.md` before changing try-on, units, the library or the interface.** It records
   settled decisions and why; add to it when the owner settles a new one.
 
