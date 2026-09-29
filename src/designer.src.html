@@ -88,7 +88,10 @@ button,input,select{font:inherit;color:inherit}
 .tutor .btn.primary{background:#3B6344;border-color:#3B6344;color:#F7F4E8}
 .tutor .x{position:absolute;top:6px;right:8px;border:0;background:transparent;color:var(--vp-ink);opacity:.6;font-size:20px;line-height:1;cursor:pointer;padding:4px}
 .tutor .x:hover{opacity:1}
-.linkbtn{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;justify-self:start;grid-column:1/-1}
+.measure-btn{grid-column:1/-1;justify-self:start;display:inline-flex;align-items:center;gap:8px;margin-top:2px;padding:7px 13px 7px 10px;border:1px solid var(--gold);border-radius:999px;background:var(--gold-soft);color:var(--ink);font:600 13.5px/1 inherit;font-family:inherit;cursor:pointer;transition:filter .15s, transform .1s}
+.measure-btn:hover{filter:brightness(1.05)}.measure-btn:active{transform:translateY(1px)}
+.measure-btn svg{width:22px;height:14px;flex:none;color:var(--gold)}
+.measure-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .stage.tutor-on .hud.bot{visibility:hidden}
 /* ---------- the library (saved designs) */
 .stage.lib-on #vp,.stage.lib-on .hud.bot,.stage.lib-on .progress,.stage.lib-on [aria-label="Camera"]{visibility:hidden}
@@ -539,7 +542,9 @@ function syncControls() {
   inputs.headSource.wrap.after(w);
 }
 {   // "How to measure": the tutorial on the fawn (see "measuring tutorial")
-  const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.id = 'measure-how'; b.textContent = 'How to measure';
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'measure-btn'; b.id = 'measure-how';
+  b.innerHTML = '<svg viewBox="0 0 22 14" aria-hidden="true"><rect x="1" y="2" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>'
+    + '<path d="M5 2v4M9 2v3M13 2v4M17 2v3" stroke="currentColor" stroke-width="1.3"/></svg>How to measure your head';
   inputs.headCirc.wrap.appendChild(b);
 }
 function applyStyle() {
@@ -959,7 +964,7 @@ const TUTOR_STEPS = [
     tip: 'These two are optional: without them the crown takes an average head’s shape at your circumference.' },
   { h: 'Ear to ear, over the top', cam: [0.25, 1, 0.6],
     p: 'Then from the tape’s line just above one ear, over the top of your head, to the line just above the other ear. Enter it as <b>Ear to ear</b>.',
-    tip: 'Or skip the tape: set Head size from to A 3D head scan and use Scan my head.' },
+    tip: 'Take each measurement twice; if they differ, use the larger.' },
 ];
 let tutor = null;   // { step, tapes: [Mesh], t0 }
 function tapeTexture() {   // a tape measure: yellow, with inch, half and quarter ticks (one inch per repeat)

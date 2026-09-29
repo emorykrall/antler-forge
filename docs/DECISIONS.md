@@ -316,7 +316,9 @@ Newest first within each section. Change one only when the owner asks.
   "How to measure" link under Head circumference opens three steps on the fawn in the wear view (around the
   head above the brows, front to back over the top, ear to ear over the top); a yellow tape with inch ticks runs
   out over its head for each step while the camera turns to it. It owns the view until closed (Done, ×, Esc,
-  or switching view).
+  or switching view). The entry is a gold pill button with a tape icon ("How to measure your head"), not a
+  text link (owner: "a little more noticeable"). The tutorial doesn't suggest the 3D head scan until the scan
+  works better (owner).
 
 ## Faun bust (wear view)
 
