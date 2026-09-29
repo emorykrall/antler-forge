@@ -50,6 +50,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   sheets (front, ¾, side, back, top; the head hides what's behind it) with area/height metrics, for judging a
   crown's composition; `--shaded` renders lit form instead, to check the form reads as well as the silhouette.
   Use it before and after any crown design change.
+- `tools/sketchbook.js sheet.js out.html`: pencil-style 2D crown sketches over the real head and antlers, with an
+  optional built crown overlaid in the same frame; the sheets and notes live in `docs/crown-sketchbook/`.
 - `tools/build-samples.js`, `tools/serve.js`, `vendor/face_mesh/` and `vendor/selfie_segmentation/`
   (MediaPipe, Apache-2.0, see NOTICE; binary model files renamed `*.wasm` so every host serves them),
   `vendor/flame/` (FLAME 2023 Open, CC BY 4.0, see NOTICE).

@@ -88,6 +88,14 @@ start: sturdiness is part of the design, not a clamp applied after.
 7. **Show the owner** the silhouette sheet, the shaded views and the critique, and say plainly what is
    still weak.
 
+## Face readings (from the sketchbook)
+
+A crown sits above a face, so symmetric shapes get read as features: a centre dip with rising sides is a
+moustache, slanted lines are eyebrows, feathered edges are eyelashes, loops are a bow tie, a row of ovals is
+teeth, a deep horns-up curve is a smile, points hanging at the temples are fangs. Prefer forms with their own
+body, accents that rise, and elements behind the head. Sketch over the head (`tools/sketchbook.js`) before
+building anything.
+
 ## Avoid (seen in earlier attempts)
 
 Constant-radius round tubes; strands running parallel; strands laid along the head at a fixed offset (piping);

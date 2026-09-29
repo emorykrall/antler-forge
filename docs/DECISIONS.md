@@ -319,6 +319,17 @@ Newest first within each section. Change one only when the owner asks.
   or switching view). The entry is a gold pill button with a tape icon ("How to measure your head"), not a
   text link (owner: "a little more noticeable"). The tutorial doesn't suggest the 3D head scan until the scan
   works better (owner).
+- **Designed in a sketchbook first** (owner, 2026-09-29: "a fully new approach… start with loose 2D sketches…
+  as frameworks for more detailed sketches… then build the 3D models… compare and refine"). Three new crown
+  designs, **Moon**, **Lotus halo** and **Roots**, came out of ten rounds recorded in `docs/crown-sketchbook/`
+  (gesture thumbnails, directions, development, refined front/side/detail drawings, models overlaid on the
+  drawings, joins). `tools/sketchbook.js` draws pencil-style sketches over the real head and antlers and overlays
+  a built crown in the same frame. The engine builds these designs from the sketches' own coordinates, anchored
+  to the antler root and mapped onto the actual head (`sketchFrame`). Lessons that now guide every crown: over a
+  face, a centre dip reads as a moustache, slanted lines as eyebrows, loops as a bow tie, rows of ovals as teeth,
+  a deep horns-up curve as a smile, hanging points as fangs; forms with their own body, rising accents and
+  things behind the head read as jewellery. Crown meshes drop stray slivers up to 0.8% of the volume (antler
+  tines that dive into the forehead). Species keep their designs; the new ones are first in the Crown design list.
 
 ## Faun bust (wear view)
 

@@ -81,7 +81,7 @@
       { k: 'headMeasured', label: 'Use over-the-top measurements', type: 'bool', only: 'crown', hint: 'Two more tape measurements give a closer fit to your head\'s shape' },
       { k: 'headArcFB', label: 'Front to back, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'With the tape still round your head: from its line at the middle of the forehead, over the top, to its line at the back' },
       { k: 'headArcEE', label: 'Ear to ear, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'From the tape line just above one ear, over the top, to the line above the other ear' },
-      { k: 'ringPattern', label: 'Crown design', type: 'select', only: 'crown', options: [['fleur', 'Fleur'], ['lattice', 'Almond lattice'], ['circlet', 'Circlet'], ['spines', 'Crown of spines'], ['briar', 'Briar'], ['band', 'Plain band']] },
+      { k: 'ringPattern', label: 'Crown design', type: 'select', only: 'crown', options: [['moon', 'Moon'], ['lotus', 'Lotus halo'], ['roots', 'Roots'], ['fleur', 'Fleur'], ['lattice', 'Almond lattice'], ['circlet', 'Circlet'], ['spines', 'Crown of spines'], ['briar', 'Briar'], ['band', 'Plain band']] },
       { k: 'character', label: 'Form & finish', min: 0, max: 1, step: 0.05, u: '', hint: 'Gnarled and biomechanical ← natural antler ← polished → faceted: the section and the surface together' },
       { k: 'beamLength', label: 'Antler length', min: 40, max: 450, step: 1, u: 'mm' },
       { k: 'beamSpread', label: 'Spread', min: -10, max: 95, step: 1, u: '°', hint: 'How far the antlers lean outward' },
@@ -603,7 +603,7 @@
   const facetOf = (P) => clamp((P.character - 0.5) * 2, 0, 1);
   const headN = (g, p) => (g.head.kind === 'scan' ? g.head.normal(p) : norm([p[0] / g.head.r[0] ** 2, p[1] / g.head.r[1] ** 2, (p[2] - g.head.c[2]) / g.head.r[2] ** 2]));
   const RIB = 6.5;   // mm between the vertebra-like ribs along a biomechanical beam
-  const DECOR = ['briar', 'spines', 'fleur'];   // patterns carried by what grows from the two beams (fleur: its strokes are all it has)
+  const DECOR = ['briar', 'spines', 'fleur', 'moon', 'lotus', 'roots'];   // patterns carried by what grows from the two beams (fleur: its strokes are all it has)
   // Circlet: a strap band STRAP_H mm tall (plus a rim along each edge), STRAP_T thick, and small copies of the
   // species' antler (MOTIF of its full size) set along its top edge
   const STRAP_H = 12, STRAP_T = 4.4, MOTIF = 0.28;
@@ -769,6 +769,102 @@
     return out;
   }
 
+  // ---- Sketched designs (docs/crown-sketchbook): drawn in front elevation over the standard head, then built
+  // from those drawings. Sketch points are mm in the front view (x across, y up), anchored to the antler's
+  // root, which the sketches put at SK_BASE; fromFront finds where a sketch point lies on this head.
+  const SKETCHED = ['moon', 'lotus', 'roots'], SK_BASE = [67.15, 37.67];
+  function sketchFrame(P, g) {
+    const hTr = bandH(P, g, g.tr), rS = g.rootR || g.rs;   // (before this design sets the band line)
+    const f = pathFrame(g, g.tr, () => hTr + (g.n >= 2 ? 7 : 0)), root = add(add(f.Q, mul(f.N, OUTER + rS * 0.7)), mul(f.W, rS * 0.4));
+    const kx = root[0] / SK_BASE[0];
+    const fromFront = ([x, y]) => {   // → [s along the band (mm), h up the head (mm)]
+      const X = x * kx, Z = root[2] + (y - SK_BASE[1]);
+      let t = Math.asin(clamp(X / g.head.r[0], -0.95, 0.95)), h = Z - onHead(g, 0, 0)[2];
+      for (let it = 0; it < 14; it++) {
+        const p = onHead(g, t, h), ex = p[0] - X, ez = p[2] - Z;
+        if (Math.abs(ex) + Math.abs(ez) < 0.01) break;
+        const pt = onHead(g, t + 1e-3, h), ph = onHead(g, t, h + 0.1);
+        const a = (pt[0] - p[0]) / 1e-3, b = (ph[0] - p[0]) / 0.1, c = (pt[2] - p[2]) / 1e-3, d = (ph[2] - p[2]) / 0.1, det = a * d - b * c || 1e-9;
+        t = clamp(t - (d * ex - b * ez) / det, -1.4, 1.4); h -= (a * ez - c * ex) / det;   // stay on the front of the head
+      }
+      return [t * (g.inner / (2 * Math.PI)), h];
+    };
+    return { hTr, fromFront, root };
+  }
+  // The band line (and so the liner) under a sketched design: under its front piece, then on round the back.
+  function sketchBandFn(P, g, sf, front) {
+    const Rs = g.inner / (2 * Math.PI), tr = g.tr, tab = front.map(([s2, h]) => [s2 / Rs, h]).filter(([t]) => t >= 0 && t < tr - 0.02).sort((a, b) => a[0] - b[0]);
+    tab.push([tr, sf.hTr]);
+    if (tab[0][0] > 0) tab.unshift([0, tab[0][1]]);
+    return (t0) => {
+      const t = Math.abs(t0);
+      if (t >= tr) return sf.hTr - P.ringDrop * sstep((t - tr) / (Math.PI - tr));
+      let i = 1; while (i < tab.length - 1 && tab[i][0] < t) i++;
+      const [ta, ha] = tab[i - 1], [tb, hb] = tab[i], u = clamp((t - ta) / (tb - ta || 1), 0, 1);
+      return ha + (hb - ha) * (u * u * (3 - 2 * u));
+    };
+  }
+  const MOON = { spine: [[0, -2], [24, 4], [47, 19], [60, 32], [66, 42]], pearl: [0, 11, 9.5] };   // the horns end in the antler roots
+  const ROOTS = { front: [[0, -4], [7, -3], [20, 3], [38, 12], [54, 24], [65, 36]], knot: [0, -4, 5], seed: [[0, -7.5], [0, -15], [0, -23]] };
+  const LOTUS = { front: [[0, 1], [30, 5], [55, 20], [67, 34]], petals: [[0, 0, 1], [0.214, 0.34, 0.82], [0.44, 0.68, 0.67]] };   // (angle round from the back, fan angle, size)
+  function sketchedCrown(P, g, SC, GG, out, pat, c) {
+    const { path, hs, he } = c, sf = g.sketch, tr = g.tr, Rs = g.inner / (2 * Math.PI), openFront = P.ringBase === 'openFront';
+    const Ha = Math.max(90, (g.antlerH || 150) * (P._decor || 1)) * (P.ornament || 1), kO = Ha / 175;   // the sketches were drawn with 175 mm antlers
+    const conv = (pl) => pl.map(sf.fromFront), both = (br) => { out.push(br, mirrorX(br)); return br; };
+    const inFront = (pl) => (openFront ? pl.filter(([s2]) => s2 / Rs > hs + 0.04) : pl);
+    const mk = (pl2, rf, o) => flatStroke(g, pl2, pl2.map((_, i) => rf(i / Math.max(1, pl2.length - 1))), Object.assign({ SC, GG }, o));
+    const blob = (sk, r, proud) => {   // a round jewel (pearl, knot) standing proud of the head
+      const [s2, h] = sf.fromFront(sk), f = pathFrame(g, s2 / Rs, () => h), c0 = add(f.Q, mul(f.N, OUTER + proud));
+      const br = { pts: [c0, add(c0, mul(f.N, 0.6))], rad: [r, r], ss: [0, 1], n: 1, length: 0.6, kind: 'tine', F: f.N, ov: 0.05, sculpt: SC, giger: GG, smooth: true };
+      parallelFrames(br); out.push(br); return br;
+    };
+    // the back: a slim band from the antlers round the back (or to the open end), finer toward the back
+    const rb = Math.max(STRAND_MIN, (g.rootR || g.rs) * (pat === 'roots' ? 0.55 : 0.42));
+    g.back = path(tr, he, () => 0, (u) => Math.max(STRAND_MIN, rb * (1 - 0.25 * u)), 'ring', { ov: 0.12 });
+    g.back.away = 1; g.hosts = [g.back];
+    if (pat === 'moon') {   // a crescent with body, thick at the centre, horns fining into the antler roots; a pearl in its bowl
+      const sp = inFront(conv(fairSk(MOON.spine, 1.6)));
+      if (sp.length > 2) g.main = both(mk(sp, (u) => 1.5 + 5 * (1 - Math.pow(u, 1.8)), { free: true, blade: 0.5, keel: 0.1 * SC, lift: 0.4 }));
+      if (!openFront) blob(MOON.pearl, MOON.pearl[2] * Math.min(1.2, Math.max(0.85, kO)), 3.5);   // seated in the bowl, its back set into the crescent
+    } else if (pat === 'roots') {   // roots from each antler meet at the brow in a knot that holds a seed; one curls back over the temple
+      const fr = inFront(conv(fairSk(ROOTS.front, 1.6)));
+      if (fr.length > 2) g.main = both(mk(fr, (u) => 3.4 + 2.1 * Math.pow(u, 1.2), { lift: 0.4, blade: 0.25 }));
+      if (!openFront) {
+        blob(ROOTS.knot, ROOTS.knot[2], 3.5);
+        const sd = conv(fairSk(ROOTS.seed, 1));
+        out.push(mk(sd, (u) => Math.max(STRAND_MIN * 0.9, 3 + 1.9 * Math.sin(Math.PI * Math.min(1, u / 0.8)) ** 0.8), { lift: 0.6, blade: 0.3, noRib: true }));
+      }
+      const tb = Math.min(he - 0.05, tr + 0.75), temple = [];   // back over the temple, dipping and lifting again at its tip (not a hook)
+      for (let i = 0; i <= 28; i++) { const u = i / 28; temple.push([(tr + (tb - tr) * u) * Rs, sf.hTr - 22 * Math.sin(Math.PI * Math.min(1, u * 0.8)) ** 1.2 + 6 * u * u]); }
+      both(mk(temple, (u) => 4.75 * (1 - 0.55 * u), { free: true, lift: 0.4, blade: 0.25 }));
+    } else if (pat === 'lotus') {   // a quiet band in front; openwork petals stand behind the head, a halo between the antlers
+      const fr = inFront(conv(fairSk(LOTUS.front, 1.6)));
+      if (fr.length > 2) g.main = both(mk(fr, () => Math.max(STRAND_MIN, rb * 0.95), { lift: 0.4, blade: 0.2 }));
+      const Z = [0, 0, 1], lean = 3 * DEG;   // near upright: a halo, and no deeper than the head, so the antlers keep their size
+      for (const [phi, fan, sz] of LOTUS.petals) {
+        const tC = Math.PI - phi;
+        if (P.ringBase === 'openBack' && tC > he - 0.08) continue;   // an open back leaves out what falls in the gap
+        const f = pathFrame(g, tC, (t) => bandH(P, g, t)), base = add(f.Q, mul(f.N, OUTER + rb));
+        const Nh = norm([f.N[0], f.N[1], 0]), Up = norm(add(Z, mul(Nh, Math.tan(lean))));
+        let T = norm(cross(Z, Nh)); if (T[0] < 0) T = mul(T, -1);   // across, level, in the plane tangent to the back of the head (so petals clear it)
+        const d = norm(add(mul(Up, Math.cos(fan)), mul(T, Math.sin(fan)))), nn = norm(add(mul(T, Math.cos(fan)), mul(Up, -Math.sin(fan)))), pn = cross(d, nn);
+        const L = 150 * kO * sz, W = 46 * kO * sz, P3 = (a, w) => add(add(base, mul(d, L * a)), mul(nn, w));
+        const edge = (sg) => fairSk([[0, 0], [0.3, sg * 0.46], [0.62, sg * 0.42], [0.88, sg * 0.16], [1, 0]].map(([a, w]) => [a * L, w * W]), 2).map(([a, w]) => P3(a / L, w));
+        const vein = fairSk([[0, 0], [0.55 * L, 0]], 2).map(([a]) => P3(a / L, 0));
+        for (const [pl, r0, r1] of [[edge(1), 3.3, 3], [edge(-1), 3.3, 3], [vein, 3.6, 3]]) {
+          const br = { pts: pl, rad: pl.map((_, i) => Math.max(STRAND_MIN, r0 + (r1 - r0) * (i / (pl.length - 1)))), ss: pl.map(() => 0.2), n: pl.length - 1, length: vlen(sub(pl[pl.length - 1], pl[0])), kind: 'ring', F: pn, Fp: pl.map(() => pn), ov: 0.3, sculpt: SC, giger: GG };
+          parallelFrames(br);
+          if (fan === 0) out.push(br); else both(br);
+        }
+      }
+    }
+    if (!g.main) g.main = g.back;
+    return out;
+  }
+  function fairSk(knots, step) {   // a sketch line, faired and resampled (sketch mm)
+    return knots.length < 3 ? resample(knots, step) : fair(knots, step);
+  }
+
   // The liner (two smooth rails blended into one soft strip) and the beams on the outside of it.
   function ringBand(P, g) {
     const out = [], [hs, he] = halfRange(P, g), openEnd = P.ringBase === 'openBack', openStart = P.ringBase === 'openFront';
@@ -776,6 +872,11 @@
     // biomechanical (GG) the beams are ribbed like vertebrae, the grain deepens and the lines grow restless.
     // The pattern decides how the strands part and meet.
     const SC = sculptOf(P), GG = gigerOf(P), pat = P.ringPattern || 'band', slim = 1 - 0.25 * SC;
+    if (SKETCHED.includes(pat)) {   // the band line runs under the design's front piece, then round the back
+      g.sketch = sketchFrame(P, g);
+      const front = pat === 'moon' ? MOON.spine : pat === 'roots' ? ROOTS.front : LOTUS.front;
+      g.bandFn = sketchBandFn(P, g, g.sketch, fair(front, 3).map(g.sketch.fromFront));
+    }
     if (pat === 'fleur') {   // its band line: a V at the brow, rising in an S into the antlers, settling lower behind
       const D = P.ringBase === 'openFront' ? 0 : P.ringDip * 1.1, R = P.ringRise * 1.3, tr0 = g.tr;
       g.bandFn = (t) => -D * Math.exp(-Math.abs(t) / 0.3) + R * Math.exp(-(((t - tr0) / 0.55) ** 2)) - P.ringDrop * sstep((t - tr0) / (Math.PI - tr0));
@@ -843,6 +944,7 @@
   // an upper beam that arches over the temple and rejoins the band at the brow (an almond).
   function sculptedBand(P, g, c) {
     const { path, so, hs, he, SC, GG, pat, out } = c, tr = g.tr, rs = g.rs;
+    if (SKETCHED.includes(pat)) return sketchedCrown(P, g, SC, GG, out, pat, c);
     if (pat === 'fleur') {   // the band: thick at the antlers, finer to the V and quiet behind; then the fleur's strokes
       const rootR = Math.max(rs * 1.55, 0.75 * (g.rootR || 0), STRAND_MIN * 1.3);
       g.main = path(hs, tr, () => 0, (u) => rootR * (0.5 + 0.5 * Math.pow(u, 1.3)), 'ring', { ov: 0.12 });
@@ -1034,7 +1136,7 @@
       const br = { pts: [c0, add(c0, mul(f.N, 1.5))], rad: [rb, rb * 0.9], ss: [0, 1], n: 1, length: 1.5, kind: 'tine', F: f.N, ov: 0.35, sculpt: 1, giger: GG };
       parallelFrames(br); out.push(br);
     }
-    if (P.ringFront !== 'none' && P.ringBase !== 'openFront' && pat !== 'circlet' && pat !== 'fleur') {   // the brow piece, at the band's lowest point (a circlet has its boss)
+    if (P.ringFront !== 'none' && P.ringBase !== 'openFront' && pat !== 'circlet' && !DECOR.slice(2).includes(pat)) {   // the brow piece, at the band's lowest point (a circlet has its boss)
       const f = pathFrame(g, 0, (t) => bandH(P, g, t)), base = add(f.Q, mul(f.N, OUTER + g.rs)), rsB = Math.max(g.rs, STRAND_MIN);   // sturdy at the base
       // brow pieces are jewels, not points: short and round at every end (small spikes at the brow read as weapons)
       const bead = (u) => Math.sin(Math.PI * Math.min(1, 0.25 + 0.75 * u)) ** 0.6;   // swells, then closes round
@@ -1647,7 +1749,8 @@
       if (a === b || b === c || a === c) continue;
       I[w++] = a; I[w++] = b; I[w++] = c;
     }
-    return taubin(dropSpecks({ positions: pos.slice(0, pc), indices: I.slice(0, w), attr: at.slice(0, pc / 3) }), skel.params.smoothing);
+    // on a crown, antler tines that dive into the head can leave slivers poking out of it: drop those too
+    return taubin(dropSpecks({ positions: pos.slice(0, pc), indices: I.slice(0, w), attr: at.slice(0, pc / 3) }, skel.mount.type === 'crown' ? 0.008 : 0.002), skel.params.smoothing);
   }
 
   // Taubin smoothing (λ/μ pairs): removes voxel ripple without shrinking the form.
@@ -1681,7 +1784,7 @@
 
   // Remove closed shells that are specks next to the main solid (isolated grid samples
   // can produce a zero-volume tetrahedron). Whole shells go, so the rest stays watertight.
-  function dropSpecks(mesh) {
+  function dropSpecks(mesh, frac) {   // frac: the largest share of the volume a stray shell can have and still be dropped
     const Pp = mesh.positions, I = mesh.indices, nv = Pp.length / 3, F = I.length / 3;
     const parent = new Int32Array(nv); for (let i = 0; i < nv; i++) parent[i] = i;
     const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
@@ -1694,7 +1797,7 @@
     }
     if (vol.size <= 1) return mesh;
     let vmax = 0; for (const x of vol.values()) vmax = Math.max(vmax, x);
-    const keep = new Set(); for (const [r, x] of vol) if (x > Math.max(2, vmax * 0.002)) keep.add(r);
+    const keep = new Set(); for (const [r, x] of vol) if (x > Math.max(2, vmax * (frac || 0.002))) keep.add(r);
     const remap = new Int32Array(nv).fill(-1); let nvOut = 0;
     const out = [];
     for (let f = 0; f < F; f++) {
