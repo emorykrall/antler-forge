@@ -123,3 +123,14 @@ test('every crown pattern, horror, natural or elven, is one sturdy watertight so
     }
   }
 });
+
+// Character: bumpy and biomechanical (0) → smooth and sculpted (½) → crisp and faceted (1). Only the crown
+// changes: headband antlers ignore it, byte for byte.
+test('Character reshapes only the crown: nodules at 0, smooth at ½, facets at 1', () => {
+  const hb = (ch) => Core.meshAntler(Core.buildSkeleton(Object.assign(Core.presetParams('stag'), { ringCharacter: ch })), 1.5).positions;
+  assert.deepEqual(hb(0), hb(1), 'headband antlers ignore Character');
+  const vol = (ch) => Core.validateMesh(Core.meshAntler(Core.buildSkeleton(crown('stag', 'closed', { ringPattern: 'band', ringCharacter: ch })), 1.2)).volume;
+  const [v0, v5, v1] = [0, 0.5, 1].map(vol);
+  assert.ok(Math.abs(v5 - v1) / v5 > 0.002, 'facets change the form at 1');
+  assert.ok(Math.abs(v5 - v0) / v5 > 0.002, 'nodules and ribs change the form at 0');
+});

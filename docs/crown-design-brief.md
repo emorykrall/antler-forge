@@ -51,10 +51,12 @@ the owner's reference 4 (a V at the brow with heart-lobed arches rising into the
 ## Character (the Character slider)
 
 One composition, three shape languages, not just surface finish:
-- **Elven (1):** long fair curves, lenticular blades, fine tapering points, polished surfaces, perfect symmetry.
-- **Natural (0.5):** antler grain, rounder sections, slight irregularity, tines rather than blades.
-- **Biomechanical horror (0):** the same skeleton becomes vertebral, ribbed and hooked, with ridged sections,
-  claw terminals, rib-cage lattices in the openings, and taut sinewy curves.
+- **Bumpy, biomechanical (0):** H.R. Giger: the skeleton becomes vertebral, ribbed and hooked, with deep grain,
+  nodules along every piece, claw terminals, rib-cage lattices in the openings and taut sinewy curves.
+- **Smooth and sculpted (½):** long fair curves, lenticular blades, fine tapering points, polished surfaces,
+  perfect symmetry. No grain.
+- **Crisp and faceted (1):** cut stone or a cut gem: pentagonal sections with a sharp ridge facing out, curves
+  cut into straight chords that meet in mitres, crisp joins.
 The silhouette itself should change across the range, not just the texture.
 
 ## Hard constraints

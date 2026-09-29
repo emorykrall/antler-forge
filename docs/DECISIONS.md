@@ -286,6 +286,18 @@ Newest first within each section. Change one only when the owner asks.
 - **The elven end is smooth and sculpted** (owner: "still many blobby shapes and bumpy textures"): no gutters
   or pearling on the crown from Character ≈ 0.87 up; Crown of spines loses its twist strand, side twigs and
   berries (clean spires); Briar's twist lengthens and its thorns thin out; brow pieces are polished.
+- **Character, taken further** (owner, 2026-09-28: "bumpy and gigeresque at the far left, smooth and
+  sculpted at the middle, crisp and faceted at the far right"). Supersedes the horror / natural / elven
+  scale above; the natural-antler middle is gone. `sculptOf` (the refined shape language: fair lines, blades,
+  calm) is full from ½ up; `gigerOf` (ribs, hooks, grain) is gone by ½, and at 0 the crown's grain is deeper
+  (×2.2) and its nodules run most of each piece's length instead of only near its root; `facetOf` (½ → 1)
+  cuts the crown in the mesher: each piece's section becomes a regular pentagon of equal area (a crisp
+  ridge facing out, a flat face toward the head), its curves become straight chords (Douglas–Peucker:
+  at most 10 mm long, straying at most 2 mm, so scrolls turn into angular spirals and joins into mitres),
+  joins get half the fillet, and Briar's vines straighten into parallel rods. Liner and antlers are never
+  faceted; headband STLs are byte-identical. Species now sit at the smooth middle (0.5; elk 0.55, reindeer
+  and moose 0.45) and the forest spirit at 0.2. Saved designs keep their number, so one saved near the old
+  elven end (0.85–0.9) now opens mostly faceted: set Character to ½ for the smooth look.
 
 ## Faun bust (wear view)
 
