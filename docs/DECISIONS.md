@@ -298,6 +298,25 @@ Newest first within each section. Change one only when the owner asks.
   faceted; headband STLs are byte-identical. Species now sit at the smooth middle (0.5; elk 0.55, reindeer
   and moose 0.45) and the forest spirit at 0.2. Saved designs keep their number, so one saved near the old
   elven end (0.85–0.9) now opens mostly faceted: set Character to ½ for the smooth look.
+- **Form & finish** (owner, 2026-09-28: the profile should go from round to geometric, "sweep a shape along a
+  path… the sweep line should still be smooth and curved, just the swept shape should be faceted"; the side
+  against the head has no sharp edges; the skin smoother; Texture folded in; it shapes antlers and crowns
+  alike). Supersedes the Character entries above. One slider, `character`, both styles: 0 gnarled and
+  biomechanical (deep grain, knobs along each piece; the crown's ribs and hooks), 0.3 natural antler (every
+  species starts here, so antlers and headband STLs look as they always have; forest spirit 0.2), ½
+  polished smooth, 1 faceted. Faceting sweeps a diamond of the circle's area along the unchanged curve: a
+  crown piece keeps a round back toward the head and cuts its outer face into two facets meeting in a ridge;
+  an antler becomes a full diamond; ridges and side edges get a 12% polish radius so they print and light
+  cleanly. The earlier straight-chord cuts are gone. Texture is gone from the page (the species set grain;
+  Form & finish scales it). Smoother skin: the section's flattening (oval, keel, facets) is now worked out per
+  segment inside the distance loop, with frames interpolated per point, instead of only for the nearest
+  segment: that removes the faint creases and ripples seen even with Texture at 0 (meshing is ~1.4× slower).
+  Designs saved with the crown-only `ringCharacter` open with the same number.
+- **Measuring tutorial** (owner, 2026-09-28: "add a tutorial for head measuring, use the fawn head"): a
+  "How to measure" link under Head circumference opens three steps on the fawn in the wear view (around the
+  head above the brows, front to back over the top, ear to ear over the top); a yellow tape with inch ticks runs
+  out over its head for each step while the camera turns to it. It owns the view until closed (Done, ×, Esc,
+  or switching view).
 
 ## Faun bust (wear view)
 

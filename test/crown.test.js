@@ -111,10 +111,10 @@ test('tape measurements: the head shape is recovered exactly, and measured crown
 });
 
 test('every crown pattern, horror, natural or elven, is one sturdy watertight solid that fits', () => {
-  for (const ringPattern of ['fleur', 'lattice', 'circlet', 'spines', 'briar', 'band']) for (const ringCharacter of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
-    const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, ringCharacter, ringBase });
+  for (const ringPattern of ['fleur', 'lattice', 'circlet', 'spines', 'briar', 'band']) for (const character of [0, 0.5, 1]) for (const ringBase of ['closed', 'openBack']) {
+    const P = Object.assign(Core.presetParams('stag', Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern, character, ringBase });
     const sk = Core.buildSkeleton(P), r = Core.validateMesh(Core.meshAntler(sk, 1.6));
-    const tag = `${ringPattern} ${ringCharacter} ${ringBase}`;
+    const tag = `${ringPattern} ${character} ${ringBase}`;
     assert.ok(r.watertight && r.shells === 1 && r.volume > 0, `${tag}: one watertight solid`);
     assert.ok(sk.fit.fits, `${tag}: fits the P2S`);
     for (const br of sk.branches) {   // printed and worn: no thin strands, no spindly tines
@@ -124,13 +124,14 @@ test('every crown pattern, horror, natural or elven, is one sturdy watertight so
   }
 });
 
-// Character: bumpy and biomechanical (0) → smooth and sculpted (½) → crisp and faceted (1). Only the crown
-// changes: headband antlers ignore it, byte for byte.
-test('Character reshapes only the crown: nodules at 0, smooth at ½, facets at 1', () => {
-  const hb = (ch) => Core.meshAntler(Core.buildSkeleton(Object.assign(Core.presetParams('stag'), { ringCharacter: ch })), 1.5).positions;
-  assert.deepEqual(hb(0), hb(1), 'headband antlers ignore Character');
-  const vol = (ch) => Core.validateMesh(Core.meshAntler(Core.buildSkeleton(crown('stag', 'closed', { ringPattern: 'band', ringCharacter: ch })), 1.2)).volume;
-  const [v0, v5, v1] = [0, 0.5, 1].map(vol);
-  assert.ok(Math.abs(v5 - v1) / v5 > 0.002, 'facets change the form at 1');
-  assert.ok(Math.abs(v5 - v0) / v5 > 0.002, 'nodules and ribs change the form at 0');
+// Form & finish: gnarled (0) → natural antler (0.3, the species) → polished (½) → faceted (1), for the whole piece.
+test('Form & finish: natural keeps the antlers as they were; each end changes the form', () => {
+  const vol = (P) => Core.validateMesh(Core.meshAntler(Core.buildSkeleton(P), 1.2)).volume;
+  const hb = (ch) => vol(Object.assign(Core.presetParams('stag'), { character: ch }));
+  assert.equal(Core.presetParams('stag').character, 0.3, 'species start at natural antler');
+  const [h0, h3, h5, h1] = [0, 0.3, 0.5, 1].map(hb);
+  for (const [v, tag] of [[h0, 'gnarled'], [h5, 'polished'], [h1, 'faceted']]) assert.ok(Math.abs(v - h3) / h3 > 0.002, `${tag} antlers differ from natural`);
+  const cr = (ch) => vol(crown('stag', 'closed', { ringPattern: 'band', character: ch }));
+  const [c0, c5, c1] = [0, 0.5, 1].map(cr);
+  assert.ok(Math.abs(c5 - c1) / c5 > 0.002 && Math.abs(c5 - c0) / c5 > 0.002, 'the crown changes at both ends');
 });

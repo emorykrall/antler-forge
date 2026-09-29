@@ -48,15 +48,15 @@ the owner's reference 4 (a V at the brow with heart-lobed arches rising into the
   each 0.8 of the last), in odd counts, graduated away from the focal point.
 - **Restraint.** Fewer, better elements. If a part doesn't serve the hierarchy or the eye path, remove it.
 
-## Character (the Character slider)
+## Form & finish (the `character` slider)
 
-One composition, three shape languages, not just surface finish:
-- **Bumpy, biomechanical (0):** H.R. Giger: the skeleton becomes vertebral, ribbed and hooked, with deep grain,
-  nodules along every piece, claw terminals, rib-cage lattices in the openings and taut sinewy curves.
-- **Smooth and sculpted (½):** long fair curves, lenticular blades, fine tapering points, polished surfaces,
-  perfect symmetry. No grain.
-- **Crisp and faceted (1):** cut stone or a cut gem: pentagonal sections with a sharp ridge facing out, curves
-  cut into straight chords that meet in mitres, crisp joins.
+One composition, several shape languages, not just surface finish (it applies to the antlers too):
+- **Gnarled, biomechanical (0):** H.R. Giger: vertebral, ribbed and hooked, deep grain and knobs along every
+  piece, claw terminals, taut sinewy curves.
+- **Natural antler (0.3):** the refined crown forms with the species' antler grain. Every species starts here.
+- **Polished (½):** long fair curves, lenticular blades, fine tapering points, smooth skin, no grain.
+- **Faceted (1):** the same smooth curves, swept with a diamond section instead of a circle: two facets meeting
+  in a ridge on the outer face, a round back against the head, polished edges.
 The silhouette itself should change across the range, not just the texture.
 
 ## Hard constraints

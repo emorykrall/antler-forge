@@ -1,17 +1,18 @@
 // Silhouette contact sheets for judging a crown's composition: flat black shapes from several angles,
 // with the head as a pale reference, so only form, hierarchy and negative space are left to read. The head
 // hides what's behind it, as when the crown is worn (add :object to a config to see the whole object).
-// Usage: node tools/silhouettes.js [--shaded] [--cell N] [--views front,3/4,side] out.png [config ...]
+// Usage: node tools/silhouettes.js [--shaded] [--res mm] [--cell N] [--views front,3/4,side] out.png [config ...]
 //   config: preset:pattern:character[:crown][:object][:zoom]   e.g. stag:circlet:0.9   spirit:spines:0.3:crown (crown only)
 //   --shaded: lit, depth-buffered form instead of flat silhouettes, to check the form reads as well as the shape
-//   :zoom frames the crown (the antlers are still drawn, cropped)
+//   :zoom frames the crown (the antlers are still drawn, cropped); :close a 76 mm close-up of its front;
+//   :key=value sets any other setting (e.g. :grooveDepth=0)
 // One row per config; columns: front, three-quarter, side, back, top.
 const fs = require('fs');
 const zlib = require('zlib');
 const Core = require('../src/antler-core.js');
 
 const ALL_VIEWS = [['front', 0, 0], ['3/4', 35, 12], ['side', 90, 0], ['back', 180, 0], ['top', 0, 90]];
-let VIEWS = ALL_VIEWS, CELL = 260, SHADED = false;
+let VIEWS = ALL_VIEWS, CELL = 260, SHADED = false, RES = 0;
 
 function viewMatrix(yaw, pitch) {   // camera looks along -forward; returns [right, up] basis in model space
   const y = (yaw * Math.PI) / 180, p = (pitch * Math.PI) / 180;
@@ -24,14 +25,20 @@ function render(configs) {
   const W = CELL * VIEWS.length, H = CELL * configs.length, img = new Uint8Array(W * H).fill(255), stats = [];
   configs.forEach((cfg, row) => {
     const [preset, pattern, character, ...flags] = cfg.split(':'), only = flags.includes('crown') ? 'crown' : '', object = flags.includes('object'), zoom = flags.includes('zoom');
-    const P = Object.assign(Core.presetParams(preset, Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern: pattern, ringCharacter: Number(character) });
+    const over = {}; for (const f of flags) if (f.includes('=')) { const [k2, v2] = f.split('='); over[k2] = isNaN(Number(v2)) ? v2 : Number(v2); }
+    const close = flags.includes('close');
+    const P = Object.assign(Core.presetParams(preset, Object.assign({}, Core.DEFAULTS, { style: 'crown' })), { ringPattern: pattern, character: Number(character) }, over);
     const sk = Core.buildSkeleton(P);
     if (only === 'crown') { sk.branches = sk.branches.filter((b) => !b.antler); sk.burrs = []; sk.palms = []; }
-    const mesh = Core.meshAntler(sk, SHADED ? 0.7 : 1.4), pos = mesh.positions, idx = mesh.indices;   // finer when lit, so surfaces read
-    const hc = sk.head.c, hr = sk.head.r;
+    const mesh = Core.meshAntler(sk, RES || (SHADED ? 0.7 : 1.4)), pos = mesh.positions, idx = mesh.indices;   // finer when lit, so surfaces read
+    let hc = sk.head.c;
+    const hr = sk.head.r;
     // one scale for every view of a row, from the model's largest extent
     let ext = 0;
-    if (zoom) { for (const b of sk.branches.filter((x) => !x.antler)) for (const p of b.pts) ext = Math.max(ext, Math.hypot(p[0] - hc[0], p[1] - hc[1], p[2] - hc[2])); ext *= 1.1; }
+    if (close) {   // a close-up of the front of the crown, 70 mm across, at the band's front
+      let best = null; for (const b of sk.branches.filter((x) => !x.antler && x.kind !== 'liner')) for (const p of b.pts) if (!best || p[1] > best[1]) best = p;
+      hc = best; ext = 38;
+    } else if (zoom) { for (const b of sk.branches.filter((x) => !x.antler)) for (const p of b.pts) ext = Math.max(ext, Math.hypot(p[0] - hc[0], p[1] - hc[1], p[2] - hc[2])); ext *= 1.1; }
     else for (let i = 0; i < pos.length; i += 3) ext = Math.max(ext, Math.hypot(pos[i] - hc[0], pos[i + 1] - hc[1], pos[i + 2] - hc[2]));
     const nrm = SHADED ? vertexNormals(pos, idx) : null;
     const k = (CELL * 0.46) / ext;
@@ -42,7 +49,7 @@ function render(configs) {
       // the head, pale grey, for scale and placement
       for (let py = row * CELL; py < (row + 1) * CELL; py++) for (let px = col * CELL; px < (col + 1) * CELL; px++) {
         // inverse-project: a point is inside the head's silhouette if the ray through it hits the ellipsoid
-        const u = (px - ox) / k, v = -(py - oy) / k, q = [u * right[0] + v * up[0], u * right[1] + v * up[1], u * right[2] + v * up[2]];
+        const u = (px - ox) / k, v = -(py - oy) / k, q = [0, 1, 2].map((a) => u * right[a] + v * up[a] + hc[a] - sk.head.c[a]);   // relative to the head's centre
         let A = 0, B = 0, C = -1;
         for (let a = 0; a < 3; a++) { A += (f[a] / hr[a]) ** 2; B += (2 * q[a] * f[a]) / hr[a] ** 2; C += (q[a] / hr[a]) ** 2; }
         const disc = B * B - 4 * A * C;
@@ -109,6 +116,7 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   for (;;) {
     if (args[0] === '--shaded') { SHADED = true; args.shift(); }
+    else if (args[0] === '--res') { args.shift(); RES = Number(args.shift()); }
     else if (args[0] === '--cell') { args.shift(); CELL = Number(args.shift()); }
     else if (args[0] === '--views') { args.shift(); const want = args.shift().split(','); VIEWS = ALL_VIEWS.filter((v) => want.includes(v[0])); }
     else break;

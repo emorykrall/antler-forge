@@ -23,7 +23,7 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   `PARAM_SPEC` drives both the page controls and CLI flags; `DEFAULTS` and `PRESETS` sit next to it.
 - `src/designer.src.html`: the page. `/*__CORE__*/` is replaced by the engine at build time, and the
   meshing Web Worker is built from that same inlined script. Sections are marked with `/* ------- name */` banner comments:
-  controls, three.js scene, faun (wear-view bust), meshing worker, files, try-on (AR), library, lore,
+  controls, three.js scene, faun (wear-view bust), measuring tutorial, meshing worker, files, try-on (AR), library, lore,
   fireflies. Views: `print`, `wear`, `ar`, `library` (switch with `setView`). The library is
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
   autosave is `antler-forge-design-v3`. The viewport pill must say whether it shows the coarse

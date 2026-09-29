@@ -77,6 +77,19 @@ button,input,select{font:inherit;color:inherit}
 .progress div{height:100%;width:0;background:linear-gradient(90deg,#8FB88A,var(--vp-active));transition:width .15s}
 .stage.ar-on #vp,.stage.ar-on #motes,.stage.ar-on .hud.bot,.stage.ar-on [aria-label="Camera"]{visibility:hidden}
 .pill.preview i{background:transparent;box-shadow:inset 0 0 0 1.5px #E8D38A}
+/* the head-measuring tutorial: a card over the viewport while the fawn shows where the tape goes */
+.tutor{position:absolute;left:50%;bottom:62px;transform:translateX(-50%);width:min(430px,calc(100% - 32px));background:rgba(12,18,14,.86);color:var(--vp-ink);border:1px solid var(--vp-edge);border-radius:14px;padding:12px 14px 12px;backdrop-filter:blur(6px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.tutor h3{margin:0 0 4px;font:400 19px/1.2 var(--f-display);color:var(--vp-active)}
+.tutor h3 small{font:500 11px/1 var(--f-mono);letter-spacing:.06em;color:var(--vp-ink);opacity:.6;margin-left:8px}
+.tutor p{margin:0 0 6px;font-size:14px;line-height:1.45}
+.tutor p.tip{font:italic 400 14.5px/1.35 var(--f-fell);opacity:.85}
+.tutor .row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px}
+.tutor .btn{background:rgba(255,255,255,.06);border-color:var(--vp-edge);color:var(--vp-ink);padding:6px 12px}
+.tutor .btn.primary{background:#3B6344;border-color:#3B6344;color:#F7F4E8}
+.tutor .x{position:absolute;top:6px;right:8px;border:0;background:transparent;color:var(--vp-ink);opacity:.6;font-size:20px;line-height:1;cursor:pointer;padding:4px}
+.tutor .x:hover{opacity:1}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;justify-self:start;grid-column:1/-1}
+.stage.tutor-on .hud.bot{visibility:hidden}
 /* ---------- the library (saved designs) */
 .stage.lib-on #vp,.stage.lib-on .hud.bot,.stage.lib-on .progress,.stage.lib-on [aria-label="Camera"]{visibility:hidden}
 .count{display:inline-block;min-width:18px;margin-left:6px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.14);font:500 11px/1.4 var(--f-mono);text-align:center}
@@ -264,7 +277,7 @@ details[open] summary::after{transform:rotate(-135deg)}
 </svg>
 
 <div class="app">
-  <section class="stage" aria-label="3D preview">
+  <section class="stage" id="stage" aria-label="3D preview">
     <svg class="glade" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A5847"/><stop offset=".55" stop-color="#20342A"/><stop offset="1" stop-color="#101A14"/></linearGradient>
@@ -363,6 +376,13 @@ details[open] summary::after{transform:rotate(-135deg)}
       <div class="statusbar"><span class="pill preview" id="status"><i></i><span>Preview</span></span><span id="dims">—</span></div>
     </div>
     <div class="progress"><div id="prog"></div></div>
+    <div class="tutor" id="tutor" role="dialog" aria-label="How to measure your head" hidden>
+      <button class="x" id="tutor-x" aria-label="Close">×</button>
+      <h3 id="tutor-h"></h3>
+      <p id="tutor-p"></p>
+      <p class="tip" id="tutor-tip"></p>
+      <div class="row"><button class="btn" id="tutor-back">Back</button><button class="btn primary" id="tutor-next">Next</button></div>
+    </div>
     <div class="err" id="gl-err" hidden>3D preview needs WebGL. The controls and STL export still work.</div>
   </section>
 
@@ -517,6 +537,10 @@ function syncControls() {
     + 'It measures your head under your hair; keep your forehead and temples clear if you can. Or import an STL, OBJ or PLY from a phone scanning app (for example Scaniverse, Polycam or Heges). Nothing leaves this device.</div>'
     + '<input type="file" id="scan-file" accept=".stl,.obj,.ply" hidden>';
   inputs.headSource.wrap.after(w);
+}
+{   // "How to measure": the tutorial on the fawn (see "measuring tutorial")
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'linkbtn'; b.id = 'measure-how'; b.textContent = 'How to measure';
+  inputs.headCirc.wrap.appendChild(b);
 }
 function applyStyle() {
   for (const b of $('styles').children) b.setAttribute('aria-pressed', String(b.dataset.style === P.style));
@@ -846,7 +870,7 @@ function buildFaun() {
     const z = V3(sx, -0.3, 0.42).normalize();                   // out, a little back, a little up
     const y = V3(0, 1, 0.25).addScaledVector(z, -V3(0, 1, 0.25).dot(z)).normalize();   // cup faces forward
     const x = V3().crossVectors(y, z);
-    const ear = new THREE.Group();
+    const ear = new THREE.Group(); ear.userData.ear = true;   // (the measuring tutorial's tape runs past them)
     ear.applyMatrix4(new THREE.Matrix4().makeBasis(x, y, z).setPosition(base.addScaledVector(z, -10)));
     add(earGeo, earMat, 1.3, { parent: ear });
     g.add(ear);
@@ -885,6 +909,7 @@ function rebuildScene() {
   if (view === 'ar') { arRefreshPair(); return; }
   if (view === 'library') return;
   while (root.children.length) root.remove(root.children[0]);
+  if (tutor) { root.add(tutorObject()); return; }   // the measuring tutorial owns the view while it's open
   if (importing) { root.add(alignObject()); if (!importing.framed) { fitCamera(); importing.framed = true; } return; }
   if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
   else root.add(wearObject());
@@ -892,6 +917,7 @@ function rebuildScene() {
   if (fitKey !== lastFitKey && shown) { fitCamera(); lastFitKey = fitKey; }
 }
 function fitCamera() {
+  if (tutor) return;   // the tutorial places its own camera
   const box = new THREE.Box3();
   if (view === 'print') box.setFromObject(root.children[1] || root);
   else {   // frame the head and antlers; the cloak can run off the bottom
@@ -919,6 +945,126 @@ function resize() {
 function loop() { if (glOK) { controls.update(); renderer.render(scene, camera); } requestAnimationFrame(loop); }
 window.addEventListener('resize', resize);
 if (window.ResizeObserver) new ResizeObserver(resize).observe($('vp'));
+
+/* ------------------------------------------------------------ measuring tutorial */
+// How to take the three tape measurements, shown on the fawn: a tape (inch ticks) is drawn onto its head for
+// each step while the camera turns to it. Paths are found by casting rays at the fawn's head, so the tape lies
+// on its surface; the ears are skipped (a person's tape runs above theirs).
+const TUTOR_STEPS = [
+  { h: 'Around your head', cam: [0.8, 1, 0.42],
+    p: 'Wrap a soft tape measure round your head where the crown will sit: across the middle of your forehead, just above your eyebrows, and round the back of your head, a little lower. Keep it flat and snug, not tight. That’s your <b>Head circumference</b>.',
+    tip: 'Measure your head itself, pressing the tape flat through thick hair: the Comfort allowance (Advanced → Crown fit) adds room for hair and ease.' },
+  { h: 'Front to back, over the top', cam: [0.85, 0.3, 0.85],
+    p: 'For a closer fit, keep the first tape in place (or have someone hold it). Measure from its line at the middle of your forehead, straight back over the top of your head, to its line at the back. Turn on <b>Use over-the-top measurements</b> and enter it as <b>Front to back</b>.',
+    tip: 'These two are optional: without them the crown takes an average head’s shape at your circumference.' },
+  { h: 'Ear to ear, over the top', cam: [0.25, 1, 0.6],
+    p: 'Then from the tape’s line just above one ear, over the top of your head, to the line just above the other ear. Enter it as <b>Ear to ear</b>.',
+    tip: 'Or skip the tape: set Head size from to A 3D head scan and use Scan my head.' },
+];
+let tutor = null;   // { step, tapes: [Mesh], t0 }
+function tapeTexture() {   // a tape measure: yellow, with inch, half and quarter ticks (one inch per repeat)
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 32;
+  const x = cv.getContext('2d');
+  x.fillStyle = '#EFC94C'; x.fillRect(0, 0, 256, 32);
+  x.fillStyle = '#2A2014';
+  for (let i = 0; i < 16; i++) { const L = i === 0 ? 16 : i % 8 === 0 ? 12 : i % 4 === 0 ? 9 : i % 2 === 0 ? 6 : 4; x.fillRect(i * 16, 0, i === 0 ? 3 : 2, L); x.fillRect(i * 16, 32 - L, i === 0 ? 3 : 2, L); }
+  const t = new THREE.CanvasTexture(cv); t.wrapS = THREE.RepeatWrapping; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+  return t;
+}
+let tapeMat = null;
+function tutorPaths() {
+  faunGroup.scale.setScalar(1); faunGroup.position.set(0, 0, 0); faunGroup.updateMatrixWorld(true);
+  const targets = [], isEar = (o) => { for (let q = o; q; q = q.parent) if (q.userData.ear) return true; return false; };
+  faunGroup.traverse((o) => { if (o.isMesh && o.material && o.material.side !== THREE.BackSide && !isEar(o)) targets.push(o); });
+  const ray = new THREE.Raycaster(), V = (x, y, z) => new THREE.Vector3(x, y, z);
+  // the surface point (and its normal) seen from outside along direction d, toward c
+  const hit = (c, d) => {
+    ray.set(c.clone().addScaledVector(d, 400), d.clone().negate());
+    const h = ray.intersectObjects(targets, false)[0];
+    if (!h) return null;
+    const n = h.face ? h.face.normal.clone().transformDirection(h.object.matrixWorld) : d.clone();
+    return { p: h.point, n: n.dot(d) < 0 ? n.negate() : n };
+  };
+  const ZF = 26, ZB = 12, circAt = (t) => { const z = ZB + (ZF - ZB) * (0.5 + 0.5 * Math.cos(t)); return hit(V(0, -6, z), V(74 * Math.sin(t), 92 * Math.cos(t), 0).normalize()); };
+  const circ = []; for (let i = 0; i <= 200; i++) { const q = circAt((i / 200) * 2 * Math.PI); if (q) circ.push(q); }
+  const arc = (a0, a1, c, dirAt) => { const out = []; for (let i = 0; i <= 120; i++) { const q = hit(c, dirAt(a0 + (a1 - a0) * (i / 120))); if (q) out.push(q); } return out; };
+  // front to back: in the middle plane, from the tape at the forehead over the top to the tape at the back
+  const f = circAt(0).p, bk = circAt(Math.PI).p, c1 = V(0, -6, 6);
+  const fb = arc(Math.atan2(f.z - c1.z, f.y - c1.y), Math.PI - Math.atan2(bk.z - c1.z, -(bk.y - c1.y)), c1, (a) => V(0, Math.cos(a), Math.sin(a)));
+  // ear to ear: in a plane just in front of the ears, from the tape line on one side over the top to the other
+  const sR = circAt(0.42 * Math.PI).p, c2 = V(0, sR.y, 6);
+  const a0 = Math.atan2(sR.z - c2.z, sR.x - c2.x);
+  const ee = arc(a0, Math.PI - a0, c2, (a) => V(Math.cos(a), 0, Math.sin(a)));
+  return [circ, fb, ee];
+}
+function tapeMesh(path) {   // a flat tape along the surface, a hair above it
+  const W = 9, pos = [], uv = [], idx = [];
+  let L = 0;
+  for (let i = 0; i < path.length; i++) {
+    const a = path[Math.max(0, i - 1)].p, b = path[Math.min(path.length - 1, i + 1)].p, t = b.clone().sub(a).normalize(), n = path[i].n;
+    const side = new THREE.Vector3().crossVectors(n, t).normalize().multiplyScalar(W / 2), p = path[i].p.clone().addScaledVector(n, 1.4);
+    if (i) L += path[i].p.distanceTo(path[i - 1].p);
+    pos.push(...p.clone().add(side).toArray(), ...p.clone().sub(side).toArray());
+    uv.push(L / 25.4, 1, L / 25.4, 0);
+    if (i) { const k = 2 * i; idx.push(k - 2, k - 1, k, k - 1, k + 1, k); }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geo.setIndex(idx); geo.computeVertexNormals();
+  const m = new THREE.Mesh(geo, tapeMat.clone()); m.material.side = THREE.DoubleSide;
+  m.userData.count = idx.length;
+  return m;
+}
+function tutorObject() {
+  const g = new THREE.Group();
+  if (!faunGroup) faunGroup = buildFaun();
+  if (!tutor.paths) { tapeMat = tapeMat || new THREE.MeshBasicMaterial({ map: tapeTexture(), transparent: true }); tutor.paths = tutorPaths(); tutor.tapes = tutor.paths.map(tapeMesh); }
+  faunGroup.scale.setScalar(1); g.add(faunGroup);
+  tutor.tapes.forEach((m, i) => { if (i <= tutor.step) { m.material.opacity = i === tutor.step ? 1 : 0.5; g.add(m); } });
+  return g;
+}
+function tutorShow(step) {
+  tutor.step = step;
+  const st = TUTOR_STEPS[step];
+  $('tutor-h').innerHTML = st.h + `<small>${step + 1} of ${TUTOR_STEPS.length}</small>`;
+  $('tutor-p').innerHTML = st.p; $('tutor-tip').textContent = st.tip;
+  $('tutor-back').style.visibility = step ? 'visible' : 'hidden';
+  $('tutor-next').textContent = step === TUTOR_STEPS.length - 1 ? 'Done' : 'Next';
+  if (!glOK) return;
+  rebuildScene();
+  const m = tutor.tapes[step]; tutor.t0 = performance.now();
+  m.geometry.setDrawRange(0, 0);
+  (function grow(now) {   // the tape runs out along its path
+    if (!tutor || tutor.tapes[tutor.step] !== m) { m.geometry.setDrawRange(0, Infinity); return; }
+    const k = Math.min(1, (now - tutor.t0) / 1100);
+    m.geometry.setDrawRange(0, Math.round((m.userData.count / 6) * (1 - (1 - k) ** 2)) * 6);
+    if (k < 1) requestAnimationFrame(grow);
+  })(performance.now());
+  // the fawn's head, whole, from this step's side, sitting above the card (so the target is below the head)
+  const R = 125, c = new THREE.Vector3(0, -2, -28), dist = R / Math.sin((camera.fov * Math.PI) / 360) / Math.min(1, camera.aspect) * 1.15;
+  camera.position.copy(c).addScaledVector(new THREE.Vector3(...st.cam).normalize(), dist);
+  camera.near = dist / 50; camera.far = dist * 20; camera.updateProjectionMatrix();
+  controls.target.copy(c); controls.update();
+}
+function tutorOpen() {
+  if (view !== 'wear') setView('wear');
+  tutor = { step: 0 };
+  $('tutor').hidden = false; $('stage').classList.add('tutor-on');
+  tutorShow(0);
+  $('tutor-next').focus();
+}
+function tutorClose() {
+  if (!tutor) return;
+  if (tutor.tapes) for (const m of tutor.tapes) { m.geometry.dispose(); m.material.dispose(); }
+  tutor = null;
+  $('tutor').hidden = true; $('stage').classList.remove('tutor-on');
+  lastFitKey = ''; rebuildScene(); if (glOK) fitCamera();
+}
+$('measure-how').addEventListener('click', tutorOpen);
+$('tutor-x').addEventListener('click', tutorClose);
+$('tutor-back').addEventListener('click', () => tutorShow(Math.max(0, tutor.step - 1)));
+$('tutor-next').addEventListener('click', () => (tutor.step < TUTOR_STEPS.length - 1 ? tutorShow(tutor.step + 1) : tutorClose()));
+document.addEventListener('keydown', (e) => { if (tutor && e.key === 'Escape') tutorClose(); });
 
 /* ------------------------------------------------------------ status + readouts */
 function updateReadout() {
@@ -1105,6 +1251,7 @@ const VIEWS = [['v-print', 'print'], ['v-wear', 'wear'], ['v-ar', 'ar'], ['v-lib
 let backView = 'wear';   // where the Library button returns to
 for (const [id, v] of VIEWS) $(id).addEventListener('click', () => setView(v === 'library' && view === 'library' ? backView : v));
 function setView(v) {
+  if (tutor && v !== 'wear') tutorClose();
   const was = view;
   if (v === 'library' && was !== 'library') backView = was;
   view = v;
@@ -2088,7 +2235,7 @@ function updatePlate() {
   $('lore').textContent = LORE[P.preset] || '';
 }
 const CROWN_WANDER = [['ringDip', 5], ['ringRise', 5], ['ringDrop', 4], ['ringSweepLift', 7], ['ringSweepReach', 14], ['ringLoopDepth', 4],
-  ['ringTineLean', 0.25], ['ringTineLength', 6], ['ringPos', 6], ['ringWander', 0.15], ['ringCharacter', 0.12]];
+  ['ringTineLean', 0.25], ['ringTineLength', 6], ['ringPos', 6], ['ringWander', 0.15], ['character', 0.08]];
 // "Surprise me": a new, still-balanced variation of the current species. It starts from the
 // species' own shape, keeps the headband, printer and Size settings, and jitters the silhouette.
 const WANDER = [

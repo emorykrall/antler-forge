@@ -82,7 +82,7 @@
       { k: 'headArcFB', label: 'Front to back, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'With the tape still round your head: from its line at the middle of the forehead, over the top, to its line at the back' },
       { k: 'headArcEE', label: 'Ear to ear, over the top', min: 177.8, max: 406.4, step: 3.175, u: 'mm', only: 'crown', hint: 'From the tape line just above one ear, over the top, to the line above the other ear' },
       { k: 'ringPattern', label: 'Crown design', type: 'select', only: 'crown', options: [['fleur', 'Fleur'], ['lattice', 'Almond lattice'], ['circlet', 'Circlet'], ['spines', 'Crown of spines'], ['briar', 'Briar'], ['band', 'Plain band']] },
-      { k: 'ringCharacter', label: 'Character', min: 0, max: 1, step: 0.05, u: '', only: 'crown', hint: 'Bumpy and biomechanical ← smooth and sculpted → crisp and faceted' },
+      { k: 'character', label: 'Form & finish', min: 0, max: 1, step: 0.05, u: '', hint: 'Gnarled and biomechanical ← natural antler ← polished → faceted: the section and the surface together' },
       { k: 'beamLength', label: 'Antler length', min: 40, max: 450, step: 1, u: 'mm' },
       { k: 'beamSpread', label: 'Spread', min: -10, max: 95, step: 1, u: '°', hint: 'How far the antlers lean outward' },
       { k: 'beamCurl', label: 'Curl', min: -60, max: 180, step: 1, u: '°', hint: 'How far the beams arc forward along their length' },
@@ -113,7 +113,6 @@
       { k: 'forkDepth', label: 'Forking', min: 0, max: 3, step: 1, u: '', hint: 'Levels of forked tips' },
     ] },
     { group: 'Surface', tier: 'details', items: [
-      { k: 'texture', label: 'Texture', min: 0, max: 2, step: 0.05, u: '×', hint: 'Antler gutters and pearling (0 is smooth)' },
       { k: 'burr', label: 'Burr (coronet)', type: 'bool', hint: 'The knobbly ring at the antler\'s base' },
     ] },
     { group: 'Crown', tier: 'details', only: 'crown', items: [
@@ -211,26 +210,27 @@
     style: 'headband', headSource: 'tape', headScan: '', headCirc: 571.5, headMeasured: false, headArcFB: 285.75, headArcEE: 254, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
     ringRise: 9, ringDrop: 7, ringSweepLift: 20, ringSweepReach: 55, ringLoopDepth: 14, ringTaper: 0.45, ringTineLean: 0.6, ringWander: 0.3, ringAsym: 0,
     ringThick: 9, ringStrands: 3, ringWeave: 2, ringDip: 18, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 26, ringFront: 'point',
-    ringCharacter: 0.5, ringPattern: 'band',   // ½: smooth and sculpted; species set their own
-    tineScale: 1, thickness: 1, wildness: 1, texture: 1, ornament: 1,   // combined controls: ×1 is the species' own design
+    character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
+    tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
   };
 
   // Tuned for silhouette first: a smooth curl, tine tips on one arch, calm surfaces.
   const PRESETS = {
-    whitetail: { label: 'Whitetail', p: { ringCharacter: 0.5, ringPattern: 'fleur' } },
-    mule: { label: 'Mule deer', p: { ringCharacter: 0.5, ringPattern: 'fleur', ringStrands: 3, ringWeave: 1, ringDip: 14, ringLoopDepth: 10, ringTines: 6, ringTineStyle: 'fork', ringTineLength: 30, ringFront: 'none', beamLength: 260, baseDia: 28, beamTaper: 0.34, tipDia: 5, beamLean: -14, beamCurl: 34, curlBias: 1.2, beamSpread: 56, beamInCurl: -62, tineCount: 0, browTine: true, browDir: 'up', browLength: 28, browAngle: 62, browPos: 0.08, forkDepth: 2, forkAngle: 50, tineCurve: 8, tineInward: 4, fillet: 3, scale: 0.64 } },
-    elk: { label: 'Elk', p: { ringCharacter: 0.55, ringPattern: 'fleur', ringStrands: 2, ringWeave: 1, ringDip: 12, ringRise: 12, ringSweepReach: 75, ringTineLean: 1, ringTines: 6, ringTineStyle: 'sweep', ringTineLength: 40, ringFront: 'none', beamLength: 420, baseDia: 34, beamTaper: 0.42, tipDia: 6, beamLean: -46, beamCurl: 80, curlBias: 1.6, beamSpread: 44, beamInCurl: -52, wobble: 0.15, tineCount: 4, tineDir: 'forward', tineStart: 0.16, tineEnd: 0.74, tineLength: 150, tineCrest: 0.55, tineTaper: 0.35, tineRhythm: 0.95, tineAngle: 60, tineFan: 18, tineCurve: 34, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 130, browAngle: 80, browPos: 0.045, ovality: 0.16, grooveDepth: 0.55, pearling: 0.55, burrSize: 4.5, scale: 0.5 } },
-    reindeer: { label: 'Reindeer', p: { ringCharacter: 0.45, ringPattern: 'circlet', ringStrands: 3, ringWeave: 2, ringDip: 8, ringSweepLift: 26, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 22, ringFront: 'shovel', beamLength: 380, baseDia: 25, beamTaper: 0.32, tipDia: 5, beamLean: -50, beamCurl: 150, curlBias: 1.5, beamSpread: 40, beamInCurl: -58, wobble: 0.15, tineCount: 2, tineDir: 'alternate', tineStart: 0.3, tineEnd: 0.52, tineLength: 70, tineCrest: 0.5, tineTaper: 0.2, tineAngle: 58, tineFan: 0, tineCurve: 20, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 90, browAngle: 95, browPos: 0.07, crownCount: 4, crownShape: 'fan', crownLength: 55, palmation: 0.3, ovality: 0.26, grooveDepth: 0.35, pearling: 0.3, burrSize: 3.2, scale: 0.56 } },
-    stag: { label: 'Red stag', p: { ringCharacter: 0.5, ringPattern: 'fleur', ringStrands: 3, ringWeave: 2, ringDip: 20, ringRise: 14, ringTines: 4, ringTineStyle: 'cluster', ringTineLength: 24, ringFront: 'point', beamLength: 360, baseDia: 32, beamTaper: 0.4, tipDia: 5.5, beamLean: -34, beamCurl: 70, curlBias: 1.3, beamSpread: 46, beamInCurl: -58, tineCount: 2, tineDir: 'forward', tineStart: 0.12, tineEnd: 0.4, tineLength: 110, tineCrest: 0.2, tineTaper: 0.2, tineAngle: 66, tineFan: 8, tineCurve: 36, tineInward: 8, tineThick: 0.72, browTine: true, browDir: 'forward', browLength: 112, browAngle: 82, browPos: 0.05, crownCount: 4, crownShape: 'cup', crownLength: 70, palmation: 0, ovality: 0.14, grooveDepth: 0.55, pearling: 0.6, burrSize: 4.5, scale: 0.53 } },
-    moose: { label: 'Moose', p: { ringCharacter: 0.45, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 4, ringDrop: 4, ringTaper: 0.2, ringWander: 0.15, ringThick: 12, ringTines: 6, ringTineStyle: 'paddle', ringTineLength: 24, ringFront: 'none', beamLength: 170, baseDia: 32, beamTaper: 0.15, tipDia: 6, beamLean: -12, beamCurl: 25, curlBias: 1, beamSpread: 72, beamInCurl: -5, wobble: 0.1, tineCount: 1, tineDir: 'forward', tineStart: 0.22, tineEnd: 0.22, tineLength: 55, tineCrest: 0.5, tineTaper: 0, tineAngle: 70, tineFan: 0, tineCurve: 20, tineInward: 0, tineThick: 0.7, browTine: false, crownCount: 8, crownShape: 'fan', crownLength: 115, palmation: 1, ovality: 0.4, grooveDepth: 0.3, pearling: 0.3, burrSize: 4, fillet: 6, scale: 0.55 } },
-    spirit: { label: 'Forest spirit', p: { ringCharacter: 0.2, ringPattern: 'spines', ringStrands: 3, ringWeave: 3, ringDip: 22, ringLoopDepth: 18, ringWander: 0.75, ringAsym: 0.3, ringTines: 10, ringTineStyle: 'tendril', ringTineLength: 34, ringFront: 'none', beamLength: 320, baseDia: 25, beamTaper: 0.52, tipDia: 4, beamLean: -10, beamCurl: 64, curlBias: 1.6, beamSpread: 52, beamInCurl: -96, wobble: 0.45, tineCount: 7, tineDir: 'spiral', tineStart: 0.14, tineEnd: 0.9, tineLength: 90, tineCrest: 0.35, tineTaper: 0.55, tineRhythm: 0.85, tineAngle: 50, tineFan: 20, tineCurve: 42, tineInward: 12, tineThick: 0.72, browTine: false, forkDepth: 1, forkAngle: 28, forkTines: true, jitter: 0.3, seed: 21, ovality: 0.08, grooveDepth: 0.3, pearling: 0.15, fillet: 6, scale: 0.55 } },
-    fawn: { label: 'Fawn nubs', p: { ringCharacter: 0.5, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 3, ringDrop: 3, ringTaper: 0.1, ringWander: 0.15, ringTines: 12, ringTineStyle: 'button', ringTineLength: 8, ringFront: 'none', beamLength: 20, baseDia: 30, beamTaper: 0.3, tipDia: 18, baseHeight: 10, baseFlare: 1.6, beamLean: -10, beamCurl: 15, curlBias: 1, beamSpread: 30, beamInCurl: 0, wobble: 0.1, tineCount: 0, browTine: false, grooveDepth: 0.6, grooveCount: 11, pearling: 0.7, burrSize: 3, scale: 0.8 } },
+    whitetail: { label: 'Whitetail', p: { character: 0.3, ringPattern: 'fleur' } },
+    mule: { label: 'Mule deer', p: { character: 0.3, ringPattern: 'fleur', ringStrands: 3, ringWeave: 1, ringDip: 14, ringLoopDepth: 10, ringTines: 6, ringTineStyle: 'fork', ringTineLength: 30, ringFront: 'none', beamLength: 260, baseDia: 28, beamTaper: 0.34, tipDia: 5, beamLean: -14, beamCurl: 34, curlBias: 1.2, beamSpread: 56, beamInCurl: -62, tineCount: 0, browTine: true, browDir: 'up', browLength: 28, browAngle: 62, browPos: 0.08, forkDepth: 2, forkAngle: 50, tineCurve: 8, tineInward: 4, fillet: 3, scale: 0.64 } },
+    elk: { label: 'Elk', p: { character: 0.3, ringPattern: 'fleur', ringStrands: 2, ringWeave: 1, ringDip: 12, ringRise: 12, ringSweepReach: 75, ringTineLean: 1, ringTines: 6, ringTineStyle: 'sweep', ringTineLength: 40, ringFront: 'none', beamLength: 420, baseDia: 34, beamTaper: 0.42, tipDia: 6, beamLean: -46, beamCurl: 80, curlBias: 1.6, beamSpread: 44, beamInCurl: -52, wobble: 0.15, tineCount: 4, tineDir: 'forward', tineStart: 0.16, tineEnd: 0.74, tineLength: 150, tineCrest: 0.55, tineTaper: 0.35, tineRhythm: 0.95, tineAngle: 60, tineFan: 18, tineCurve: 34, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 130, browAngle: 80, browPos: 0.045, ovality: 0.16, grooveDepth: 0.55, pearling: 0.55, burrSize: 4.5, scale: 0.5 } },
+    reindeer: { label: 'Reindeer', p: { character: 0.3, ringPattern: 'circlet', ringStrands: 3, ringWeave: 2, ringDip: 8, ringSweepLift: 26, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 22, ringFront: 'shovel', beamLength: 380, baseDia: 25, beamTaper: 0.32, tipDia: 5, beamLean: -50, beamCurl: 150, curlBias: 1.5, beamSpread: 40, beamInCurl: -58, wobble: 0.15, tineCount: 2, tineDir: 'alternate', tineStart: 0.3, tineEnd: 0.52, tineLength: 70, tineCrest: 0.5, tineTaper: 0.2, tineAngle: 58, tineFan: 0, tineCurve: 20, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 90, browAngle: 95, browPos: 0.07, crownCount: 4, crownShape: 'fan', crownLength: 55, palmation: 0.3, ovality: 0.26, grooveDepth: 0.35, pearling: 0.3, burrSize: 3.2, scale: 0.56 } },
+    stag: { label: 'Red stag', p: { character: 0.3, ringPattern: 'fleur', ringStrands: 3, ringWeave: 2, ringDip: 20, ringRise: 14, ringTines: 4, ringTineStyle: 'cluster', ringTineLength: 24, ringFront: 'point', beamLength: 360, baseDia: 32, beamTaper: 0.4, tipDia: 5.5, beamLean: -34, beamCurl: 70, curlBias: 1.3, beamSpread: 46, beamInCurl: -58, tineCount: 2, tineDir: 'forward', tineStart: 0.12, tineEnd: 0.4, tineLength: 110, tineCrest: 0.2, tineTaper: 0.2, tineAngle: 66, tineFan: 8, tineCurve: 36, tineInward: 8, tineThick: 0.72, browTine: true, browDir: 'forward', browLength: 112, browAngle: 82, browPos: 0.05, crownCount: 4, crownShape: 'cup', crownLength: 70, palmation: 0, ovality: 0.14, grooveDepth: 0.55, pearling: 0.6, burrSize: 4.5, scale: 0.53 } },
+    moose: { label: 'Moose', p: { character: 0.3, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 4, ringDrop: 4, ringTaper: 0.2, ringWander: 0.15, ringThick: 12, ringTines: 6, ringTineStyle: 'paddle', ringTineLength: 24, ringFront: 'none', beamLength: 170, baseDia: 32, beamTaper: 0.15, tipDia: 6, beamLean: -12, beamCurl: 25, curlBias: 1, beamSpread: 72, beamInCurl: -5, wobble: 0.1, tineCount: 1, tineDir: 'forward', tineStart: 0.22, tineEnd: 0.22, tineLength: 55, tineCrest: 0.5, tineTaper: 0, tineAngle: 70, tineFan: 0, tineCurve: 20, tineInward: 0, tineThick: 0.7, browTine: false, crownCount: 8, crownShape: 'fan', crownLength: 115, palmation: 1, ovality: 0.4, grooveDepth: 0.3, pearling: 0.3, burrSize: 4, fillet: 6, scale: 0.55 } },
+    spirit: { label: 'Forest spirit', p: { character: 0.2, ringPattern: 'spines', ringStrands: 3, ringWeave: 3, ringDip: 22, ringLoopDepth: 18, ringWander: 0.75, ringAsym: 0.3, ringTines: 10, ringTineStyle: 'tendril', ringTineLength: 34, ringFront: 'none', beamLength: 320, baseDia: 25, beamTaper: 0.52, tipDia: 4, beamLean: -10, beamCurl: 64, curlBias: 1.6, beamSpread: 52, beamInCurl: -96, wobble: 0.45, tineCount: 7, tineDir: 'spiral', tineStart: 0.14, tineEnd: 0.9, tineLength: 90, tineCrest: 0.35, tineTaper: 0.55, tineRhythm: 0.85, tineAngle: 50, tineFan: 20, tineCurve: 42, tineInward: 12, tineThick: 0.72, browTine: false, forkDepth: 1, forkAngle: 28, forkTines: true, jitter: 0.3, seed: 21, ovality: 0.08, grooveDepth: 0.3, pearling: 0.15, fillet: 6, scale: 0.55 } },
+    fawn: { label: 'Fawn nubs', p: { character: 0.3, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 3, ringDrop: 3, ringTaper: 0.1, ringWander: 0.15, ringTines: 12, ringTineStyle: 'button', ringTineLength: 8, ringFront: 'none', beamLength: 20, baseDia: 30, beamTaper: 0.3, tipDia: 18, baseHeight: 10, baseFlare: 1.6, beamLean: -10, beamCurl: 15, curlBias: 1, beamSpread: 30, beamInCurl: 0, wobble: 0.1, tineCount: 0, browTine: false, grooveDepth: 0.6, grooveCount: 11, pearling: 0.7, burrSize: 3, scale: 0.8 } },
   };
 
   // Crown designs retired in the controls review (2026-09-28), and the nearest one that's left
   const RETIRED = { tiara: 'fleur', lyre: 'fleur', whiplash: 'fleur', kokoshnik: 'fleur', laurel: 'circlet', sunburst: 'spines', loops: 'lattice', weave: 'lattice' };
   function resolveParams(p) {
-    if (p && p.ringCharacter == null && typeof p.ringSculpt === 'number') p = Object.assign({}, p, { ringCharacter: 0.5 + p.ringSculpt / 2 });   // the old Sculpted slider
+    if (p && p.character == null && typeof p.ringSculpt === 'number') p = Object.assign({}, p, { character: 0.5 + p.ringSculpt / 2 });   // the old Sculpted slider
+    if (p && p.character == null && typeof p.ringCharacter === 'number') p = Object.assign({}, p, { character: p.ringCharacter });   // its crown-only name
     const P = Object.assign({}, DEFAULTS, p || {});
     if (RETIRED[P.ringPattern]) P.ringPattern = RETIRED[P.ringPattern];
     for (const g of PARAM_SPEC) for (const it of g.items) {
@@ -460,7 +460,7 @@
 
     return {
       params: P, scale: S, branches, burr, palm, mount, r0: r0 * S,
-      texture: { groove: P.grooveDepth, grooves: P.grooveCount, pearl: P.pearling },
+      texture: { groove: P.grooveDepth * grainOf(P), grooves: P.grooveCount, pearl: P.pearling * grainOf(P) * (1 + gigerOf(P)), knob: gigerOf(P) },
       fillet: P.fillet,
     };
   }
@@ -591,12 +591,16 @@
   // end fines to its tip, and tines at least TINE_BASE_MIN at the base and no longer than TINE_REACH ×
   // that radius, so nothing long and thin snaps off. (Tips still end at MIN_R.)
   const STRAND_MIN = 3, TINE_BASE_MIN = 3, TINE_REACH = 12;
-  // Character: 0 bumpy, biomechanical (Giger), ½ smooth and sculpted, 1 crisp and faceted, like cut stone.
-  // sculptOf is the refined shape language (fair lines, blades, calm), full from ½ up; gigerOf the horror
-  // (ribs, hooks, grain, nodules), gone by ½; facetOf the cut facets (in the mesher), from ½ to 1.
-  const sculptOf = (P) => clamp(P.ringCharacter * 2, 0, 1), gigerOf = (P) => clamp((0.5 - P.ringCharacter) * 2, 0, 1);
-  const facetOf = (P) => clamp((P.ringCharacter - 0.5) * 2, 0, 1);
-  const FACETS = 5;   // sides of a faceted section: a crisp ridge facing out, a flat face toward the head
+  // Form & finish (`character`), for the whole piece: 0 gnarled and biomechanical (Giger), 0.3 natural antler
+  // (the species' own grain), ½ polished smooth, 1 faceted: the swept section turns from a circle into a
+  // diamond, while the line it's swept along stays a smooth curve. sculptOf is the crown's refined shape
+  // language (fair lines, blades, calm), full from 0.3; gigerOf the crown's horror (ribs, hooks), gone by 0.3;
+  // grainOf scales the antler grain (gutters, pearling): 1 at 0.3, 0 from ½, deeper and knobblier below 0.3;
+  // facetOf the diamond section, from ½ to 1.
+  const NATURAL = 0.3;
+  const sculptOf = (P) => clamp(P.character / NATURAL, 0, 1), gigerOf = (P) => clamp((NATURAL - P.character) / NATURAL, 0, 1);
+  const grainOf = (P) => (P.character <= NATURAL ? 1 + 1.2 * gigerOf(P) : clamp((0.5 - P.character) / (0.5 - NATURAL), 0, 1));
+  const facetOf = (P) => clamp((P.character - 0.5) * 2, 0, 1);
   const headN = (g, p) => (g.head.kind === 'scan' ? g.head.normal(p) : norm([p[0] / g.head.r[0] ** 2, p[1] / g.head.r[1] ** 2, (p[2] - g.head.c[2]) / g.head.r[2] ** 2]));
   const RIB = 6.5;   // mm between the vertebra-like ribs along a biomechanical beam
   const DECOR = ['briar', 'spines', 'fleur'];   // patterns carried by what grows from the two beams (fleur: its strokes are all it has)
@@ -745,7 +749,7 @@
       for (const sd of [1, -1]) out.push(mk(edge.map(([a, b]) => [sd * a, b]), re, { stand: hc + 10, blade: 0.3 * SC, keel: 0.08 * SC }));
       // the gem: a pendant drop hanging from the window's top on a short stem, as tiara drops do, so the foot of
       // the V stays clean; u runs from the top down to the drop's round bottom
-      const drop = fair([[0, hc + 0.98 * Ho], [0, hc + 0.72 * Ho], [0, hc + 0.36 * Ho]], 1.2);
+      const drop = fair([[0, hc + 0.98 * Ho], [0, hc + 0.72 * Ho], [0, hc + 0.36 * Ho]], 0.6);   // fine steps: its radius swells fast
       out.push(mk(drop, (u) => Math.max(STRAND_MIN * 0.9, root * (0.42 + 0.85 * Math.pow(Math.max(0, Math.sin(Math.PI * Math.min(1, (u - 0.35) / 0.65))), 0.8) * sstep((u - 0.3) / 0.4))), { stand: hc + 10, noRib: true, blade: 0.3 }));
       if (GG > 0.15) for (const sd of [1, -1]) {   // biomechanical: small thorns hooking inward from the outline
         const nt = Math.round(2 + 2 * GG);
@@ -1122,7 +1126,7 @@
       params: P, scale: S, branches, burr: null, burrs, palm: null, palms, ring: g, roots: [tr, -tr],
       head: g.head.kind === 'scan' ? { kind: 'scan', c: lift(g.head.c), r: g.head.r, R: g.head.R } : { c: lift(g.head.c), r: g.head.r },   // cut away: nothing reaches inside the head
       mount: { type: 'crown', h: 0, rf: 0, ex: 1, baseZ: 0, tunnelCZ: 0 }, r0: rS,
-      texture: { groove: P.grooveDepth, grooves: P.grooveCount, pearl: P.pearling }, fillet: P.fillet,
+      texture: { groove: P.grooveDepth * grainOf(P), grooves: P.grooveCount, pearl: P.pearling * grainOf(P) * (1 + gigerOf(P)), knob: gigerOf(P) }, fillet: P.fillet,
     };
   }
 
@@ -1163,7 +1167,6 @@
     for (const k of ['tineLength', 'browLength', 'crownLength']) m(k, P.tineScale);
     for (const k of ['baseDia', 'tipDia']) m(k, P.thickness);
     for (const k of ['wobble', 'jitter', 'ringWander']) m(k, P.wildness);
-    for (const k of ['grooveDepth', 'pearling']) m(k, P.texture);
     for (const k of ['ringTineLength', 'ringSweepLift', 'ringLoopDepth']) m(k, P.ornament);
     return Q;
   }
@@ -1259,37 +1262,35 @@
     return (a < b ? a : b) - hh * hh * k * 0.25;
   }
 
-  // A curve cut into straight chords, blended in by f (0 = the curve itself): each chord strays at most
-  // FACET_TOL mm from the curve and is at most FACET_CHORD long, so gentle curves become long cuts and
-  // tight ones (a scroll, a helix) keep their shape; joined faceted prisms meet in crisp mitres, which reads
-  // as cut stone rather than a bent rod.
-  const FACET_CHORD = 10, FACET_TOL = 2;
-  function chords(pts, f) {
-    const n = pts.length, keep = new Uint8Array(n);
-    keep[0] = keep[n - 1] = 1;
-    const split = (i0, i1) => {   // Douglas–Peucker, with a length cap
-      if (i1 - i0 < 2) return;
-      const a = pts[i0], ab = sub(pts[i1], a), L = vlen(ab) || 1e-9;
-      let worst = -1, wi = -1;
-      for (let i = i0 + 1; i < i1; i++) { const d = vlen(cross(sub(pts[i], a), ab)) / L; if (d > worst) { worst = d; wi = i; } }
-      if (worst > FACET_TOL || L > FACET_CHORD) { const m = worst > FACET_TOL ? wi : (i0 + i1) >> 1; keep[m] = 1; split(i0, m); split(m, i1); }
-    };
-    split(0, n - 1);
-    const out = pts.map((p) => p.slice());
-    let i0 = 0;
-    for (let i1 = 1; i1 < n; i1++) {
-      if (!keep[i1]) continue;
-      const a = pts[i0], b = pts[i1];
-      let L = 0; const cum = [0];
-      for (let i = i0 + 1; i <= i1; i++) cum.push((L += vlen(sub(pts[i], pts[i - 1]))));
-      for (let i = i0 + 1; i < i1; i++) { const u = cum[i - i0] / (L || 1); out[i] = add(pts[i], mul(sub(add(a, mul(sub(b, a), u)), pts[i]), f)); }
-      i0 = i1;
+  // A branch's section, from one segment: flattened along F (oval), a carved keel, and toward faceted a diamond
+  // (the same area as the circle): a crown piece keeps a round back against the head and cuts its outer face into
+  // two facets meeting in a ridge; an antler becomes a full diamond. (wx, wy, wz): from the axis point at h; d:
+  // the round distance.
+  const KH = Math.sqrt(Math.PI / (Math.PI / 2 + 1)), KD = Math.sqrt(Math.PI / 2), R2 = Math.SQRT1_2;
+  const smax = (a, b, k) => { const hh = Math.max(k - Math.abs(a - b), 0) / k; return Math.max(a, b) + hh * hh * k * 0.25; };
+  function shapeSection(g, s, h, wx, wy, wz, d) {
+    const rloc = s.ra + (s.rb - s.ra) * h, wl = Math.sqrt(wx * wx + wy * wy + wz * wz) + 1e-9, fa = g.facet, u = s.u;
+    if (fa > 0) {
+      let O0 = s.Oa[0] + (s.Ob[0] - s.Oa[0]) * h, O1 = s.Oa[1] + (s.Ob[1] - s.Oa[1]) * h, O2 = s.Oa[2] + (s.Ob[2] - s.Oa[2]) * h;
+      const ou = O0 * u[0] + O1 * u[1] + O2 * u[2]; O0 -= u[0] * ou; O1 -= u[1] * ou; O2 -= u[2] * ou;
+      const ol = Math.sqrt(O0 * O0 + O1 * O1 + O2 * O2) || 1; O0 /= ol; O1 /= ol; O2 /= ol;
+      const G0 = u[1] * O2 - u[2] * O1, G1 = u[2] * O0 - u[0] * O2, G2 = u[0] * O1 - u[1] * O0;
+      // edges get a small polish radius (e), so ridges print and light cleanly instead of as a beaded line
+      const e = 0.12 * rloc, gy = wx * G0 + wy * G1 + wz * G2, x = wx * O0 + wy * O1 + wz * O2;
+      const y = Math.sqrt(gy * gy + e * e) - e, rp = Math.sqrt(x * x + gy * gy);
+      const dg = g.half ? smax(rp - rloc * KH, (x + y - rloc * KH) * R2, e) : (Math.sqrt(x * x + e * e) - e + y - rloc * KD) * R2;
+      d += fa * (dg - (rp - rloc));
     }
-    return out;
+    if (g.ov > 0) {   // keel: a carved ridge along F
+      const F0 = s.Fa[0] + (s.Fb[0] - s.Fa[0]) * h, F1 = s.Fa[1] + (s.Fb[1] - s.Fa[1]) * h, F2 = s.Fa[2] + (s.Fb[2] - s.Fa[2]) * h;
+      const cf = (wx * F0 + wy * F1 + wz * F2) / (wl * (Math.sqrt(F0 * F0 + F1 * F1 + F2 * F2) || 1));
+      d += rloc * g.ov * cf * cf; if (g.keel && cf > 0) d -= rloc * g.keel * cf ** 8;
+    }
+    return d;
   }
 
   function buildGroups(skel, margin) {
-    const groups = [];
+    const groups = [], hd = skel.head;
     const T = skel.texture;
     const extra = T.groove + T.pearl + 0.5;
     for (const br of skel.branches) {
@@ -1297,21 +1298,28 @@
       const ov = br.ov || 0;
       const gb = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
       // crown pieces: sculpted = polished; biomechanical = deep grain and nodules; faceted = cut, with crisper joins
-      const sc = br.sculpt || 0, gg = br.giger || 0, fa = br.sculpt != null && br.kind !== 'liner' ? facetOf(skel.params) : 0;
-      const P3 = fa > 0 ? chords(br.pts, fa) : br.pts;   // faceted: curves become short straight cuts
+      const crownPiece = br.sculpt != null, sc = br.sculpt || 0, gg = br.giger || 0, fa = br.kind === 'liner' ? 0 : facetOf(skel.params);
+      // per-point frames, so the section turns smoothly along the curve (per-segment frames left faint creases)
+      const pts = br.pts, np = pts.length, tan = pts.map((_, i) => norm(sub(pts[Math.min(np - 1, i + 1)], pts[Math.max(0, i - 1)])));
+      const Fpt = pts.map((_, i) => { const f = perp(br.Fp ? br.Fp[i] : br.F, tan[i]); return vlen(f) > 1e-3 ? norm(f) : br.N[i]; });
+      // the diamond's ridge faces away from the head on a crown, along F on an antler
+      const Opt = fa > 0 && crownPiece && hd ? pts.map((p, i) => { const o = perp(norm([(p[0] - hd.c[0]) / hd.r[0] ** 2, (p[1] - hd.c[1]) / hd.r[1] ** 2, (p[2] - hd.c[2]) / hd.r[2] ** 2]), tan[i]); return vlen(o) > 1e-3 ? norm(o) : Fpt[i]; }) : Fpt;
       for (let i = 0; i < br.pts.length - 1; i++) {
-        const a = P3[i], b = P3[i + 1], ra = br.rad[i], rb = br.rad[i + 1];
-        const r = Math.max(ra, rb) * (1 + 0.2 * fa) + margin + T.pearl * (1 + 2 * gg);   // room for facet corners and nodules
+        const a = pts[i], b = pts[i + 1], ra = br.rad[i], rb = br.rad[i + 1];
+        const r = Math.max(ra, rb) * (1 + 0.3 * fa) + margin + T.pearl * (1 + 2 * gg);   // room for diamond corners and nodules
         const bb = [Math.min(a[0], b[0]) - r, Math.min(a[1], b[1]) - r, Math.min(a[2], b[2]) - r,
                     Math.max(a[0], b[0]) + r, Math.max(a[1], b[1]) + r, Math.max(a[2], b[2]) + r];
         for (let j = 0; j < 3; j++) { gb[j] = Math.min(gb[j], bb[j]); gb[j + 3] = Math.max(gb[j + 3], bb[j + 3]); }
-        const dir = norm(sub(b, a));
-        let F = perp(br.Fp ? br.Fp[i] : br.F, dir); F = vlen(F) > 1e-3 ? norm(F) : br.N[i];   // Fp: a per-point direction (a crown ribbon's outward normal)
-        segs.push({ a, b, ra, rb, bb, N: br.N[i], B: br.B[i], F, G: cross(dir, F), s0: br.ss[i], s1: br.ss[i + 1] });
+        const dir = norm(sub(b, a));   // Fp: a per-point direction (a crown ribbon's outward normal)
+        segs.push({ a, b, ra, rb, bb, N: br.N[i], B: br.B[i], u: dir, Fa: Fpt[i], Fb: Fpt[i + 1], Oa: Opt[i], Ob: Opt[i + 1], s0: br.ss[i], s1: br.ss[i + 1],
+          slack: Math.max(ra, rb) * ((br.keel || 0) + 0.3 * fa) + 0.01,   // how far the section's shaping can bring a surface closer
+        });
       }
-      groups.push({ kind: br.kind, segs, bb: gb, ov, groove: br.smooth ? 0 : T.groove * Math.max(0, 1 - 1.35 * sc) * (1 + 1.2 * gg), grooves: T.grooves,
-        pearl: br.smooth ? 0 : T.pearl * (br.kind === 'beam' ? 1 : 0.45) * Math.max(0, 1 - 1.35 * sc) * (1 + 2.2 * gg), pearlEnd: br.kind === 'beam' ? 0.3 : 0.18 + 0.6 * gg,
-        keel: (br.keel || 0) * (1 - fa), facet: fa, len: br.length, k: skel.fillet * (1 - 0.5 * fa),
+      // crown pieces carry a lighter grain than the antlers (0.35 of it at natural), none when polished
+      const cg = crownPiece ? 0.35 * (1 + 1.5 * gg) : 1, kn = T.knob || 0;
+      groups.push({ kind: br.kind, segs, bb: gb, ov, groove: br.smooth ? 0 : T.groove * cg, grooves: T.grooves,
+        pearl: br.smooth ? 0 : T.pearl * (br.kind === 'beam' ? 1 : 0.45) * cg, pearlEnd: (br.kind === 'beam' ? 0.3 : 0.18) + 0.55 * kn,   // gnarled: knobs run along the piece
+        keel: (br.keel || 0) * (1 - fa), facet: fa, half: crownPiece, len: br.length, k: skel.fillet * (1 - 0.4 * fa),
         extra: extra + Math.max(br.rad[0], 1) * ov, r0: skel.r0 });
     }
     const m = skel.mount;
@@ -1374,7 +1382,7 @@
         const gw = g.gw, cells = gw * g.gh;
         if (g.segs) {
           tmp.fill(BIG, 0, cells);
-          const segs = g.segs;
+          const segs = g.segs, shaped = g.ov > 0 || g.facet > 0, fast = !(g.facet > 0), ov = g.ov, keel = g.keel;
           for (let si = 0; si < segs.length; si++) {
             const s = segs[si];
             if (z < s.bb[2] || z > s.bb[5]) continue;
@@ -1397,13 +1405,21 @@
                 else if (Math.sign(y) * a2 * y2 < kx) d = Math.sqrt(x2 + y2) * il2 - r1;
                 else d = (Math.sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
                 const j = row + ix;
-                if (d < tmp[j]) { tmp[j] = d; tsid[j] = si; tH[j] = clamp(y * il2, 0, 1); }
+                if (shaped) {   // the section's shape, from this segment's own axis point, so the nearest surface wins
+                  if (d - s.slack >= tmp[j]) continue;
+                  const h = y <= 0 ? 0 : y >= l2 ? 1 : y * il2, wx = px - bx * h, wy = py - by * h, wz = pz - bz * h;
+                  if (fast) {   // oval only (no facets): inline, no square roots
+                    const Fa = s.Fa, Fb = s.Fb, f0 = Fa[0] + (Fb[0] - Fa[0]) * h, f1 = Fa[1] + (Fb[1] - Fa[1]) * h, f2 = Fa[2] + (Fb[2] - Fa[2]) * h;
+                    const wF = wx * f0 + wy * f1 + wz * f2, c2 = (wF * wF) / ((wx * wx + wy * wy + wz * wz) * (f0 * f0 + f1 * f1 + f2 * f2) + 1e-12), rl = r1 + (r2 - r1) * h;
+                    d += rl * ov * c2;
+                    if (keel && wF > 0) d -= rl * keel * c2 * c2 * c2 * c2;
+                  } else d = shapeSection(g, s, h, wx, wy, wz, d);
+                  if (d < tmp[j]) { tmp[j] = d; tsid[j] = si; tH[j] = h; }
+                } else if (d < tmp[j]) { tmp[j] = d; tsid[j] = si; tH[j] = clamp(y * il2, 0, 1); }
               }
             }
           }
-          const gd = g.groove, gc = g.grooves / 6, pe = g.pearl, kf = g.k, ov = g.ov, r0 = g.r0, fa = g.facet || 0;
-          // a faceted section: a regular FACETS-gon of the same area as the circle, a corner facing out along F
-          const fw = (2 * Math.PI) / FACETS, fap = Math.sqrt(Math.PI / (FACETS * Math.tan(Math.PI / FACETS)));
+          const gd = g.groove, gc = g.grooves / 6, pe = g.pearl, kf = g.k, r0 = g.r0;
           for (let iy = g.iy0; iy <= g.iy1; iy++) {
             const row = (iy - g.iy0) * gw - g.ix0, orow = iy * nx;
             for (let ix = g.ix0; ix <= g.ix1; ix++) {
@@ -1418,12 +1434,6 @@
                 const wx = px - (s.a[0] + s.ba[0] * h), wy = py - (s.a[1] + s.ba[1] * h), wz = z - (s.a[2] + s.ba[2] * h);
                 const wl = Math.sqrt(wx * wx + wy * wy + wz * wz) + 1e-9;
                 const sp = s.s0 + (s.s1 - s.s0) * h;
-                if (fa > 0) {   // distance to the nearest facet plane instead of the round surface
-                  const fx = wx * s.F[0] + wy * s.F[1] + wz * s.F[2], fy = wx * s.G[0] + wy * s.G[1] + wz * s.G[2], rp = Math.sqrt(fx * fx + fy * fy);
-                  const th = Math.atan2(fy, fx) + Math.PI / FACETS, tl = th - fw * Math.floor(th / fw) - Math.PI / FACETS;
-                  d += fa * (rp * (Math.cos(tl) - 1) + rloc * (1 - fap));
-                }
-                if (ov > 0) { const cf = (wx * s.F[0] + wy * s.F[1] + wz * s.F[2]) / wl; d += rloc * ov * cf * cf; if (g.keel && cf > 0) d -= rloc * g.keel * cf ** 8; }   // keel: a carved ridge along F
                 const fade = clamp((0.86 - sp) / 0.45, 0, 1) * clamp((rloc - 1.4) / 2.5, 0, 1);
                 if (gd > 0 && fade > 0) {
                   const cs = (wx * s.N[0] + wy * s.N[1] + wz * s.N[2]) / wl, sn = (wx * s.B[0] + wy * s.B[1] + wz * s.B[2]) / wl;
