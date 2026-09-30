@@ -55,6 +55,13 @@ Newest first within each section. Change one only when the owner asks.
 - **One place per action.** The owner found the interface crowded when actions were duplicated.
 - **The viewport always says whether it shows the coarse preview or the final mesh.**
 - **Surprise me** gives a new variation of the current species (keeps Size, headband, printer).
+- **Viewport chrome clearances** (owner, 2026-09-29: text got too close to the decorative frame in the corners).
+  Two CSS variables on `.stage` place everything inside the viewport: `--frame` (the gilt line's inset, 8 px; 6 px
+  on phones) and `--chrome` (where text and controls sit, 26 px; 20 px on phones), which clears the corner vines
+  (`--vine`, 40 px; 30 px on phones) with room to spare. The HUD, library, tutorial card, try-on and head-scan
+  panels, notes and error banner all use them; the progress bar runs along the frame's bottom line. On phones the
+  status line drops "one piece on the P2S" so it stays one line (it still says when a piece is too big). New
+  overlays use these variables, never fixed offsets.
 - **Fewer, combined controls** (2026-09-28): see Crown style → Controls review. Before adding a control,
   check it makes a visible difference and isn't better as part of an existing combined control.
 
