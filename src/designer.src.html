@@ -486,9 +486,9 @@ for (const [k, v] of Object.entries(C.PRESETS)) {
 const inch = (mm, d) => (mm / 25.4).toFixed(d == null ? (mm / 25.4 < 10 ? 2 : 1) : d);
 const fmt = (it, v) => {
   if (it.pct) return Math.round(v * 100) + '%';
-  if (it.u === 'mm') return inch(v) + ' in';
+  if (it.u === 'mm') return inch(v, it.step / 25.4 < 0.009 ? 3 : undefined) + ' in';   // fine steps (clearance, wall) need thousandths
   const dec = it.step < 0.1 ? 2 : it.step < 1 ? (it.step < 0.5 ? 2 : 1) : 0;
-  return Number(v).toFixed(dec) + (it.u && it.u.length <= 3 ? ' ' + it.u : '');
+  return Number(v).toFixed(dec) + (it.u && it.u.length <= 3 ? ' ' + it.u : it.u && it.u[0] === '°' ? '°' : '');
 };
 const inputs = {};
 // Every group is a collapsible section in its tier; only Essentials starts open.
@@ -1113,18 +1113,19 @@ function updateReadout() {
   // Footer: one line of status, then Save to library and one primary action that moves the job on.
   const warns = [], notes = [];
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
-  if (P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
+  if (P.style !== 'crown' && P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
   const msg = $('msg');
   if (building) { msg.className = 'msg'; msg.textContent = 'Building the final mesh and checking it…'; }
   else if (warns.length) { msg.className = 'msg warn'; msg.textContent = warns.join(' '); }
   else if (ok) { msg.className = 'msg ok'; msg.textContent = `✓ Watertight, one solid · ${(r.triangles / 1000).toFixed(0)}k triangles · about ${(r.volume / 1000 * 1.24).toFixed(0)} g of PLA if solid. ${notes.join(' ')}`.trim(); }
   else if (fresh) { msg.className = 'msg bad'; msg.textContent = 'The final mesh failed its check. Try a finer mesh resolution under Advanced › Printer.'; }
-  else { msg.className = 'msg'; msg.textContent = `Preview only. Build the final mesh to check it and download the STLs. ${notes.join(' ')}`.trim(); }
+  else { msg.className = 'msg'; msg.textContent = `Preview only. Build the final mesh to check it and download the ${P.style === 'crown' ? 'STL' : 'STLs'}. ${notes.join(' ')}`.trim(); }
   const pb = $('primary');
   pb.disabled = building || (fresh && !ok);
   pb.dataset.action = ok ? 'download' : 'build';
-  pb.textContent = building ? 'Building…' : ok ? `Download STLs · ${Math.max(1, Math.round((84 + r.triangles * 50) * 2 / 1e6))} MB` : fresh ? 'Mesh failed its check' : 'Build final mesh';
+  const nStl = P.style === 'crown' ? 1 : 2;   // a crown is one piece; a headband pair is two
+  pb.textContent = building ? 'Building…' : ok ? `Download ${nStl > 1 ? 'STLs' : 'STL'} · ${Math.max(1, Math.round((84 + r.triangles * 50) * nStl / 1e6))} MB` : fresh ? 'Mesh failed its check' : 'Build final mesh';
 }
 
 /* ------------------------------------------------------------ change pipeline */
@@ -1146,16 +1147,20 @@ function makeWorker() {
     const src = $('antler-core').textContent + `
       self.onmessage = function (e) {
         var j = e.data;
-        if (j.scan && !AntlerCore.hasHeadScan(j.params.headScan)) AntlerCore.registerHeadScan(j.params.headScan, HeadScan.unpack(j.scan));
-        var sk = AntlerCore.buildSkeleton(j.params);
-        var mesh = AntlerCore.meshAntler(sk, j.res, j.kind === 'build' ? function (p) { self.postMessage({ type: 'progress', id: j.id, p: p }); } : null);
-        var report = j.kind === 'build' ? AntlerCore.validateMesh(mesh) : AntlerCore.meshBounds(mesh);
-        report.fit = sk.fit;
-        self.postMessage({ type: 'done', id: j.id, mesh: mesh, report: report }, [mesh.positions.buffer, mesh.indices.buffer, mesh.attr.buffer]);
+        try {
+          if (j.scan && !AntlerCore.hasHeadScan(j.params.headScan)) {
+            try { AntlerCore.registerHeadScan(j.params.headScan, HeadScan.unpack(j.scan)); } catch (err) { /* unreadable scan: the tape measurements are used */ }
+          }
+          var sk = AntlerCore.buildSkeleton(j.params);
+          var mesh = AntlerCore.meshAntler(sk, j.res, j.kind === 'build' ? function (p) { self.postMessage({ type: 'progress', id: j.id, p: p }); } : null);
+          var report = j.kind === 'build' ? AntlerCore.validateMesh(mesh) : AntlerCore.meshBounds(mesh);
+          report.fit = sk.fit;
+          self.postMessage({ type: 'done', id: j.id, mesh: mesh, report: report }, [mesh.positions.buffer, mesh.indices.buffer, mesh.attr.buffer]);
+        } catch (err) { self.postMessage({ type: 'error', id: j.id, message: String(err && err.message || err) }); }
       };`;
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
     w.onmessage = onWorker;
-    w.onerror = () => { worker = null; if (running) { const j = running; running = null; runInline(j); } };
+    w.onerror = () => { try { w.terminate(); } catch (e) { /* already gone */ } worker = null; if (running) { const j = running; running = null; runInline(j); } };
     return w;
   } catch (e) { return null; }
 }
@@ -1164,9 +1169,17 @@ function previewRes(p) {
   const L = p.beamLength * p.scale;
   return Math.max(0.8, Math.min(1.6, L / 150));
 }
+function showBuilt() {
+  setShown(built.mesh, built.key, 'build'); shown.size = built.report.size; shown.fit = built.report.fit;
+}
 function requestPreview() {
-  const snap = JSON.parse(JSON.stringify(P));
-  if (queued && queued.kind === 'build') return;
+  const snap = JSON.parse(JSON.stringify(P)), key = keyOf(snap);
+  if (built && built.key === key) {   // back at the built settings: show the final mesh again, no preview needed
+    if (queued && queued.kind === 'preview') queued = null;
+    if (!shown || shown.key !== key || shown.kind !== 'build') { showBuilt(); rebuildScene(); updateReadout(); }
+    return;
+  }
+  if (queued && queued.kind === 'build') return;   // finishJob catches the preview up after the build
   queued = { kind: 'preview', params: snap, key: keyOf(snap), res: previewRes(snap) };
   pump();
 }
@@ -1182,16 +1195,27 @@ function pump() {
 function runInline(j) {
   running = j;
   setTimeout(() => {
-    ensureScan(j.params);
-    const sk = C.buildSkeleton(j.params);
-    const mesh = C.meshAntler(sk, j.res);
-    const rep = j.kind === 'build' ? C.validateMesh(mesh) : C.meshBounds(mesh); rep.fit = sk.fit;
+    let sk, mesh, rep;
+    try {
+      ensureScan(j.params);
+      sk = C.buildSkeleton(j.params);
+      mesh = C.meshAntler(sk, j.res);
+      rep = j.kind === 'build' ? C.validateMesh(mesh) : C.meshBounds(mesh); rep.fit = sk.fit;
+    } catch (e) { failJob(j, e); return; }
     finishJob(j, mesh, rep);
   }, 20);
+}
+function failJob(j, e) {   // the engine couldn't build this design: say so, and don't leave the page waiting
+  console.error(e);
+  if (running === j) running = null;
+  if (j.kind === 'build') { building = false; $('prog').style.width = '0'; if (j.resolve) j.resolve(false); }   // false: failed (null: already busy)
+  toast('Couldn’t build this design. Try changing a setting, or Surprise me.');
+  updateReadout(); pump();
 }
 function onWorker(e) {
   const d = e.data;
   if (!running || d.id !== running.id) return;
+  if (d.type === 'error') { const j = running; running = null; runInline(j); return; }   // try once more on the main thread, where the error can be reported
   if (d.type === 'progress') { $('prog').style.width = (d.p * 100).toFixed(1) + '%'; $('primary').textContent = `Building… ${Math.round(d.p * 100)}%`; return; }
   finishJob(running, d.mesh, d.report);
 }
@@ -1203,11 +1227,14 @@ function finishJob(j, mesh, report) {
     if (j.key === keyOf(P)) { setShown(mesh, j.key, 'build'); shown.size = report.size; shown.fit = report.fit; }
     else toast('Settings changed while building. Build again to include them.');
     if (j.resolve) j.resolve(built);
-  } else if (!(built && built.key === keyOf(P))) {
+  } else if (built && built.key === keyOf(P)) {
+    if (!shown || shown.key !== built.key || shown.kind !== 'build') showBuilt();
+  } else {
     setShown(mesh, j.key, 'preview'); shown.size = report.size; shown.fit = report.fit;
   }
   rebuildScene(); updateReadout();
   if (shown) previewWaiters = previewWaiters.filter((w) => (w.key === shown.key ? (w.resolve(true), false) : true));
+  if (!queued && (!shown || shown.key !== keyOf(P))) { requestPreview(); return; }   // settings moved on while this ran
   pump();
 }
 // Resolves true once the preview (or a build) for `key` is on screen, false after `ms`.
@@ -1233,7 +1260,8 @@ function build() {
 let dlCap;
 async function getDownloads() {
   if (dlCap !== undefined) return dlCap;
-  try { dlCap = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dlCap = null; }
+  if (!(window.claude && window.claude.use)) return (dlCap = null);   // a normal browser tab: plain downloads
+  try { dlCap = await window.claude.use('downloads'); } catch (e) { return null; }   // not cached: the next download asks again
   return dlCap;
 }
 async function offerFile(name, data) {
@@ -1255,19 +1283,21 @@ async function offerFile(name, data) {
 const slug = () => (P.style === 'crown' ? 'crown-' : 'antlers-') + (P.preset || 'custom') + '-' + (C.FILAMENTS[P.filament] || C.FILAMENTS.bone).slug;
 async function downloadSTLs() {
   let b = built && built.key === keyOf(P) ? built : await build();
+  if (b === false) return;   // the build failed and said so
   if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
   if (!b.report.watertight || b.report.shells !== 1) { toast('Mesh failed its check, so nothing was exported.'); return; }
+  const params = Object.assign({}, b.params, { filament: P.filament });   // filament doesn't change the mesh, so it isn't in the build's key
   const base = slug();
-  const angle = b.report.fit.angle, stls = b.params.style === 'crown'
+  const angle = b.report.fit.angle, stls = params.style === 'crown'
     ? [{ name: base + '.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base, rotZ: angle })) }]   // one piece
     : [{ name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: angle })) },
       { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -angle })) }];
   const notesReport = Object.assign({}, b.report, { size: C.plateSize(b.mesh, angle) });   // size as it sits on the plate
   const zip = C.makeZip([
     ...stls,
-    ...(b.params.headSource === 'scan' && scanStore.get(b.params.headScan) ? [{ name: base + '-head-scan.json', data: JSON.stringify(scanStore.get(b.params.headScan)) }] : []),
-    { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params: b.params }, null, 2) },
-    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(b.params), notesReport, b.report.fit, { units: 'in' }) },
+    ...(params.headSource === 'scan' && scanStore.get(params.headScan) ? [{ name: base + '-head-scan.json', data: JSON.stringify(scanStore.get(params.headScan)) }] : []),
+    { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params }, null, 2) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in' }) },
   ]);
   offerFile(base + '.zip', zip);
 }
@@ -1310,7 +1340,7 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add(
 // Every frame stays on this device; nothing is uploaded.
 const AR = {
   on: false, mode: null, renderer: null, scene: null, cam: null, bg: null, pair: null, occ: null,
-  video: null, stream: null, mirror: true, W: 0, H: 0, fm: null, fmReady: null,
+  video: null, stream: null, startId: 0, mirror: true, W: 0, H: 0, fm: null, fmReady: null,
   busy: false, pose: null, found: false, fit: { size: 1, lift: 0 },
 };
 try { const f = JSON.parse(localStorage.getItem('antler-forge-fit') || 'null'); if (f) AR.fit = f; } catch (e) {}
@@ -1572,14 +1602,19 @@ async function arStartCamera() {
     arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Open Antler Forge in a browser tab to try the antlers on.' : 'This browser can’t open the camera here. Live try-on needs https or localhost.');
     return;
   }
+  const my = ++AR.startId;   // a newer start, or leaving Try on, makes this one stale
+  let stream;
   try {
     arStopCamera();
-    AR.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
   } catch (e) {
+    if (my !== AR.startId || !AR.on) return;
     arStatus(inViewer() ? 'This viewer doesn’t allow the camera. Open Antler Forge in a browser tab to try the antlers on.'
       : e && e.name === 'NotAllowedError' ? 'Camera access was declined. Allow it in your browser’s site settings to try the antlers on.' : 'Couldn’t open a camera on this device.');
     return;
   }
+  if (my !== AR.startId || !AR.on) { stream.getTracks().forEach((t) => t.stop()); return; }   // the permission prompt outlived the visit
+  AR.stream = stream;
   let v = AR.video;
   if (!v) {
     v = AR.video = document.createElement('video');
@@ -1629,7 +1664,7 @@ function arEnter() {
 }
 function arExit() {
   AR.calib = null; AR.calPending = false; hsEnd();
-  AR.on = false; arStopCamera();
+  AR.on = false; AR.startId++; arStopCamera();
   if (AR.mode === 'camera') AR.mode = null;
   document.querySelector('.stage').classList.remove('ar-on');
   $('ar').hidden = true; $('ar-ui').hidden = true;
@@ -1744,12 +1779,13 @@ function flameBust(p) {   // a camera scan fitted with FLAME is shown as that he
   if (!flameM) { hsFlameModel(); return false; }
   return true;
 }
+const badScans = new Set();   // stored scans that couldn't be read: tried once, then the tape is used
 function ensureScan(p) {   // make sure the engine knows the design's scan; false if it isn't on this device
-  if (!p.headScan) return false;
+  if (!p.headScan || badScans.has(p.headScan)) return false;
   if (C.hasHeadScan(p.headScan)) return true;
   const packed = scanStore.get(p.headScan);
   if (!packed) return false;
-  C.registerHeadScan(p.headScan, HS.unpack(packed));
+  try { C.registerHeadScan(p.headScan, HS.unpack(packed)); } catch (e) { badScans.add(p.headScan); console.warn('stored head scan unreadable', e); return false; }   // the tape measurements are used
   return true;
 }
 let importing = null;   // { mesh, name, o, framed } while the alignment view is open
@@ -2069,7 +2105,15 @@ function flameBustObject(p) {
 const LIB_KEY = 'antler-forge-library-v1';
 const libKey = (p) => keyOf(p) + '|' + p.filament;   // same shape and same filament = same design
 function libLoad() {
-  try { const a = JSON.parse(localStorage.getItem(LIB_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  let raw = null;
+  try { raw = localStorage.getItem(LIB_KEY); } catch (e) { return []; }
+  try {
+    const a = JSON.parse(raw || '[]');
+    return Array.isArray(a) ? a.filter((d) => d && typeof d === 'object' && d.params && typeof d.params === 'object') : [];
+  } catch (e) {   // unreadable: keep a copy before the next save replaces it
+    try { if (!localStorage.getItem(LIB_KEY + '-unreadable')) localStorage.setItem(LIB_KEY + '-unreadable', raw); } catch (e2) { /* nothing more to do */ }
+    return [];
+  }
 }
 function libStore(all) { localStorage.setItem(LIB_KEY, JSON.stringify(all)); }   // throws when storage is full or blocked
 function libError(e) {
@@ -2198,7 +2242,7 @@ function libCard(d) {
   const meta = el('p', 'card-meta'); const dot = el('i'); dot.style.background = fil.hex;
   meta.append(dot, `${(C.PRESETS[p.preset] || {}).label || 'Custom'}${p.style === 'crown' ? ' crown' : ''} · ${p.filament === 'oak' ? 'White Oak' : 'Bone White'}`);
   const dims = el('p', 'card-dims');
-  if (d.size) dims.append(el('span', 'size', `${d.size.map((x) => inch(x, 1)).join(' × ')} in`));
+  if (Array.isArray(d.size)) dims.append(el('span', 'size', `${d.size.map((x) => inch(x, 1)).join(' × ')} in`));
   dims.append(d.fits === false ? Object.assign(el('span', 'over'), { textContent: 'Too big for the P2S' }) : el('span', '', 'One piece on the P2S'));
   const actions = el('div', 'card-actions');
   actions.append(
