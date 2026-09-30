@@ -979,7 +979,7 @@ if (window.ResizeObserver) new ResizeObserver(resize).observe($('vp'));
 // on its surface; the ears are skipped (a person's tape runs above theirs).
 const TUTOR_STEPS = [
   { h: 'Around your head', cam: [0.8, 1, 0.42],
-    p: 'Wrap a soft tape measure round your head where the crown will sit: across the middle of your forehead, just above your eyebrows, and round the back of your head, a little lower. Keep it flat and snug, not tight. That’s your <b>Head circumference</b>.',
+    p: 'Wrap a soft tape measure round your head where the crown will sit: across the middle of your forehead, just above your eyebrows and ears, and round the back of your head, a little lower. Keep it flat and snug, not tight. That’s your <b>Head circumference</b>.',
     tip: 'Measure your head itself, pressing the tape flat through thick hair: the Comfort allowance (Advanced → Crown fit) adds room for hair and ease.' },
   { h: 'Front to back, over the top', cam: [0.85, 0.3, 0.85],
     p: 'For a closer fit, keep the first tape in place (or have someone hold it). Measure from its line at the middle of your forehead, straight back over the top of your head, to its line at the back. Turn on <b>Use over-the-top measurements</b> and enter it as <b>Front to back</b>.',
@@ -989,6 +989,98 @@ const TUTOR_STEPS = [
     tip: 'Take each measurement twice; if they differ, use the larger.' },
 ];
 let tutor = null;   // { step, tapes: [Mesh], t0 }
+
+// ---- the ear swap: for measuring, the fawn borrows a pair of human ears (a tape runs just above a person's
+// ears, and a fawn's sit on top of its head), and hands them back when the tutorial closes. A small gag: the
+// fawn ears twitch, pop off in a puff and spin away; slightly-too-big human ears boing into place. In reverse,
+// the human ears get sucked away and the fawn ears drop back in with a bounce.
+const EAR = { x: 72, y: -11, front: -1, z: -12, flare: 26 * Math.PI / 180, tilt: 0.24 };   // on the skull (74 × 92 × 92 at (0,−6,0)), at human height
+let earSwap = null;   // { fawn: [{ o, pos, quat, scale }], human: [pivot], inner: [group], puffs: Group, state, anim }
+function humanEar() {   // one right ear: a cupped helix (extruded outline), its inner curl, a tragus; toon like the fawn
+  const lin = (h) => new THREE.Color(h).convertSRGBToLinear(), grad = toonGradient();
+  const skin = new THREE.MeshToonMaterial({ color: lin('#A5744B'), gradientMap: grad }), inside = new THREE.MeshToonMaterial({ color: lin('#E9C8AE'), gradientMap: grad });
+  const curlMat = new THREE.MeshToonMaterial({ color: lin('#7E5434'), gradientMap: grad }), line = new THREE.MeshBasicMaterial({ color: lin('#1A130E'), side: THREE.BackSide });
+  const sh = new THREE.Shape();   // (u: + forward, v: up) mm; u = 0 is where it meets the head
+  sh.moveTo(0, -13); sh.bezierCurveTo(-2, -22, -10, -25, -14, -18); sh.bezierCurveTo(-18, -11, -20, -2, -21, 6);
+  sh.bezierCurveTo(-22, 17, -13, 25, -5, 23); sh.bezierCurveTo(1, 22, 3, 15, 2, 9); sh.bezierCurveTo(1, 2, 1, -6, 0, -13);
+  const toWorld = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0));   // u → y, v → z, depth → x (out)
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: 4, bevelEnabled: true, bevelThickness: 2.2, bevelSize: 2.2, bevelSegments: 3, curveSegments: 20 }).applyMatrix4(toWorld);
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(geo, skin));
+  const ol = new THREE.Mesh(geo, line); geo.computeBoundingBox(); const c = geo.boundingBox.getCenter(new THREE.Vector3());
+  ol.scale.setScalar(1.07); ol.position.copy(c).multiplyScalar(-0.07); g.add(ol);   // the outline, like the fawn's
+  const inner = new THREE.Mesh(new THREE.ShapeGeometry((() => { const q = new THREE.Shape(); q.moveTo(-3, -9); q.bezierCurveTo(-8, -14, -15, -8, -15, 2); q.bezierCurveTo(-15, 12, -9, 17, -4, 15); q.bezierCurveTo(-2, 6, -1, -3, -3, -9); return q; })(), 16).applyMatrix4(toWorld), inside);
+  inner.position.x = 6.4; g.add(inner);
+  const curl = new THREE.CatmullRomCurve3([[-4, 15], [-11, 17], [-16, 9], [-16, -3], [-11, -11]].map(([u, v]) => new THREE.Vector3(6.9, u, v)));
+  g.add(new THREE.Mesh(new THREE.TubeGeometry(curl, 24, 1.7, 8, false), curlMat));
+  const tragus = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 8), curlMat); tragus.position.set(6.6, -2.5, -3); tragus.scale.set(0.6, 1, 1.3); g.add(tragus);
+  return g;
+}
+function earSetup() {
+  if (earSwap || !faunGroup) return earSwap;
+  const fawn = faunGroup.children.filter((o) => o.userData.ear).map((o) => ({ o, pos: o.position.clone(), quat: o.quaternion.clone(), scale: o.scale.clone(), side: Math.sign(o.position.x) || 1 }));
+  const human = [], inner = [];
+  for (const sx of [1, -1]) {
+    const pivot = new THREE.Group(); pivot.userData.ear = true;   // the tape's rays pass by ears
+    pivot.position.set(sx * EAR.x, EAR.y + 11 + EAR.front, EAR.z);   // the ear's front edge, sunk a little into the head
+    pivot.rotation.set(EAR.tilt, 0, sx * EAR.flare);   // leaning back a touch, sticking out a touch (they're borrowed)
+    if (sx < 0) pivot.scale.x = -1;
+    const g = new THREE.Group(); g.add(humanEar()); g.scale.setScalar(0.001); pivot.add(g);
+    pivot.visible = false; faunGroup.add(pivot); human.push(pivot); inner.push(g);
+  }
+  const puffs = new THREE.Group(); puffs.userData.ear = true; faunGroup.add(puffs);   // (the tape's rays skip the puff too)
+  earSwap = { fawn, human, inner, puffs, state: 'fawn', anim: null };
+  return earSwap;
+}
+const easeOutElastic = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : Math.pow(2, -9 * u) * Math.sin((u * 10 - 0.75) * (2 * Math.PI / 3)) + 1);
+const easeOutBounce = (u) => { const n = 7.5625, d = 2.75; if (u < 1 / d) return n * u * u; if (u < 2 / d) return n * (u -= 1.5 / d) * u + 0.75; if (u < 2.5 / d) return n * (u -= 2.25 / d) * u + 0.9375; return n * (u -= 2.625 / d) * u + 0.984375; };
+function earPose(e, to, t) {   // the swap at time t (s); to: 'human' (the gag) or 'fawn' (handing them back)
+  const cl = (x) => Math.min(1, Math.max(0, x)), Q = (ax, a) => new THREE.Quaternion().setFromAxisAngle(ax, a);
+  if (to === 'human') {
+    for (const f of e.fawn) {
+      const sx = f.side, twitch = t < 0.5 ? 0.35 * Math.sin(t * 26) * (1 - t) : 0, u = cl((t - 0.5) / 0.55);
+      f.o.visible = u < 1;
+      f.o.position.copy(f.pos).add(new THREE.Vector3(sx * 190 * u, -30 * u, 240 * u - 170 * u * u));   // flung up and away, then falling
+      f.o.quaternion.copy(f.quat).multiply(Q(new THREE.Vector3(1, 0, 0), twitch)).premultiply(Q(new THREE.Vector3(0.3, 0.2, 1).normalize(), sx * 11 * u * u));
+      f.o.scale.copy(f.scale).multiplyScalar(1 - 0.45 * u);
+    }
+    const p = cl((t - 0.5) / 0.4);   // the puff where they came off
+    e.puffs.visible = p > 0 && p < 1;
+    e.puffs.children.forEach((m, i) => { m.scale.setScalar(2 + 6 * p + (i % 3)); m.material.opacity = 0.85 * (1 - p); m.position.copy(m.userData.at).addScaledVector(m.userData.dir, 14 * p); });
+    const h = cl((t - 0.95) / 0.75), s = easeOutElastic(h) * 1.12;   // 12% too big: they're borrowed
+    e.human.forEach((pv, i) => { pv.visible = h > 0; e.inner[i].scale.setScalar(Math.max(0.001, s)); e.inner[i].rotation.z = 0.5 * Math.exp(-5 * h) * Math.sin(20 * h); });
+    return t >= 1.75;
+  }
+  const u = cl(t / 0.3), v = cl((t - 0.2) / 0.7);   // human ears sucked away, fawn ears dropped back in
+  e.human.forEach((pv, i) => { const k = (1 - u) * 1.12; e.inner[i].scale.set(Math.max(0.001, k * (1 + 0.8 * u)), Math.max(0.001, k), Math.max(0.001, k)); e.inner[i].rotation.z = 3 * u; pv.visible = u < 1; });
+  e.puffs.visible = false;
+  for (const f of e.fawn) {
+    f.o.visible = v > 0; f.o.quaternion.copy(f.quat); f.o.scale.copy(f.scale);
+    f.o.position.copy(f.pos); f.o.position.z += 110 * (1 - easeOutBounce(v));
+  }
+  return t >= 0.9;
+}
+function earsTo(to) {   // run the swap (instantly when motion is reduced); returns its length in ms
+  const e = earSetup();
+  if (!e || e.state === to) return 0;
+  if (e.anim) { cancelAnimationFrame(e.anim); earPose(e, e.state, 99); }   // finish the one under way first
+  if (to === 'human' && !e.puffs.children.length) {
+    const mat = new THREE.MeshBasicMaterial({ color: 0xf6f1e4, transparent: true, depthWrite: false });
+    for (const f of e.fawn) for (let i = 0; i < 7; i++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), mat.clone()), a = (i / 7) * Math.PI * 2;
+      m.userData.at = f.pos.clone(); m.userData.dir = new THREE.Vector3(f.side * 0.6 + Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0.6 + 0.3 * Math.sin(a * 2)).normalize();
+      e.puffs.add(m);
+    }
+  }
+  e.state = to;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { earPose(e, to, 99); return 0; }
+  const t0 = performance.now();
+  (function step(now) {
+    const done = earPose(e, to, (now - t0) / 1000);
+    e.anim = done ? null : requestAnimationFrame(step);
+  })(t0);
+  return to === 'human' ? 1500 : 900;
+}
 function tapeTexture() {   // a tape measure: yellow, with inch, half and quarter ticks (one inch per repeat)
   const cv = document.createElement('canvas'); cv.width = 256; cv.height = 32;
   const x = cv.getContext('2d');
@@ -1018,8 +1110,8 @@ function tutorPaths() {
   // front to back: in the middle plane, from the tape at the forehead over the top to the tape at the back
   const f = circAt(0).p, bk = circAt(Math.PI).p, c1 = V(0, -6, 6);
   const fb = arc(Math.atan2(f.z - c1.z, f.y - c1.y), Math.PI - Math.atan2(bk.z - c1.z, -(bk.y - c1.y)), c1, (a) => V(0, Math.cos(a), Math.sin(a)));
-  // ear to ear: in a plane just in front of the ears, from the tape line on one side over the top to the other
-  const sR = circAt(0.42 * Math.PI).p, c2 = V(0, sR.y, 6);
+  // ear to ear: in the plane through the (borrowed, human) ears, from the tape just above one over the top to the other
+  const sR = circ.filter((q) => q.p.x > 0).reduce((a, q) => (Math.abs(q.p.y - EAR.y) < Math.abs(a.p.y - EAR.y) ? q : a)).p, c2 = V(0, sR.y, 6);
   const a0 = Math.atan2(sR.z - c2.z, sR.x - c2.x);
   const ee = arc(a0, Math.PI - a0, c2, (a) => V(Math.cos(a), 0, Math.sin(a)));
   return [circ, fb, ee];
@@ -1059,11 +1151,11 @@ function tutorShow(step) {
   $('tutor-next').textContent = step === TUTOR_STEPS.length - 1 ? 'Done' : 'Next';
   if (!glOK) return;
   rebuildScene();
-  const m = tutor.tapes[step]; tutor.t0 = performance.now();
+  const m = tutor.tapes[step]; tutor.t0 = Math.max(performance.now(), tutor.earsAt || 0);
   m.geometry.setDrawRange(0, 0);
   (function grow(now) {   // the tape runs out along its path
     if (!tutor || tutor.tapes[tutor.step] !== m) { m.geometry.setDrawRange(0, Infinity); return; }
-    const k = Math.min(1, (now - tutor.t0) / 1100);
+    const k = Math.max(0, Math.min(1, (now - tutor.t0) / 1100));
     m.geometry.setDrawRange(0, Math.round((m.userData.count / 6) * (1 - (1 - k) ** 2)) * 6);
     if (k < 1) requestAnimationFrame(grow);
   })(performance.now());
@@ -1078,6 +1170,8 @@ function tutorOpen() {
   tutor = { step: 0 };
   $('tutor').hidden = false; $('stage').classList.add('tutor-on');
   resize();   // phones make the viewport taller for the tutorial: frame with its new shape
+  if (!faunGroup) faunGroup = buildFaun();
+  tutor.earsAt = performance.now() + (glOK ? earsTo('human') : 0);   // the first tape waits for the new ears
   tutorShow(0);
   $('tutor-next').focus();
 }
@@ -1086,7 +1180,7 @@ function tutorClose() {
   if (tutor.tapes) for (const m of tutor.tapes) { m.geometry.dispose(); m.material.dispose(); }
   tutor = null;
   $('tutor').hidden = true; $('stage').classList.remove('tutor-on');
-  lastFitKey = ''; rebuildScene(); if (glOK) fitCamera();
+  lastFitKey = ''; rebuildScene(); if (glOK) { fitCamera(); earsTo('fawn'); }   // the fawn gets its own ears back
 }
 $('measure-how').addEventListener('click', tutorOpen);
 $('tutor-x').addEventListener('click', tutorClose);
