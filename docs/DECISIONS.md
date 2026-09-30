@@ -62,6 +62,11 @@ Newest first within each section. Change one only when the owner asks.
   panels, notes and error banner all use them; the progress bar runs along the frame's bottom line. On phones the
   status line drops "one piece on the P2S" so it stays one line (it still says when a piece is too big). New
   overlays use these variables, never fixed offsets.
+  Also (same review): toasts sit in the viewport above the status line (they were centred on the window, across
+  the panel's Build button); library cards fade out at the frame's top and bottom; the no-WebGL message is a
+  centred card; the try-on camera picture sits on a plain dark mat instead of the forest scene; phones make the
+  viewport taller while the measuring tutorial is open so the fawn stays visible; a phone on its side (landscape,
+  up to 520 px tall) keeps the viewport and panel side by side, since stacking left no room for the controls.
 - **Fewer, combined controls** (2026-09-28): see Crown style → Controls review. Before adding a control,
   check it makes a visible difference and isn't better as part of an existing combined control.
 
