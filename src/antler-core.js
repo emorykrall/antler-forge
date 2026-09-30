@@ -228,6 +228,7 @@
 
   // Crown designs retired in the controls review (2026-09-28), and the nearest one that's left
   const RETIRED = { tiara: 'fleur', lyre: 'fleur', whiplash: 'fleur', kokoshnik: 'fleur', laurel: 'circlet', sunburst: 'spines', loops: 'lattice', weave: 'lattice' };
+  const COUNTS = ['tineCount', 'crownCount', 'forkDepth', 'ringStrands', 'ringWeave', 'ringTines', 'grooveCount', 'seed', 'smoothing'];   // whole numbers
   function resolveParams(p) {
     if (p && p.character == null && typeof p.ringSculpt === 'number') p = Object.assign({}, p, { character: 0.5 + p.ringSculpt / 2 });   // the old Sculpted slider
     if (p && p.character == null && typeof p.ringCharacter === 'number') p = Object.assign({}, p, { character: p.ringCharacter });   // its crown-only name
@@ -237,7 +238,11 @@
       if (it.type === 'text') P[it.k] = String(P[it.k] == null ? DEFAULTS[it.k] : P[it.k]).slice(0, 80);
       else if (it.type === 'bool') P[it.k] = !!P[it.k];
       else if (it.type === 'select') { P[it.k] = String(P[it.k]); if (!it.options.some((o) => o[0] === P[it.k])) P[it.k] = String(DEFAULTS[it.k]); }
-      else { const x = Number(P[it.k]); P[it.k] = clamp(isFinite(x) ? x : DEFAULTS[it.k], it.min, it.max); }
+      else {
+        const v = P[it.k], x = v == null || v === '' || typeof v === 'boolean' ? NaN : Number(v);   // JSON writes NaN as null: treat it as missing
+        P[it.k] = clamp(isFinite(x) ? x : DEFAULTS[it.k], it.min, it.max);
+        if (COUNTS.includes(it.k)) P[it.k] = Math.round(P[it.k]);
+      }
     }
     if (P.tineEnd < P.tineStart) P.tineEnd = P.tineStart;
     return P;
@@ -493,8 +498,8 @@
     const key = C + '|' + fb + '|' + ee;
     if (tapeCache.has(key)) return tapeCache.get(key);
     const s = RING_SEAT, cs = Math.sqrt(1 - s * s);
-    const domeFor = (ia) => {   // the dome height that makes the front-to-back arc come out right
-      let lo = 5, hi = 400;
+    const domeFor = (ia) => {   // the dome height that makes the front-to-back arc come out right (within a real head's proportions)
+      let lo = 0.45 * ia, hi = 1.6 * ia;
       for (let i = 0; i < 48; i++) { const H = (lo + hi) / 2; if (capArc(ia / cs, H / (1 - s)) < fb) lo = H; else hi = H; }
       return (lo + hi) / 2;
     };
@@ -639,7 +644,7 @@
     const a = vnoise(x, y, z) - 0.5;
     return side > 0 || !P.ringAsym ? a : a + (vnoise(x + 53.1, y + 17.7, z + 9.3) - 0.5 - a) * P.ringAsym;
   };
-  const mirrorX = (br) => { const m = Object.assign({}, br, { pts: br.pts.map((p) => [-p[0], p[1], p[2]]), Fp: br.Fp && br.Fp.map((p) => [-p[0], p[1], p[2]]) }); parallelFrames(m); return m; };
+  const mirrorX = (br) => { const m = Object.assign({}, br, { pts: br.pts.map((p) => [-p[0], p[1], p[2]]), Fp: br.Fp && br.Fp.map((p) => [-p[0], p[1], p[2]]), F: br.F && [-br.F[0], br.F[1], br.F[2]] }); parallelFrames(m); return m; };
 
   // Flat-template compositions. A jeweller designs a circlet as a flat template (a front elevation) and bends
   // it round the head; these do the same: strokes are drawn in (s, h), s mm along the band from the brow
@@ -777,17 +782,24 @@
     const hTr = bandH(P, g, g.tr), rS = g.rootR || g.rs;   // (before this design sets the band line)
     const f = pathFrame(g, g.tr, () => hTr + (g.n >= 2 ? 7 : 0)), root = add(add(f.Q, mul(f.N, OUTER + rS * 0.7)), mul(f.W, rS * 0.4));
     const kx = root[0] / SK_BASE[0];
+    // Where a sketch point lies on this head: the point whose front view is (x, y), or, for a point beyond the
+    // head's outline (near the antler roots), the closest one that exists. It stays on the front, between the
+    // antlers (t within tr + 0.3), and the best attempt is kept, so a point never lands across the head.
+    const tMax = g.tr + 0.3, z0 = onHead(g, 0, 0)[2];
     const fromFront = ([x, y]) => {   // → [s along the band (mm), h up the head (mm)]
       const X = x * kx, Z = root[2] + (y - SK_BASE[1]);
-      let t = Math.asin(clamp(X / g.head.r[0], -0.95, 0.95)), h = Z - onHead(g, 0, 0)[2];
-      for (let it = 0; it < 14; it++) {
-        const p = onHead(g, t, h), ex = p[0] - X, ez = p[2] - Z;
-        if (Math.abs(ex) + Math.abs(ez) < 0.01) break;
+      let t = clamp(Math.asin(clamp(X / g.head.r[0], -0.95, 0.95)), -tMax, tMax), h = clamp(Z - z0, -80, 160);
+      let best = null;
+      for (let it = 0; it < 18; it++) {
+        const p = onHead(g, t, h), ex = p[0] - X, ez = p[2] - Z, err = Math.hypot(ex, ez);
+        if (!best || err < best[2]) best = [t, h, err];
+        if (err < 0.01) break;
         const pt = onHead(g, t + 1e-3, h), ph = onHead(g, t, h + 0.1);
         const a = (pt[0] - p[0]) / 1e-3, b = (ph[0] - p[0]) / 0.1, c = (pt[2] - p[2]) / 1e-3, d = (ph[2] - p[2]) / 0.1, det = a * d - b * c || 1e-9;
-        t = clamp(t - (d * ex - b * ez) / det, -1.4, 1.4); h -= (a * ez - c * ex) / det;   // stay on the front of the head
+        const dt = (d * ex - b * ez) / det, dh = (a * ez - c * ex) / det;
+        t = clamp(t - clamp(dt, -0.2, 0.2), -tMax, tMax); h = clamp(h - clamp(dh, -20, 20), -80, 160);   // damped, within reach
       }
-      return [t * (g.inner / (2 * Math.PI)), h];
+      return [best[0] * (g.inner / (2 * Math.PI)), best[1]];
     };
     return { hTr, fromFront, root };
   }
@@ -1251,7 +1263,8 @@
     const P = sk.params, pts = [];
     let zmax = 0;
     const ring = (c, r) => { for (let k = 0; k < 8; k++) pts.push([c[0] + r * Math.cos(k * Math.PI / 4), c[1] + r * Math.sin(k * Math.PI / 4)]); };
-    for (const br of sk.branches) br.pts.forEach((p, i) => { const r = br.rad[i] + 1; ring(p, r); zmax = Math.max(zmax, p[2] + r); });
+    const fk = 1 + 0.26 * facetOf(P);   // a faceted section's diamond corners reach past the round radius
+    for (const br of sk.branches) br.pts.forEach((p, i) => { const r = br.rad[i] * (br.kind === 'liner' ? 1 : fk) + 1; ring(p, r); zmax = Math.max(zmax, p[2] + r); });
     for (const b of sk.burr ? [sk.burr] : sk.burrs || []) ring(b.c, b.R + b.rm + b.amp);
     for (const pm of sk.palm ? [sk.palm] : sk.palms || []) {
       // the plate's real outline: its polygon in the palm plane, which can reach past the points it wraps
@@ -1297,6 +1310,7 @@
         S = lo; sk = best.k; m = best.mm;
         break;
       }
+      if (over > 1 && Math.max(m.xyRatio, m.zRatio) > 1) { S = P.scale; sk = buildAt(P, S); m = measureSkeleton(sk); }   // the band itself is too big for this bed
     }
     sk.fit = Object.assign({ scale: S, requested: P.scale, shrunk: S < P.scale - 1e-6, fits: Math.max(m.xyRatio, m.zRatio) <= 1 }, m);
     return sk;
@@ -1345,10 +1359,17 @@
       m.tunnelCZ = m.floor + m.th / 2;
       if (P.mount === 'clip') m.slot = Math.max(2, P.hbWidth - 2 * Math.max(0.8, P.hbWidth * 0.12));
     } else m.tunnelCZ = -P.hbThick / 2;
+    // The flare must still cover the tunnel and its walls at the tunnel's roof (zt). Where the antler's base is narrower than
+    // that, the flare widens only modestly and the base grows taller instead: widening alone ran away for wide or
+    // thick headbands (and grew as the fit loop shrank the antlers).
     m.h = Math.max(P.baseHeight, zt + 4);
-    const g = Math.pow(1 - zt / m.h, FLARE_K);
-    let rf = m.rp * P.baseFlare;
-    if (m.rp < need) rf = Math.max(rf, m.rp + (need - m.rp) / Math.max(g, 0.05));
+    const cover = need + 0.5;   // the radius the base must reach at the roof (need already includes the wall)
+    let rf = Math.max(m.rp * P.baseFlare, m.rp);
+    if (m.rp < cover) {
+      rf = Math.max(rf, cover + Math.max(2, 0.8 * (cover - m.rp)));   // at most ~1.8× the cover: bounded however small the antler
+      const gNeed = (cover - m.rp) / (rf - m.rp);   // < 1: the share of the flare left at the roof
+      m.h = Math.max(m.h, zt / (1 - Math.pow(gNeed, 1 / FLARE_K)));
+    }
     m.rf = Math.max(rf, need + 0.5, m.rp);
     m.ex = Math.max(1, P.padLength / 2 / m.rf);   // footprint stretched along the band
     m.baseZ = m.h - 0.5;
@@ -1863,7 +1884,7 @@
     for (let f = 0; f < F; f++) { const a = find(I[f * 3]), b = find(I[f * 3 + 1]), c = find(I[f * 3 + 2]); parent[b] = a; parent[find(c)] = a; }
     let shells = 0; for (let i = 0; i < nv; i++) if (find(i) === i) shells++;
     const E = (F * 3) / 2, chi = nv - E + F;
-    const watertight = open === 0 && dup === 0;
+    const watertight = open === 0 && dup === 0 && I.length > 0;   // an empty mesh is nothing, not a solid
     return {
       triangles: F, vertices: nv, openEdges: open, nonManifoldEdges: dup, degenerate: degen,
       watertight, shells, genus: watertight ? (2 * shells - chi) / 2 : null,

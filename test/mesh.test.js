@@ -53,3 +53,15 @@ test('headband dimensions never scale', () => {
   const small = at(0.3), big = at(1.4);
   for (const k of ['tw', 'th', 'slot', 'floor', 'tunnelCZ']) assert.equal(small[k], big[k], k);
 });
+
+// A wide or thick headband once made the base flare run away (a base far wider than the part, antlers shrunk
+// to nothing, the tunnel roof split off). The base now grows taller instead, and stays one solid.
+test('wide and thick headbands get a bounded base, not a runaway flare', () => {
+  for (const [name, q] of [['whitetail', { hbWidth: 40, hbThick: 6, mount: 'clip' }], ['fawn', { hbWidth: 40, thickness: 0.65 }]]) {
+    const sk = Core.buildSkeleton(Object.assign(Core.presetParams(name), q)), r = Core.validateMesh(Core.meshAntler(sk, 1));
+    const tag = `${name} ${JSON.stringify(q)}`;
+    assert.ok(sk.fit.fits && sk.fit.scale > 0.4, `${tag}: scale ${sk.fit.scale.toFixed(2)}`);
+    assert.ok(sk.mount.rf < 45, `${tag}: base radius ${sk.mount.rf.toFixed(0)} mm`);
+    assert.ok(r.watertight && r.shells === 1, `${tag}: ${r.shells} shells`);
+  }
+});

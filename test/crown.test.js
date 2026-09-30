@@ -135,3 +135,33 @@ test('Form & finish: natural keeps the antlers as they were; each end changes th
   const [c0, c5, c1] = [0, 0.5, 1].map(cr);
   assert.ok(Math.abs(c5 - c1) / c5 > 0.002 && Math.abs(c5 - c0) / c5 > 0.002, 'the crown changes at both ends');
 });
+
+// Sketched designs map their drawing onto the head; points beyond the head's outline near the antler roots
+// must not land across the head (they once lifted the whole crown off the bed, or split it).
+test('sketched designs sit on the bed as one solid at any antler position', () => {
+  for (const ringPattern of ['moon', 'lotus', 'roots']) for (const ringPos of [20, 85]) for (const ringBase of ['closed', 'openFront']) {
+    const P = crown('whitetail', ringBase, { ringPattern, ringPos, ringGap: 140 });
+    const m = Core.meshAntler(Core.buildSkeleton(P), 1.6), r = Core.validateMesh(m);
+    let minZ = Infinity; for (let i = 2; i < m.positions.length; i += 3) minZ = Math.min(minZ, m.positions[i]);
+    const tag = `${ringPattern} ${ringPos}° ${ringBase}`;
+    assert.ok(minZ < 0.01, `${tag}: floats ${minZ.toFixed(1)} mm above the bed`);
+    assert.ok(r.watertight && r.shells === 1, `${tag}: ${r.shells} shells`);
+  }
+});
+
+test('mirrored crown pieces mirror their flattening too (left paddles match the right)', () => {
+  const sk = Core.buildSkeleton(crown('moose', 'closed', {}));
+  const pads = sk.branches.filter((b) => b.kind === 'tine' && b.F && Math.abs(b.F[0]) > 0.5);
+  for (const b of pads) assert.ok(Math.sign(b.F[0]) === Math.sign(b.pts[0][0]), 'a paddle faces out on its own side');
+});
+
+test('a crown too big for a small bed keeps its size and says it does not fit', () => {
+  const sk = Core.buildSkeleton(crown('whitetail', 'closed', { bedX: 150, bedY: 150, bedZ: 150 }));
+  assert.equal(sk.fit.fits, false);
+  assert.ok(sk.fit.scale > 0.3, `antlers shrank to ${sk.fit.scale}`);
+});
+
+test('impossible tape measurements give a plausible head, not a pancake', () => {
+  const h = Core.headFromTape(660.4, 177.8, 177.8);
+  assert.ok(h.dome > 0.4 * h.ia, `dome ${h.dome.toFixed(0)} mm on a head ${(2 * h.ia).toFixed(0)} mm long`);
+});

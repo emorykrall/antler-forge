@@ -5,8 +5,8 @@
  * Uses the exact same geometry engine as the browser designer
  * (src/antler-core.js), so a design exported from the page builds identically.
  *
- *   node tools/build-antlers.js design.json                  # right + left STL, 0.5 mm voxels
- *   node tools/build-antlers.js design.json --res 0.35       # finer mesh
+ *   node tools/build-antlers.js design.json                  # right + left STL, at the design's mesh resolution
+ *   node tools/build-antlers.js design.json --res 0.35       # finer mesh (a crown's head scan, saved beside it, is found)
  *   node tools/build-antlers.js --preset elk --scale 0.7     # no design file needed
  *   node tools/build-antlers.js design.json --side right --out ./stl
  *   node tools/build-antlers.js --preset elk --style crown --ringBase openBack --headCirc 571.5
@@ -14,7 +14,7 @@
  *   node tools/build-antlers.js --list-presets
  *
  * Any parameter can be overridden: --beamLength 260 --mount clip --hbWidth 15
- * Exit code is 1 if the mesh fails the watertight / manifold check.
+ * Exit code is 1 if the mesh fails the watertight / manifold check, 2 for bad arguments.
  */
 'use strict';
 const fs = require('fs');
@@ -46,12 +46,23 @@ function main() {
     return 0;
   }
 
+  const fail = (msg) => { console.error(msg); return 2; };
   let params = {};
   if (args._[0]) {
     const raw = JSON.parse(fs.readFileSync(args._[0], 'utf8'));
     params = raw.params || raw;
   }
-  if (args.preset) params = Core.presetParams(args.preset, params.mount ? params : null);
+  if (args.preset !== undefined) {
+    if (!Core.PRESETS[args.preset]) return fail(`Unknown species "${args.preset === true ? '' : args.preset}". Try --list-presets.`);
+    params = Core.presetParams(args.preset, params.mount ? params : null);
+  }
+  if (!args.scan && params.style === 'crown' && params.headSource === 'scan') {   // a design fitted to a scan: the page's zip keeps it beside the design
+    const dir = args._[0] ? path.dirname(args._[0]) : '.', guess = args._[0] ? args._[0].replace(/-design\.json$/i, '-head-scan.json') : null;
+    const found = guess && guess !== args._[0] && fs.existsSync(guess) ? guess
+      : (() => { const all = fs.readdirSync(dir).filter((f) => /-head-scan\.json$/i.test(f)); return all.length === 1 ? path.join(dir, all[0]) : null; })();
+    if (!found) return fail('This crown is fitted to a head scan. Put its -head-scan.json (from the same zip) next to the design, or pass --scan <file>.');
+    args.scan = found;
+  }
   if (args.scan) {   // a head scan (STL/OBJ/PLY, or a scan saved from the page as .json) for a crown to fit
     const f = String(args.scan), buf = fs.readFileSync(f);
     let scan;
@@ -67,7 +78,8 @@ function main() {
     params[k] = v === 'true' ? true : v === 'false' ? false : isNaN(Number(v)) ? v : Number(v);
   }
   const P = Core.resolveParams(params);
-  const res = Number(args.res || args.resolution || 0.5);
+  const res = Number(args.res || args.resolution || P.resolution || 0.5);   // the page's own resolution unless told otherwise
+  if (!(res >= 0.2 && res <= 3)) return fail(`--res must be a number of millimetres between 0.2 and 3 (got ${args.res || args.resolution}).`);
   const side = String(args.side || 'both');
   const outDir = path.resolve(String(args.out || '.'));
   const fil = Core.FILAMENTS[P.filament] || Core.FILAMENTS.bone;

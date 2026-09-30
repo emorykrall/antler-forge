@@ -34,3 +34,11 @@ test('designs saved with a retired crown design open with the nearest one', () =
 test('designs saved with the crown-only Character open with the same Form & finish', () => {
   assert.equal(Core.resolveParams({ ringCharacter: 0.8 }).character, 0.8);
 });
+
+test('missing values (null from JSON NaN, empty, booleans) fall back to the default; counts are whole', () => {
+  assert.equal(Core.resolveParams({ beamLength: null }).beamLength, Core.DEFAULTS.beamLength);
+  assert.equal(Core.resolveParams({ beamLength: '' }).beamLength, Core.DEFAULTS.beamLength);
+  assert.equal(Core.resolveParams({ beamLength: true }).beamLength, Core.DEFAULTS.beamLength);
+  assert.equal(Core.resolveParams({ tineCount: 2.5 }).tineCount, 3);
+  assert.equal(Core.validateMesh({ positions: new Float32Array(0), indices: new Uint32Array(0) }).watertight, false, 'an empty mesh is not a solid');
+});
