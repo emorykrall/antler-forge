@@ -41,9 +41,9 @@ npm run samples                            # samples/*.stl, one per preset at 0.
 - **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` carves a real deer
   skull: `src/deer-skull.js` is the Smithsonian's CC0 white-tailed deer scan as a signed distance grid (half the
   skull, mirrored; made by `tools/convert-skull.js` from the scan's OBJ, which isn't bundled; credited in NOTICE;
-  inlined as `/*__SKULL__*/` into the Yellowjackets page only, `require`d in Node). `skullForm` cuts it along a
-  plane through the eye sockets (`CUT`), bends it gently over the head (`BEND`, a flatter curve than the head's, so
-  it still reads as a skull) and hollows it to a `CAP_T` shell, over the band (band frame: origin at the band arc's
+  inlined as `/*__SKULL__*/` into the Yellowjackets page only, `require`d in Node). `skullForm` keeps only a thin
+  plate of its top (`CUT_DEPTH` below the upper surface, as the trial crown in the show), bends it over the head (`BEND`),
+  tapers the shortened snout to a rounded nasal point and hollows it to a `CAP_T` shell, over the band (band frame: origin at the band arc's
   centre), with a pedicle (on the scan's own cut pedicle) and D-shaped peg per antler,
   a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
   slots; its curve comes from `headCirc`, its scale (`capSpacing`), cuts, snout length and width from the `cap*` settings (the

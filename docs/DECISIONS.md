@@ -43,6 +43,10 @@ Newest first within each section. Change one only when the owner asks.
   sets the skull's size; front reach is where a plate is sawn, or the snout's length (shorter like a younger deer's);
   back reach is where the braincase is sawn; width stretches the skull outside the antlers. On a skull the antler's
   burr sits straight on the pedicle (no headband flare).
+- **…but dialled back to a wearable plate, as in the trial crown photo** (owner: "gone too far into anatomical
+  accuracy"). Only a thin plate of the skull's top is kept (5–20 mm deep: its real surface and the eye-socket
+  notches, not the deep sides, orbit rims hanging below or the tall snout), bent to lie on the head. The snout is
+  shortened (Front reach sets how much) and narrows to a rounded nasal point at the hairline.
 - **Wear view: a silhouette, not a character.** The owner rejected a hooded figure and soft, featured busts:
   the figure is flat black, hard-edged, like a cut-paper locket silhouette (profile, hair up, a long neck). It is
   built from drawn side and front outlines.

@@ -1496,17 +1496,20 @@
   // Where the parts go, in the band frame: the shell, and for the right antler its print frame (origin Q, axes
   // X, Y, Z) standing on its pedicle. The left is the mirror image (x → −x).
   //
-  // The skull is a real one: the Smithsonian's CC0 scan of a white-tailed deer's skull (src/deer-skull.js, a signed
-  // distance grid of its upper half; skull frame x across, y toward the nose, z up, in mm). It is worn as the trial crown
-  // in Yellowjackets is: its top faces out and its face runs down the wearer's forehead. It's cut as a taxidermist cuts
-  // one, along a plane through the middle of the eye sockets (CUT: through the orbit centre o, sloping down toward the
-  // nose), and that plane is laid on the head: the skull bends over it keeping its lengths at every height, so the
-  // cut becomes the rim that rests on the head. plate: the skull plate, sawn across the forehead in front of the eye
-  // sockets; nasal: the upper skull, its snout ending at the nasal bones' tip. Then hollowed to a bone shell CAP_T thick.
+  // The skull is a real one, worn as the trial crown in Yellowjackets is: the Smithsonian's CC0 scan of a white-tailed
+  // deer's skull (src/deer-skull.js, a signed distance grid of its upper half; skull frame x across, y toward the nose,
+  // z up, in mm), but only a thin plate of its top: cut CUT_DEPTH below the skull's upper surface, so it keeps the bone's
+  // real surface and the notches of the eye sockets without the deep sides, and laid on the head (the cut becomes the
+  // rim that rests on it), bending with it, keeping its lengths at every height. plate: sawn across the forehead in
+  // front of the eye sockets; nasal: the snout, shortened, narrowing to a rounded nasal point at the hairline. Hollowed
+  // to a bone shell CAP_T thick.
   //
   // Skull coordinates (mm): x across, s along the head from the antlers' line (+ toward the face), h out from the head.
-  const CUT = { o: [-14.5, 16], slope: 0.15, nose: 106.5 };
-  const BEND = { x: 1.25, s: 1.6 };   // the curve the skull bends round, against the head's   // read off the scan: orbit centre (y, z); nasal tip, along the cut from o
+  // Read off the scan (skull frame, mm): the eye sockets' centre and the nasal tip (y), and how deep the cap is cut
+  // below the skull's top along its length (y, depth): a thin plate of the skull's upper surface, as worn in the show.
+  const SKULL_AT = { orbit: -14.5, nose: 80, back: -133 };   // nose: where the nasal point ends, before the nose opening flares
+  const CUT_DEPTH = [[-133, 20], [-62, 20], [-14.5, 16], [40, 15], [92, 11]];
+  const BEND = { x: 1.1, s: 1.15 };   // the curve the plate bends round, against the head's: close, so it lies on the head
   let DEER = null;
   function deerSkull() {   // the scan, decoded once
     if (DEER) return DEER;
@@ -1533,24 +1536,42 @@
   // capWidth; cut behind the antlers capBack back; in front, the plate sawn through the forehead, or the snout's
   // length set by capLength (a younger deer's snout is shorter).
   function skullForm(P) {
-    const { S, at } = deerSkull(), [oy, oz] = CUT.o, L = Math.hypot(1, CUT.slope);
-    const u = [1 / L, -CUT.slope / L], nn = [CUT.slope / L, 1 / L];   // along the cut toward the nose, and up from it (y, z)
-    const D = S.disc.c, aD = (D[1] - oy) * u[0] + (D[2] - oz) * u[1], hD = (D[1] - oy) * nn[0] + (D[2] - oz) * nn[1];
-    const k = P.capSpacing / 2 / D[0], X = k * D[0], sO = -k * aD;   // scale; the pedicles' x; the eye sockets' s
+    const { S, at } = deerSkull(), D = S.disc.c;
+    const k = P.capSpacing / 2 / D[0], X = k * D[0], sO = k * (SKULL_AT.orbit - D[1]);   // scale; the pedicles' x; the eye sockets' s
     const halfW = 67.5 - D[0], wf = Math.max(0.3, 1 + P.capWidth / (k * halfW));
     const plate = P.capShape !== 'nasal';
-    const fs = plate ? 1 : 0.6 + 0.5 * (P.capLength - 30) / 55;   // the snout's length, against a grown buck's
-    const sF = plate ? sO + 12 + 0.4 * (P.capLength - 30) : sO + k * CUT.nose * fs + 2, sB = -Math.min(P.capBack, k * (133 + D[1]) - 1);
+    const fs = plate ? 1 : 0.35 + 0.55 * (P.capLength - 30) / 55;   // the snout's length, against a grown buck's: short, to the hairline
+    // along the skull: true to the scan behind the eye sockets, the snout shortened (by fs) easing in across them, so no crease
+    const s1 = sO - 15, ST = 0.5, Ys = [];
+    for (let s = s1, y = D[1] + s1 / k; y <= SKULL_AT.nose + 1 && Ys.length < 2000; s += ST) { Ys.push(y); y += ST / (k * (1 + (fs - 1) * sstep((s - s1) / 35))); }
+    const yAt = (s) => { if (s <= s1) return D[1] + s / k; const i = (s - s1) / ST, j = Math.min(Math.floor(i), Ys.length - 2); return Ys[j] + (Ys[j + 1] - Ys[j]) * (i - j); };
+    const sF = plate ? sO + 12 + 0.4 * (P.capLength - 30) : s1 + (Ys.length - 1) * ST;
+    const sB = -Math.min(P.capBack, k * (D[1] - SKULL_AT.back) - 1);
+    // the skull's top along its middle (the highest bone within 15 mm of it, smoothed), and the cut CUT_DEPTH below it
+    const y0 = Math.floor(SKULL_AT.back), raw = [];
+    for (let y = y0; y <= SKULL_AT.nose + 2; y++) {
+      let t = -40; for (let x = 0; x <= 15 && t < 0; x += 3) for (let z = 75; z > t; z -= 0.5) if (at(x, y, z) <= 0) { t = z; break; }
+      raw.push(t);
+    }
+    const topY = raw.map((_, i) => { let sum = 0, n = 0; for (let j = Math.max(0, i - 12); j <= Math.min(raw.length - 1, i + 12); j++) { sum += raw[j]; n++; } return sum / n; });
+    const lerpT = (tab, y) => { if (y <= tab[0][0]) return tab[0][1]; for (let i = 1; i < tab.length; i++) if (y <= tab[i][0]) { const [a0, b0] = tab[i - 1], [a1, b1] = tab[i]; return b0 + (b1 - b0) * (y - a0) / (a1 - a0); } return tab[tab.length - 1][1]; };
+    const base = (y) => { const i = clamp(y - y0, 0, raw.length - 1), j = Math.floor(i), f = i - j, t = topY[j] + (topY[Math.min(j + 1, raw.length - 1)] - topY[j]) * f; return t - lerpT(CUT_DEPTH, y); };
     // skull coordinates → the scan (mm)
     const toScan = (x, s, h) => {
       const ax = Math.abs(x), xs = ax <= X ? ax / k : D[0] + (ax - X) / (k * wf);
-      const a = s > sO ? (s - sO) / (k * fs) : s / k + aD, b = h / k;
-      return [xs, oy + a * u[0] + b * nn[0], oz + a * u[1] + b * nn[1]];
+      const y = yAt(s);
+      return [xs, y, base(y) + h / k];
     };
-    const bone = (x, s, h) => { const q = toScan(x, s, h); return k * at(q[0], q[1], q[2]); };
+    // the nasal point: the snout narrows steadily to a rounded tip (the scan's own snout ends in a nose opening)
+    const tipW = 7, pointW = (s) => tipW + (k * 62 - tipW) * Math.pow(Math.max(0, (sF - s) / Math.max(1, sF - sO)), 1.5);
+    const bone = (x, s, h) => {
+      const q = toScan(x, s, h); let d = k * at(q[0], q[1], q[2]);
+      if (!plate && s > sO) d = Math.max(d, Math.hypot(Math.max(0, Math.abs(x) - pointW(s) + tipW), Math.max(0, s - (sF - tipW))) - tipW);
+      return d;
+    };
     const edge = (s, h) => { for (let x = k * 75 * wf; x > 0; x -= 0.5) if (bone(x, s, h) <= 0) return x; return 0; };   // the side wall's outside
     const top = (x, s) => { for (let h = k * 70; h > 0; h -= 0.5) if (bone(x, s, h) <= 0) return h; return 0; };
-    return { k, X, sO, sF, sB, plate, bone, edge, top, hD: k * hD, discR: k * S.disc.r };
+    return { k, X, sO, sF, sB, plate, bone, edge, top, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
   }
   function skullSpec(params, antlerBase) {
     const P = resolveParams(params);
@@ -1561,9 +1582,8 @@
     const fb = P.headCirc / perimeter(1, RING_ASPECT) / Math.sqrt(1 - RING_SEAT * RING_SEAT), ry = Math.sqrt(fb * rin), ryF = 0.88 * ry;
     const ryAt = (s) => (s > 0 ? ryF : ry);
     const sk = skullForm(P);
-    // between skull coordinates and the band frame: the skull bends a little over the head, across (x) and front to back
-    // (s), keeping its lengths at every height h. It bends round a gentler curve than the head's (BEND), touching it on
-    // top, so it still reads as a skull; in front the forehead drops away under it.
+    // between skull coordinates and the band frame: the plate bends over the head, across (x) and front to back (s),
+    // keeping its lengths at every height h, round a curve a little flatter than the head's (BEND) that touches it on top
     const bx = BEND.x * rin, bz = rin - bx, byAt = (s) => BEND.s * ryAt(s);
     const fromSkull = (x, s, h) => {
       const r = byAt(s), ps = x / (bx + h), ph = s / (r + h), q = [Math.sin(ps), Math.cos(ps) * Math.sin(ph), Math.cos(ps) * Math.cos(ph)], p0 = [bx * q[0], r * q[1], bx * q[2]];
