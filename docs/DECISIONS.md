@@ -8,8 +8,11 @@ Newest first within each section. Change one only when the owner asks.
 - **A second page, same source.** `yellowjackets.html` beside the storybook page, built from the same
   `designer.src.html` with its own blocks (`src/editions/yellowjackets.html`), so fixes reach both. Named
   "Antler Forge: Yellowjackets" by the owner; a fan-made edition, with a not-affiliated note under About the files.
-- **Mood: campfire night.** Black spruce, firelight from below, sparks instead of fireflies, typewriter display
-  type, handwritten lore and names. Always dark. Antler lighting stays neutral (true filament colour).
+- **Mood: campfire night, chromed as 1996.** The scene is a black-spruce forest lit by a fire below, with sparks
+  instead of fireflies. The chrome is not fantasy (owner, 2026-10-04): the girls' soccer team (yellow and black,
+  condensed varsity capitals, a stitched team patch, varsity stripes, square chips, a chunky yellow button) and
+  camcorder footage (viewfinder corners, a blinking REC, today's date in 1996, a running tape counter, faint
+  scanlines, an LCD status line). Always dark. Antler lighting stays neutral (true filament colour).
 - **Species, loosely after the show's found-bone headpieces:** Trial crown (short, rough, gnarled), Queen's lyre
   (tall, slender, tips curving in), Spikes (curved spikes with one small point), Non-typical (gnarled, points every
   way). Small and irregular rather than trophy racks. Same controls as the storybook page.
