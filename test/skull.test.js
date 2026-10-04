@@ -42,6 +42,29 @@ test('the upper skull, to the nose (the Yellowjackets default), is a light cap t
   assert.ok(Math.abs(span - g.P.capSpacing) < 6, `pedicles ${span.toFixed(0)} mm apart`);
 });
 
+// Straight down through the cap, wherever it stands tall enough to be hollow: one bone shell about CAP_T (2.6 mm) thick
+// and nothing under it. (The shell's inside once followed the scan's own nose and palate under the cut, and that ragged
+// inner face showed through the open front, pitted, and differently on the left and right.)
+test('the skull cap is one even shell over a clean hollow, the same left and right', () => {
+  const sk = cap('trial', { capShape: 'nasal' }), g = sk.spec, f = sk.fields[0].f, M = sk.toBand;
+  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
+  let n = 0;
+  for (let s = g.form.sB + 8; s < g.form.sF - 10; s += 6) for (let x = 0; x < 50; x += 6) {
+    if (Math.abs(x - g.form.X) < 22 && Math.abs(s) < 22) continue;   // the pedicles and pegs
+    const runs = [-1, 1].map((side) => {
+      let r = '', prev = false;
+      for (let h = 30; h >= 0.4; h -= 0.2) { const inside = f(...toPrint(g.fromSkull(side * x, s, h))) < 0; if (inside !== prev) r += inside ? '[' + h.toFixed(1) : ']' + h.toFixed(1); prev = inside; }
+      return r;
+    });
+    assert.equal(runs[0], runs[1], `x ${x}, s ${s}: left and right differ`);
+    const m = runs[1].match(/^\[([\d.]+)\]([\d.]+)$/);
+    if (!m || +m[1] < 6) continue;   // a thin or solid edge, or outside the cap
+    const t = +m[1] - +m[2]; n++;
+    assert.ok(t > 2.2 && t < 7, `x ${x}, s ${s}: shell ${t.toFixed(1)} mm (${runs[1]})`);
+  }
+  assert.ok(n > 30, `checked ${n} columns`);
+});
+
 test('designs saved with the retired cap shapes open as a skull plate', () => {
   assert.equal(Core.resolveParams({ capShape: 'shield' }).capShape, 'plate');
   assert.equal(Core.resolveParams({ capShape: 'round' }).capShape, 'plate');
