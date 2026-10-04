@@ -1267,6 +1267,30 @@
     }
     return best;
   }
+  // How the parts share the printer: each part fits on its own (the fit loop sees to that), but they need not fit
+  // together. Parts [{ name, w, d }] (footprints in mm, as they sit on the plate) are packed onto as few plates as
+  // possible, in rows, with a gap between them. Returns [{ parts: [{ name, w, d, x, y }] }], x/y from the plate's
+  // corner inside the brim margin.
+  function platesFor(P, parts) {
+    const W = P.bedX - 2 * BED_MARGIN, D = P.bedY - 2 * BED_MARGIN, gap = 10, plates = [];
+    for (const part of parts.slice().sort((a, b) => b.d - a.d)) {
+      let placed = false;
+      for (const pl of plates) {
+        for (const row of pl.rows) if (row.x + part.w <= W && part.d <= row.h) { pl.parts.push(Object.assign({}, part, { x: row.x, y: row.y })); row.x += part.w + gap; placed = true; break; }
+        if (placed) break;
+        const last = pl.rows[pl.rows.length - 1], y = last.y + last.h + gap;
+        if (y + part.d <= D && part.w <= W) { pl.rows.push({ y, h: part.d, x: part.w + gap }); pl.parts.push(Object.assign({}, part, { x: 0, y })); placed = true; break; }
+      }
+      if (!placed) plates.push({ rows: [{ y: 0, h: part.d, x: part.w + gap }], parts: [Object.assign({}, part, { x: 0, y: 0 })] });
+    }
+    return plates.map((pl) => ({ parts: pl.parts }));
+  }
+  // One line for the notes and the page: how many prints, and what goes on each.
+  function platesText(plates) {
+    if (plates.length < 2) return '';
+    const list = (ps) => { const n = ps.map((p) => p.name); return n.length === 1 ? n[0] : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; };
+    return `${plates.length} separate prints: the parts don't all fit on the plate at once. ${plates.map((pl, i) => `Print ${i + 1}: ${list(pl.parts)}.`).join(' ')}`;
+  }
   function measureSkeleton(sk) {
     const P = sk.params, pts = [];
     let zmax = 0;
@@ -1517,12 +1541,13 @@
       const b = sub([x, y, z], O), pp = [dot(b, Xp), dot(b, Yp), dot(b, Zp)];
       for (let j = 0; j < 3; j++) { wide[j] = Math.min(wide[j], pp[j]); wide[j + 3] = Math.max(wide[j + 3], pp[j]); }
     }
-    const bb = [Infinity, Infinity, 0, -Infinity, -Infinity, -Infinity], st = 3;
-    for (let x = wide[0]; x <= wide[3]; x += st) for (let y = wide[1]; y <= wide[4]; y += st) for (let z = 0; z <= wide[5]; z += st) {
-      if (f(toBand(x, y, z)) > st) continue;
+    const bb = [Infinity, Infinity, 0, -Infinity, -Infinity, -Infinity], st = 1.5;   // the outline cut isn't a true distance, so only points inside count
+    for (let x = wide[0]; x <= wide[3]; x += st) for (let y = wide[1]; y <= wide[4]; y += st) for (let z = st / 2; z <= wide[5]; z += st) {
+      if (f(toBand(x, y, z)) > 0) continue;
       bb[0] = Math.min(bb[0], x); bb[1] = Math.min(bb[1], y); bb[3] = Math.max(bb[3], x); bb[4] = Math.max(bb[4], y); bb[5] = Math.max(bb[5], z);
     }
-    for (let j = 0; j < 3; j++) { bb[j] -= 2 * st; bb[j + 3] += 2 * st; }
+    const ext = bb.slice();   // the part itself, to within the grid (for the fit); the mesher gets a margin round it
+    for (let j = 0; j < 3; j++) { bb[j] -= 4 * st; bb[j + 3] += 4 * st; }
     bb[2] = -2;
     const field = (x, y, z) => f(toBand(x, y, z));
     const sk = {
@@ -1532,8 +1557,9 @@
       toBand: [Xp[0], Xp[1], Xp[2], 0, Yp[0], Yp[1], Yp[2], 0, Zp[0], Zp[1], Zp[2], 0, O[0], O[1], O[2], 1],
       spec: g,
     };
-    const w = bb[3] - bb[0], dd = bb[4] - bb[1], fp = bestFootprint([[bb[0], bb[1]], [bb[3], bb[1]], [bb[3], bb[4]], [bb[0], bb[4]]], P.bedX - 2 * BED_MARGIN, P.bedY - 2 * BED_MARGIN);
-    sk.fit = { scale: 1, requested: 1, shrunk: false, angle: fp.angle, w, d: dd, h: bb[5], xyRatio: fp.ratio, zRatio: bb[5] / (P.bedZ - 1), fits: fp.ratio <= 1 && bb[5] <= P.bedZ - 1 };
+    const w = ext[3] - ext[0] + st, dd = ext[4] - ext[1] + st, h = ext[5] + st / 2;
+    const fp = bestFootprint([[ext[0], ext[1]], [ext[0] + w, ext[1]], [ext[0] + w, ext[1] + dd], [ext[0], ext[1] + dd]], P.bedX - 2 * BED_MARGIN, P.bedY - 2 * BED_MARGIN);
+    sk.fit = { scale: 1, requested: 1, shrunk: false, angle: fp.angle, w, d: dd, h, xyRatio: fp.ratio, zRatio: h / (P.bedZ - 1), fits: fp.ratio <= 1 && h <= P.bedZ - 1 };
     return sk;
   }
 
@@ -2168,9 +2194,11 @@
       `${P.mount === 'skull' && !crown ? 'Each antler' : 'Each part '} ${inches ? `${s.map(toIn).join(' × ')} in (${s.map((x) => x.toFixed(0)).join(' × ')} mm)` : `${f(s[0])} × ${f(s[1])} × ${f(s[2])} mm`}${fit && fit.angle ? ` (turned ${fit.angle}° on the plate to fit)` : ''}`,
       `Material   about ${Math.round(grams * 0.45)}–${Math.round(grams * 0.6)} g ${crown ? 'for the crown' : 'per antler'} at the settings below, plus supports`,
       `Mesh       ${report.triangles.toLocaleString()} triangles · one closed solid · watertight=${report.watertight}`,
+      ...(opts && opts.plates && opts.plates.length > 1 ? [`Plates     ${platesText(opts.plates)}`] : []),
       '',
       crown ? 'The crown is one complete part, upright as worn, resting on a small flat foot at Z = 0. Supports carry the rest.' : 'Each antler is one complete part, already standing on its flat base at Z = 0.',
-      crown ? 'Print it on its own plate.' : 'Print the right and the left on separate plates, or together if both footprints fit.',
+      crown ? 'Print it on its own plate.' : opts && opts.plates ? (opts.plates.length > 1 ? 'Print the parts as listed under Plates above.' : 'All the parts fit on one plate: print them together, or one at a time.')
+      : 'Print the right and the left on separate plates, or together if both footprints fit.',
       crown && P.headSource === 'scan' && SCANS.has(P.headScan) ? `Fitted to your head scan (${len(SCANS.get(P.headScan).circ)} round at the tape line), plus ${len(P.ringFit)} comfort allowance.`
       : crown ? `Sized for a head ${len(P.headCirc)} around${P.headMeasured ? `, ${len(P.headArcFB)} front to back and ${len(P.headArcEE)} ear to ear over the top` : ''}, plus ${len(P.ringFit)} comfort allowance.`
       : P.mount === 'tunnel' || P.mount === 'clip'
@@ -2198,7 +2226,7 @@
 
   return {
     PARAM_SPEC, DEFAULTS, PRESETS, resolveParams, presetParams, ringSpec, headFromTape, capArc, registerHeadScan, hasHeadScan: (id) => SCANS.has(String(id)),
-    FILAMENTS, buildSkeleton, buildSkullCap, skullSpec, PEG, meshAntler, meshBounds, plateSize, validateMesh, toSTL, makeZip, printNotes,
+    FILAMENTS, buildSkeleton, buildSkullCap, skullSpec, PEG, platesFor, platesText, meshAntler, meshBounds, plateSize, validateMesh, toSTL, makeZip, printNotes,
     _util: { add, sub, mul, dot, cross, norm, rotate },
   };
 });

@@ -685,6 +685,14 @@ function antlerObject() {
   const m = new THREE.Mesh(shown.geo, mats.antler); m.castShadow = true; m.receiveShadow = true; return m;
 }
 
+// The parts and their footprints on the plate (mm), and how they share plates (each fits alone; together they may not).
+function platesNow() {
+  if (!shown || !shown.fit) return [];
+  const f = shown.fit, parts = [{ name: 'right antler', w: f.w, d: f.d }];
+  if (P.style !== 'crown') parts.push({ name: 'left antler', w: f.w, d: f.d });
+  if (shown.cap && P.mount === 'skull' && P.style !== 'crown') parts.push({ name: 'skull cap', w: shown.cap.report.fit.w, d: shown.cap.report.fit.d });
+  return C.platesFor(P, parts);
+}
 function bedObject() {
   const g = new THREE.Group();
   const w = P.bedX, d = P.bedY;
@@ -1045,26 +1053,33 @@ function rebuildScene() {
   if (tutor) { root.add(tutorObject()); return; }   // the measuring tutorial owns the view while it's open
   if (importing) { root.add(alignObject()); if (!importing.framed) { fitCamera(); importing.framed = true; } return; }
   if (view === 'print') {
-    root.add(bedObject());
-    if (shown) {   // every part as it prints, side by side: right and (mirrored) left antler, and the skull cap if there is one
-      const parts = [], ang = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180;
-      const right = antlerObject(); right.rotation.z = ang; parts.push(right);
-      if (P.style !== 'crown') { const left = antlerObject(); left.scale.x = -1; left.rotation.z = -ang; parts.push(left); }
-      if (shown.cap && P.mount === 'skull' && P.style !== 'crown') parts.push(capObject(shown.cap));
-      const boxes = parts.map((o) => { o.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); });
-      const gap = 12, total = boxes.reduce((w, b) => w + b.max.x - b.min.x, 0) + gap * (parts.length - 1);
-      let x = -total / 2;
-      parts.forEach((o, i) => { const b = boxes[i]; o.position.x = x - b.min.x; o.position.y = -(b.min.y + b.max.y) / 2; x += b.max.x - b.min.x + gap; root.add(o); });
+    if (!shown) root.add(bedObject());
+    else {   // every part as it prints (right and mirrored left antler, the skull cap if there is one), on as many plates as they need
+      const ang = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180, objs = {};
+      objs['right antler'] = antlerObject(); objs['right antler'].rotation.z = ang;
+      if (P.style !== 'crown') { objs['left antler'] = antlerObject(); objs['left antler'].scale.x = -1; objs['left antler'].rotation.z = -ang; }
+      if (shown.cap && P.mount === 'skull' && P.style !== 'crown') objs['skull cap'] = capObject(shown.cap);
+      const plates = platesNow(), m = 6;
+      plates.forEach((pl, i) => {
+        const bed = bedObject(); bed.position.x = i * (P.bedX + 40); root.add(bed);
+        for (const part of pl.parts) {
+          const o = objs[part.name]; o.updateMatrixWorld(true);
+          const b = new THREE.Box3().setFromObject(o), c = b.getCenter(new THREE.Vector3());
+          o.position.x = bed.position.x - P.bedX / 2 + m + part.x + part.w / 2 - c.x;
+          o.position.y = -P.bedY / 2 + m + part.y + part.d / 2 - c.y;
+          root.add(o);
+        }
+      });
     }
   }
   else root.add(wearObject());
-  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + (P.headMeasured ? P.headArcFB + '|' + P.headArcEE : '') + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + P.mount + '|' + (shown ? (shown.cap ? 2 : 1) : 0);
+  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + (P.headMeasured ? P.headArcFB + '|' + P.headArcEE : '') + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + P.mount + '|' + (shown ? (shown.cap ? 2 : 1) : 0) + '|' + (view === 'print' ? P.bedX + 'x' + P.bedY + 'x' + platesNow().length : '');
   if (fitKey !== lastFitKey && shown) { fitCamera(); lastFitKey = fitKey; }
 }
 function fitCamera() {
   if (tutor) return;   // the tutorial places its own camera
   const box = new THREE.Box3();
-  if (view === 'print') { if (root.children.length < 2) box.setFromObject(root); for (const o of root.children.slice(1)) box.expandByObject(o); }   // the parts, not the bed
+  if (view === 'print') { root.traverse((o) => { if (o.isMesh && o.material === mats.antler) box.expandByObject(o); }); if (box.isEmpty()) box.setFromObject(root); }   // the parts, not the beds
   else {   // frame the head and antlers; the cloak can run off the bottom
     root.updateMatrixWorld(true);
     root.traverse((o) => { if (o.isMesh && !o.userData.nofit && !(o.parent && o.parent.userData.nofit)) box.expandByObject(o); });
@@ -1329,6 +1344,8 @@ function updateReadout() {
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
   if (P.style !== 'crown' && P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
+  const nPlates = fits ? platesNow().length : 0;
+  if (nPlates > 1) notes.push(`Needs ${nPlates} separate prints: the parts don’t all fit on the plate at once (each one does on its own).`);
   const msg = $('msg');
   if (building) { msg.className = 'msg'; msg.textContent = 'Building the final mesh and checking it…'; }
   else if (warns.length) { msg.className = 'msg warn'; msg.textContent = warns.join(' '); }
@@ -1386,7 +1403,8 @@ function capJob(Core, j) {
   if (j.params.style === 'crown' || j.params.mount !== 'skull') return null;
   var sk = Core.buildSkullCap(j.params), mesh = Core.meshAntler(sk, j.kind === 'build' ? j.res : Math.max(1, j.res));
   var report = j.kind === 'build' ? Core.validateMesh(mesh) : Core.meshBounds(mesh), size = Core.meshBounds(mesh).size;
-  report.fit = Object.assign({}, sk.fit, { w: size[0], d: size[1], h: size[2] });   // the part's own size, not the box it was meshed in
+  var W = j.params.bedX - 12, D = j.params.bedY - 12;   // the part's own size, not the box it was meshed in (6 mm brim margin)
+  report.fit = Object.assign({}, sk.fit, { w: size[0], d: size[1], h: size[2], fits: ((size[0] <= W && size[1] <= D) || (size[1] <= W && size[0] <= D)) && size[2] <= j.params.bedZ - 1 });
   var g = sk.spec;
   return { mesh: mesh, report: report, place: { toBand: sk.toBand, Q: g.Q, X: g.F.X, Y: g.F.Y, Z: g.F.Z, slots: g.slots } };
 }
@@ -1525,7 +1543,7 @@ async function downloadSTLs() {
     ...stls,
     ...(params.headSource === 'scan' && scanStore.get(params.headScan) ? [{ name: base + '-head-scan.json', data: JSON.stringify(scanStore.get(params.headScan)) }] : []),
     { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params }, null, 2) },
-    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in', cap: b.cap ? { report: Object.assign({}, b.cap.report, { size: C.plateSize(b.cap.mesh, b.cap.report.fit.angle) }), fit: b.cap.report.fit } : undefined }) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in', plates: params.style === 'crown' ? null : platesNow(), cap: b.cap ? { report: Object.assign({}, b.cap.report, { size: C.plateSize(b.cap.mesh, b.cap.report.fit.angle) }), fit: b.cap.report.fit } : undefined }) },
   ]);
   offerFile(base + '.zip', zip);
 }

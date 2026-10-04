@@ -53,3 +53,17 @@ test('the headband groove under the cap matches the band and never scales', () =
   const at = (scale) => Core.skullSpec(design('trial', 'skull', { scale })).band;
   assert.deepEqual(at(0.3), at(1.4));
 });
+
+test('parts share plates only when they fit together; each part still fits on its own', () => {
+  const P = Core.resolveParams({});
+  const one = Core.platesFor(P, [{ name: 'right antler', w: 90, d: 120 }, { name: 'left antler', w: 90, d: 120 }, { name: 'skull cap', w: 117, d: 97 }]);
+  assert.equal(one.length, 1, 'small parts print together');
+  assert.equal(Core.platesText(one), '', 'and say nothing about it');
+  const three = Core.platesFor(P, [{ name: 'right antler', w: 200, d: 180 }, { name: 'left antler', w: 200, d: 180 }, { name: 'skull cap', w: 117, d: 97 }]);
+  assert.equal(three.length, 3, 'two big antlers and the cap: one plate each');
+  const two = Core.platesFor(P, [{ name: 'right antler', w: 110, d: 180 }, { name: 'left antler', w: 110, d: 180 }, { name: 'skull cap', w: 117, d: 97 }]);
+  assert.equal(two.length, 2, 'the antlers side by side, the cap on its own');
+  const W = P.bedX - 12, D = P.bedY - 12;
+  for (const pl of [...one, ...two, ...three]) for (const p of pl.parts) assert.ok(p.x >= 0 && p.y >= 0 && p.x + p.w <= W && p.y + p.d <= D, `${p.name} on the plate`);
+  assert.match(Core.platesText(two), /^2 separate prints.*Print 1: right antler and left antler\. Print 2: skull cap\.$/);
+});

@@ -124,7 +124,10 @@ function main() {
     console.log(`skull cap  ${f1(crep.size[0])} × ${f1(crep.size[1])} × ${f1(crep.size[2])} mm · ${f1(crep.volume / 1000)} cm³ · open edges ${crep.openEdges}, shells ${crep.shells} · ${csk.fit.fits ? 'fits' : 'DOES NOT FIT'} · watertight ${crep.watertight ? 'YES' : 'NO'}`);
     const f = path.join(outDir, `${base}-skull.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(cmesh, { name: base + ' skull cap', rotZ: csk.fit.angle }))); written.push(f);
   }
-  if (args.notes !== 'false') { const f = path.join(outDir, `${base}-print-notes.txt`); fs.writeFileSync(f, Core.printNotes(P, rep, fit, cap ? { cap } : undefined)); written.push(f); }
+  // how the parts share the plate: each fits on its own; they may need separate prints
+  const plates = crown ? null : Core.platesFor(P, [{ name: 'right antler', w: fit.w, d: fit.d }, { name: 'left antler', w: fit.w, d: fit.d }, ...(cap ? [{ name: 'skull cap', w: cap.report.size[0], d: cap.report.size[1] }] : [])]);
+  if (plates) console.log(`plates     ${plates.length > 1 ? Core.platesText(plates) : 'all the parts fit on one plate'}`);
+  if (args.notes !== 'false') { const f = path.join(outDir, `${base}-print-notes.txt`); fs.writeFileSync(f, Core.printNotes(P, rep, fit, Object.assign({ plates }, cap ? { cap } : {}))); written.push(f); }
   for (const f of written) console.log(`wrote      ${path.relative(process.cwd(), f) || f}`);
   return rep.watertight && rep.shells === 1 && capOK ? 0 : 1;
 }
