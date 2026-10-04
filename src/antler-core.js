@@ -96,7 +96,7 @@
       { k: 'thickness', label: 'Thickness', min: 0.6, max: 1.6, step: 0.05, u: '×', hint: 'The whole beam, base to tip' },
       { k: 'beamTaper', label: 'Taper', min: 0, max: 0.8, step: 0.01, u: '', hint: 'How much the beam thins toward the tip' },
       { k: 'beamLean', label: 'Lean', min: -80, max: 40, step: 1, u: '°', hint: 'Back ← → forward' },
-      { k: 'beamInCurl', label: 'Tip curl', min: -120, max: 40, step: 1, u: '°', hint: 'The tips turning inward (−) or outward (+)' },
+      { k: 'beamInCurl', label: 'Tip curl', min: -160, max: 40, step: 1, u: '°', hint: 'The tips turning inward (−) or outward (+)' },
       { k: 'wildness', label: 'Wildness', min: 0, max: 2, step: 0.05, u: '×', hint: 'Kinks, wander and natural irregularity (0 is perfectly calm)' },
     ] },
     { group: 'Tines & points', tier: 'details', items: [
@@ -172,6 +172,7 @@
       { k: 'baseDia', label: 'Base diameter', min: 8, max: 45, step: 0.5, u: 'mm' },
       { k: 'tipDia', label: 'Tip diameter', min: 2.5, max: 16, step: 0.5, u: 'mm', hint: '⅛ in or more survives handling' },
       { k: 'curlBias', label: 'Curl toward tip', min: 0.4, max: 3, step: 0.05, u: '×' },
+      { k: 'inCurlBias', label: 'Tip curl toward tip', min: 0.4, max: 4, step: 0.05, u: '×', hint: 'Above 1, the beam runs out straight and turns in near its end' },
       { k: 'wobble', label: 'Kinks & wander', min: 0, max: 1, step: 0.05, u: '', hint: 'Low values read as sculpted, high as wild' },
       { k: 'tineCrest', label: 'Longest tine at', min: 0, max: 1, step: 0.05, u: '', pct: true, hint: 'Tine tips follow a smooth arch that peaks here' },
       { k: 'tineTaper', label: 'Arch falloff', min: 0, max: 0.9, step: 0.05, u: '' },
@@ -213,7 +214,7 @@
   // regardless of where the base sits on the band.
   const DEFAULTS = {
     preset: 'whitetail',
-    beamLength: 310, baseDia: 28, beamTaper: 0.46, tipDia: 5, beamLean: -26, beamCurl: 118, curlBias: 1.45, beamSpread: 66, beamInCurl: -108, wobble: 0.12,
+    beamLength: 310, baseDia: 28, beamTaper: 0.46, tipDia: 5, beamLean: -26, beamCurl: 118, curlBias: 1.45, inCurlBias: 1, beamSpread: 66, beamInCurl: -108, wobble: 0.12,
     tineCount: 3, tineDir: 'up', tineStart: 0.34, tineEnd: 0.76, tineLength: 120, tineCrest: 0.4, tineTaper: 0.4, tineRhythm: 0.9, tineAngle: 80, tineFan: 14, tineCurve: 20, tineInward: 10, tineThick: 0.72,
     browTine: true, browDir: 'up', browLength: 44, browAngle: 74, browPos: 0.1,
     crownCount: 0, crownShape: 'cup', crownLength: 50, palmation: 0, forkDepth: 0, forkAngle: 32, forkTines: false,
@@ -251,6 +252,9 @@
     // after reference photos of whitetail and mule deer bucks: a typical 10-point rack, one in velvet, a young
     // forkhorn, and a mule buck's forked points
     buck: { label: 'Typical buck', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 340, baseDia: 30, beamTaper: 0.46, tipDia: 5, beamLean: -28, beamCurl: 122, curlBias: 1.4, beamSpread: 70, beamInCurl: -112, wobble: 0.14, tineCount: 4, tineDir: 'up', tineStart: 0.28, tineEnd: 0.8, tineLength: 128, tineCrest: 0.35, tineTaper: 0.45, tineRhythm: 0.95, tineAngle: 84, tineFan: 10, tineCurve: 18, tineInward: 8, tineThick: 0.7, browTine: true, browDir: 'up', browLength: 40, browAngle: 72, browPos: 0.09, jitter: 0.1, seed: 41, ovality: 0.14, grooveDepth: 0.5, grooveCount: 9, pearling: 0.55, burrSize: 4, scale: 0.6 } },
+    // fitted to a photo of a typical whitetail eight-pointer, front on (2026-10-04): the beam runs out and back, turns
+    // up and sweeps forward so its tip points in; a tall G2 and a shorter G3 straight up off the bend, a short brow
+    eightpoint: { label: '8-point whitetail', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 272, baseDia: 19, beamTaper: 0.46, tipDia: 5, beamLean: -35, beamCurl: 101, curlBias: 1.43, inCurlBias: 2.1, beamSpread: 59, beamInCurl: -152, wobble: 0.05, tineCount: 2, tineDir: 'up', tineStart: 0.47, tineEnd: 0.62, tineLength: 146, tineCrest: 0, tineTaper: 0.68, tineRhythm: 1, tineAngle: 30, tineFan: 0, tineCurve: -10, tineInward: 4, tineThick: 0.62, browTine: true, browDir: 'up', browLength: 55, browAngle: 69, browPos: 0.04, jitter: 0.04, seed: 41, ovality: 0.14, grooveDepth: 0.5, grooveCount: 9, pearling: 0.55, burrSize: 4, scale: 0.7 } },
     velvet: { label: 'Velvet buck', set: 'campfire', p: { character: 0.5, ringPattern: 'band', beamLength: 270, baseDia: 34, beamTaper: 0.28, tipDia: 13, beamLean: -24, beamCurl: 104, curlBias: 1.3, beamSpread: 62, beamInCurl: -92, wobble: 0.1, tineCount: 3, tineDir: 'up', tineStart: 0.3, tineEnd: 0.72, tineLength: 88, tineCrest: 0.35, tineTaper: 0.35, tineAngle: 78, tineFan: 8, tineCurve: 16, tineInward: 6, tineThick: 0.86, browTine: true, browDir: 'up', browLength: 30, browAngle: 70, browPos: 0.1, jitter: 0.08, seed: 17, ovality: 0.08, grooveDepth: 0, pearling: 0, burr: false, fillet: 7, scale: 0.62 } },
     forkhorn: { label: 'Forkhorn', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 200, baseDia: 22, beamTaper: 0.45, tipDia: 4.5, beamLean: -24, beamCurl: 84, curlBias: 1.4, beamSpread: 54, beamInCurl: -72, wobble: 0.18, tineCount: 1, tineDir: 'up', tineStart: 0.56, tineEnd: 0.56, tineLength: 62, tineTaper: 0, tineAngle: 70, tineCurve: 22, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'up', browLength: 16, browAngle: 68, browPos: 0.09, jitter: 0.14, seed: 9, ovality: 0.12, grooveDepth: 0.45, pearling: 0.45, burrSize: 3.5, scale: 0.68 } },
     mulebuck: { label: 'Mule buck', set: 'campfire', p: { character: 0.25, ringPattern: 'band', beamLength: 280, baseDia: 29, beamTaper: 0.36, tipDia: 5, beamLean: -14, beamCurl: 48, curlBias: 1.2, beamSpread: 58, beamInCurl: -64, wobble: 0.2, tineCount: 0, browTine: true, browDir: 'up', browLength: 22, browAngle: 62, browPos: 0.08, forkDepth: 2, forkAngle: 44, tineCurve: 10, tineInward: 4, jitter: 0.16, seed: 58, ovality: 0.14, grooveDepth: 0.6, pearling: 0.6, burrSize: 4.2, fillet: 3, scale: 0.62 } },
@@ -432,7 +436,7 @@
     const kinkDeg = (3 + 7 * W) * DEG;
     const bdir = (s) => {
       const pitch = lean + curl * Math.pow(s, P.curlBias) + W * 16 * DEG * (vnoise(s * 3.3 + so, 1.7, 0.3) - 0.5);
-      const yaw = spread + incurl * s + W * 16 * DEG * (vnoise(s * 3.3 + so, 5.1, 3.7) - 0.5);
+      const yaw = spread + incurl * Math.pow(s, P.inCurlBias) + W * 16 * DEG * (vnoise(s * 3.3 + so, 5.1, 3.7) - 0.5);
       let d = norm([Math.sin(yaw), Math.cos(yaw) * Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)]);
       for (const t of plan) {
         if (!t.ref || t.kind === 'crown') continue;

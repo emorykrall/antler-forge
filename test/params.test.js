@@ -42,3 +42,13 @@ test('missing values (null from JSON NaN, empty, booleans) fall back to the defa
   assert.equal(Core.resolveParams({ tineCount: 2.5 }).tineCount, 3);
   assert.equal(Core.validateMesh({ positions: new Float32Array(0), indices: new Uint32Array(0) }).watertight, false, 'an empty mesh is not a solid');
 });
+
+// inCurlBias (species files only): above 1, the beam's inward turn gathers toward its end, so it runs out straight
+// first; at 1 (the default) every species is as it was.
+test('the beam turns in nearer its end as inCurlBias rises; 1 is the default', () => {
+  const P = Object.assign(Core.presetParams('eightpoint'), { mount: 'tunnel', autoFit: false, wobble: 0, jitter: 0 });
+  const beam = (q) => Core.buildSkeleton(Object.assign({}, P, q)).branches.find((b) => b.id === 'beam').pts;
+  const out = (pts) => pts[Math.round(pts.length / 2)][0] - pts[0][0];   // how far out the beam is halfway along
+  assert.ok(out(beam({ inCurlBias: 2.5 })) > out(beam({ inCurlBias: 1 })) + 3, 'straighter outward run before the turn');
+  assert.equal(Core.resolveParams({}).inCurlBias, 1);
+});

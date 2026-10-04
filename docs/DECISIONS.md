@@ -22,6 +22,12 @@ Newest first within each section. Change one only when the owner asks.
 - **More species from the owner's reference photos** (whitetail and mule deer bucks): Typical buck (10 points,
   tines straight up off a forward-sweeping beam), Velvet buck (thick, smooth, blunt), Forkhorn (a young buck's fork)
   and Mule buck (forked points).
+- **8-point whitetail** (owner, 2026-10-04, from a front-on photo of a typical whitetail eight-pointer; Typical buck
+  left as it was): the shape and arrangement are the photo's, the size is the page's. A short upright brow; the beam
+  runs out and back at about 45° from the front, turns up and sweeps forward so its tip points in; a tall G2 and a
+  shorter G3 straight up off the bend. Fitted to the photo's points in the front view, with a whitetail's side profile
+  (back a little, then forward), and slimmer than the other bucks, as in the photo. It needed the beam's inward turn to
+  gather toward its end (`inCurlBias`, a species setting) and Tip curl to go to −160°.
 - **The skull cap is configurable** (a Skull cap group, shown only when it's the base style): shape (true to deer
   skulls, as a taxidermist cuts them: a Skull plate, the forehead and both antlers cut through the eye sockets, or the
   Upper skull, to the nose; the invented Shield and Rounded shapes were retired and open as a skull plate), front reach, back reach, width beyond the antlers, antler spacing, pedicle height,
