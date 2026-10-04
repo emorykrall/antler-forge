@@ -1522,13 +1522,25 @@
       if (c === 0x80) { g.fill(((bin.charCodeAt(i + 2) << 24) >> 24) * S.q, o, o + bin.charCodeAt(i + 1)); o += bin.charCodeAt(i + 1); i += 3; }
       else { g[o++] = ((c << 24) >> 24) * S.q; i++; }
     }
-    const at = (x, y, z) => {   // signed distance to the bone (mm, clamped to ±band), the skull mirrored across x = 0
+    // signed distance to the bone (mm, clamped to ±band), the skull mirrored across x = 0: a cubic B-spline through the
+    // grid, so the surface is smooth across the cells (straight-line sampling left faint creases at every cell edge)
+    const B = (t, w) => { const t2 = t * t, t3 = t2 * t; w[0] = (1 - 3 * t + 3 * t2 - t3) / 6; w[1] = (4 - 6 * t2 + 3 * t3) / 6; w[2] = (1 + 3 * t + 3 * t2 - 3 * t3) / 6; w[3] = t3 / 6; };
+    const wx = [0, 0, 0, 0], wy = [0, 0, 0, 0], wz = [0, 0, 0, 0];
+    const at = (x, y, z) => {
       const fx = (Math.abs(x) - S.org[0]) / S.step, fy = (y - S.org[1]) / S.step, fz = (z - S.org[2]) / S.step;
-      if (!(fx >= 0 && fy >= 0 && fz >= 0 && fx < n[0] - 1 && fy < n[1] - 1 && fz < n[2] - 1)) return S.band;
-      const i = fx | 0, j = fy | 0, k = fz | 0, u = fx - i, v = fy - j, w = fz - k, o = k * n01 + j * n0 + i;
-      const a = g[o] + (g[o + 1] - g[o]) * u, b = g[o + n0] + (g[o + n0 + 1] - g[o + n0]) * u;
-      const c = g[o + n01] + (g[o + n01 + 1] - g[o + n01]) * u, d = g[o + n01 + n0] + (g[o + n01 + n0 + 1] - g[o + n01 + n0]) * u;
-      return (a + (b - a) * v) * (1 - w) + (c + (d - c) * v) * w;
+      if (!(fx >= 1 && fy >= 1 && fz >= 1 && fx < n[0] - 2 && fy < n[1] - 2 && fz < n[2] - 2)) return S.band;
+      const i = fx | 0, j = fy | 0, k = fz | 0;
+      B(fx - i, wx); B(fy - j, wy); B(fz - k, wz);
+      let sum = 0;
+      for (let c = 0; c < 4; c++) {
+        let sc = 0;
+        for (let b = 0; b < 4; b++) {
+          const o = (k - 1 + c) * n01 + (j - 1 + b) * n0 + i - 1;
+          sc += wy[b] * (wx[0] * g[o] + wx[1] * g[o + 1] + wx[2] * g[o + 2] + wx[3] * g[o + 3]);
+        }
+        sum += wz[c] * sc;
+      }
+      return sum;
     };
     return (DEER = { S, at });
   }
@@ -1566,7 +1578,10 @@
     const tipW = 7, pointW = (s) => tipW + (k * 62 - tipW) * Math.pow(Math.max(0, (sF - s) / Math.max(1, sF - sO)), 1.5);
     const bone = (x, s, h) => {
       const q = toScan(x, s, h); let d = k * at(q[0], q[1], q[2]);
-      if (!plate && s > sO) d = Math.max(d, Math.hypot(Math.max(0, Math.abs(x) - pointW(s) + tipW), Math.max(0, s - (sF - tipW))) - tipW);
+      if (!plate && s > sO) {   // blended into the bone, and thinning toward the tip so it ends in a rounded point that lies on the head
+        d = smax(d, Math.hypot(Math.max(0, Math.abs(x) - pointW(s) + tipW), Math.max(0, s - (sF - tipW))) - tipW, 3);
+        d = smax(d, h - (k * 16 + 6) + (k * 16 * 0.6 + 6) * sstep((s - sF + 32) / 32), 3);   // well clear of the bone until near the tip
+      }
       return d;
     };
     const edge = (s, h) => { for (let x = k * 75 * wf; x > 0; x -= 0.5) if (bone(x, s, h) <= 0) return x; return 0; };   // the side wall's outside
@@ -1666,7 +1681,7 @@
       // the groove the headband glues into, open toward the head; the strap slots; the bobby-pin grooves
       d = Math.max(d, -Math.max(Math.abs(p[1]) - groW, r - bandOut));
       for (const sl of slots) { const q = sub(p, sl.p); d = Math.max(d, -Math.max(Math.abs(dot(q, sl.u)) - SLOT.len / 2, Math.abs(dot(q, sl.w)) - SLOT.w / 2, dot(q, sl.dir) - 2, -dot(q, sl.dir) - CAP_T - 3)); }
-      for (const pn of pins) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s); d = Math.max(d, -Math.max(Math.abs(b) - PIN.w / 2, -a - 8, a - PIN.len, -outer - PIN.depth)); }
+      for (const pn of pins) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s); d = Math.max(d, -Math.max(Math.abs(b) - PIN.w / 2, -a - 8, a - PIN.len, -dot(q, pn.dir) - 6, -outer - PIN.depth)); }   // on the side wall only
       return d;
     };
     // print frame: the plane under the rim is the bed (Z = 0)
