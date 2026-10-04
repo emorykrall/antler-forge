@@ -89,5 +89,5 @@ test('fine-tuned branches and moved sliders never reach the other antler', () =>
     if (Object.keys(sk.fit.cleared).length) turned++;
   }
   assert.ok(turned > 0, 'some of these needed a branch turned out');
-  assert.deepEqual(Core.buildSkeleton(design('lyre', 'skull', { capSpacing: 70 })).fit.cleared, { beam: 4 }, 'Queen’s lyre’s beams curl in to the middle on a narrow skull cap');
+  assert.deepEqual(Core.buildSkeleton(design('lyre', 'skull', { capSpacing: 70 })).fit.cleared, { beam: 5 }, 'Queen’s lyre’s beams curl in to the middle on a narrow skull cap');
 });

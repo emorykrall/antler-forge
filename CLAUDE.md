@@ -28,6 +28,7 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   Fine-tune: one antler's skeleton with drag handles; adjustments go in `P.tweaks` (per branch id: a turn about the
   branch's base in the head frame, length, thickness, where it leaves its parent, and tangent arms `a0`/`a1` that bend
   it between its fixed ends like a Bézier curve's handles), applied in the engine's `buildAt`.
+  A species can bend its own beam the same way (`beamArms`, hidden), under any Fine-tuning.
   `keepClear` then turns any branch that comes within `MID_GAP` of the middle of the head (where the mirrored antler is)
   outward about its base just far enough; the turns are in `fit.cleared` and the page's status line says so. The library is
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's

@@ -172,6 +172,7 @@
       { k: 'baseDia', label: 'Base diameter', min: 8, max: 45, step: 0.5, u: 'mm' },
       { k: 'tipDia', label: 'Tip diameter', min: 2.5, max: 16, step: 0.5, u: 'mm', hint: '⅛ in or more survives handling' },
       { k: 'curlBias', label: 'Curl toward tip', min: 0.4, max: 3, step: 0.05, u: '×' },
+      { k: 'beamArms', label: 'Beam bend', type: 'arms', hint: 'The species’ own tangent arms on the beam (as Fine-tune’s): base x y z, then tip x y z, in beam lengths, head frame' },
       { k: 'inCurlBias', label: 'Tip curl toward tip', min: 0.4, max: 4, step: 0.05, u: '×', hint: 'Above 1, the beam runs out straight and turns in near its end' },
       { k: 'wobble', label: 'Kinks & wander', min: 0, max: 1, step: 0.05, u: '', hint: 'Low values read as sculpted, high as wild' },
       { k: 'tineCrest', label: 'Longest tine at', min: 0, max: 1, step: 0.05, u: '', pct: true, hint: 'Tine tips follow a smooth arch that peaks here' },
@@ -214,7 +215,7 @@
   // regardless of where the base sits on the band.
   const DEFAULTS = {
     preset: 'whitetail',
-    beamLength: 310, baseDia: 28, beamTaper: 0.46, tipDia: 5, beamLean: -26, beamCurl: 118, curlBias: 1.45, inCurlBias: 1, beamSpread: 66, beamInCurl: -108, wobble: 0.12,
+    beamLength: 310, baseDia: 28, beamTaper: 0.46, tipDia: 5, beamLean: -26, beamCurl: 118, curlBias: 1.45, inCurlBias: 1, beamArms: [0, 0, 0, 0, 0, 0], beamSpread: 66, beamInCurl: -108, wobble: 0.12,
     tineCount: 3, tineDir: 'up', tineStart: 0.34, tineEnd: 0.76, tineLength: 120, tineCrest: 0.4, tineTaper: 0.4, tineRhythm: 0.9, tineAngle: 80, tineFan: 14, tineCurve: 20, tineInward: 10, tineThick: 0.72,
     browTine: true, browDir: 'up', browLength: 44, browAngle: 74, browPos: 0.1,
     crownCount: 0, crownShape: 'cup', crownLength: 50, palmation: 0, forkDepth: 0, forkAngle: 32, forkTines: false,
@@ -229,7 +230,7 @@
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
     tweaks: {},   // Fine-tune: { branch id: { rot: rotation vector (rad, head frame), len: ×, thick: ×, s: where it leaves its parent, a0/a1: tangent arms } }
-    capTie: true, capShape: 'plate', capLength: 54, capBack: 40, capWidth: 0, capSpacing: 80, capPedicle: 8,   // the skull cap
+    capTie: true, capShape: 'plate', capLength: 54, capBack: 40, capWidth: 0, capSpacing: 80, capPedicle: 5,   // the skull cap
     capSnoutWidth: 1, capTaper: 0.5, capTip: 14, capDroop: 0.5,                                                 // and its front
   };
 
@@ -252,9 +253,10 @@
     // after reference photos of whitetail and mule deer bucks: a typical 10-point rack, one in velvet, a young
     // forkhorn, and a mule buck's forked points
     buck: { label: 'Typical buck', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 340, baseDia: 30, beamTaper: 0.46, tipDia: 5, beamLean: -28, beamCurl: 122, curlBias: 1.4, beamSpread: 70, beamInCurl: -112, wobble: 0.14, tineCount: 4, tineDir: 'up', tineStart: 0.28, tineEnd: 0.8, tineLength: 128, tineCrest: 0.35, tineTaper: 0.45, tineRhythm: 0.95, tineAngle: 84, tineFan: 10, tineCurve: 18, tineInward: 8, tineThick: 0.7, browTine: true, browDir: 'up', browLength: 40, browAngle: 72, browPos: 0.09, jitter: 0.1, seed: 41, ovality: 0.14, grooveDepth: 0.5, grooveCount: 9, pearling: 0.55, burrSize: 4, scale: 0.6 } },
-    // fitted to a photo of a typical whitetail eight-pointer, front on (2026-10-04): the beam runs out and back, turns
-    // up and sweeps forward so its tip points in; a tall G2 and a shorter G3 straight up off the bend, a short brow
-    eightpoint: { label: '8-point whitetail', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 272, baseDia: 19, beamTaper: 0.46, tipDia: 5, beamLean: -35, beamCurl: 101, curlBias: 1.43, inCurlBias: 2.1, beamSpread: 59, beamInCurl: -152, wobble: 0.05, tineCount: 2, tineDir: 'up', tineStart: 0.47, tineEnd: 0.62, tineLength: 146, tineCrest: 0, tineTaper: 0.68, tineRhythm: 1, tineAngle: 30, tineFan: 0, tineCurve: -10, tineInward: 4, tineThick: 0.62, browTine: true, browDir: 'up', browLength: 55, browAngle: 69, browPos: 0.04, jitter: 0.04, seed: 41, ovality: 0.14, grooveDepth: 0.5, grooveCount: 9, pearling: 0.55, burrSize: 4, scale: 0.7 } },
+    // fitted to a photo of a typical whitetail eight-pointer, front on, and a whitetail's side profile (2026-10-04): the
+    // beam runs out and back, then sweeps forward in a long low arc so its tip points in (beamArms shape that arc); a
+    // tall G2 and a shorter G3 standing up off its top, a short upright brow
+    eightpoint: { label: '8-point whitetail', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 272, baseDia: 19, beamTaper: 0.46, tipDia: 5, beamLean: -19, beamCurl: 139, curlBias: 2.11, inCurlBias: 1.47, beamArms: [0.82, -0.53, 0.71, 0.04, 0.35, 0.97], beamSpread: 53, beamInCurl: -108, wobble: 0.05, tineCount: 2, tineDir: 'up', tineStart: 0.61, tineEnd: 0.72, tineLength: 96, tineCrest: 0, tineTaper: 0.74, tineRhythm: 1, tineAngle: 56, tineFan: 0, tineCurve: 60, tineInward: -7, tineThick: 0.62, browTine: true, browDir: 'up', browLength: 47, browAngle: 70, browPos: 0.03, jitter: 0.04, seed: 41, ovality: 0.14, grooveDepth: 0.5, grooveCount: 9, pearling: 0.55, burrSize: 4, scale: 0.7 } },
     velvet: { label: 'Velvet buck', set: 'campfire', p: { character: 0.5, ringPattern: 'band', beamLength: 270, baseDia: 34, beamTaper: 0.28, tipDia: 13, beamLean: -24, beamCurl: 104, curlBias: 1.3, beamSpread: 62, beamInCurl: -92, wobble: 0.1, tineCount: 3, tineDir: 'up', tineStart: 0.3, tineEnd: 0.72, tineLength: 88, tineCrest: 0.35, tineTaper: 0.35, tineAngle: 78, tineFan: 8, tineCurve: 16, tineInward: 6, tineThick: 0.86, browTine: true, browDir: 'up', browLength: 30, browAngle: 70, browPos: 0.1, jitter: 0.08, seed: 17, ovality: 0.08, grooveDepth: 0, pearling: 0, burr: false, fillet: 7, scale: 0.62 } },
     forkhorn: { label: 'Forkhorn', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 200, baseDia: 22, beamTaper: 0.45, tipDia: 4.5, beamLean: -24, beamCurl: 84, curlBias: 1.4, beamSpread: 54, beamInCurl: -72, wobble: 0.18, tineCount: 1, tineDir: 'up', tineStart: 0.56, tineEnd: 0.56, tineLength: 62, tineTaper: 0, tineAngle: 70, tineCurve: 22, tineInward: 6, tineThick: 0.7, browTine: true, browDir: 'up', browLength: 16, browAngle: 68, browPos: 0.09, jitter: 0.14, seed: 9, ovality: 0.12, grooveDepth: 0.45, pearling: 0.45, burrSize: 3.5, scale: 0.68 } },
     mulebuck: { label: 'Mule buck', set: 'campfire', p: { character: 0.25, ringPattern: 'band', beamLength: 280, baseDia: 29, beamTaper: 0.36, tipDia: 5, beamLean: -14, beamCurl: 48, curlBias: 1.2, beamSpread: 58, beamInCurl: -64, wobble: 0.2, tineCount: 0, browTine: true, browDir: 'up', browLength: 22, browAngle: 62, browPos: 0.08, forkDepth: 2, forkAngle: 44, tineCurve: 10, tineInward: 4, jitter: 0.16, seed: 58, ovality: 0.14, grooveDepth: 0.6, pearling: 0.6, burrSize: 4.2, fillet: 3, scale: 0.62 } },
@@ -284,6 +286,10 @@
     }
     return out;
   }
+  function cleanArms(a) {   // six numbers (an array, or a comma list from the CLI), each within ±ARM_MAX
+    const v = typeof a === 'string' ? a.split(',') : Array.isArray(a) ? a : [];
+    return [0, 1, 2, 3, 4, 5].map((i) => { const x = Number(v[i]); return isFinite(x) && v[i] !== null && v[i] !== '' ? clamp(x, -ARM_MAX, ARM_MAX) : 0; });
+  }
   function resolveParams(p) {
     if (p && p.character == null && typeof p.ringSculpt === 'number') p = Object.assign({}, p, { character: 0.5 + p.ringSculpt / 2 });   // the old Sculpted slider
     if (p && p.character == null && typeof p.ringCharacter === 'number') p = Object.assign({}, p, { character: p.ringCharacter });   // its crown-only name
@@ -293,6 +299,7 @@
     for (const g of PARAM_SPEC) for (const it of g.items) {
       if (it.type === 'text') P[it.k] = String(P[it.k] == null ? DEFAULTS[it.k] : P[it.k]).slice(0, 80);
       else if (it.type === 'tweaks') P[it.k] = cleanTweaks(P[it.k]);
+      else if (it.type === 'arms') P[it.k] = cleanArms(P[it.k]);
       else if (it.type === 'bool') P[it.k] = !!P[it.k];
       else if (it.type === 'select') { P[it.k] = String(P[it.k]); if (!it.options.some((o) => o[0] === P[it.k])) P[it.k] = String(DEFAULTS[it.k]); }
       else {
@@ -459,6 +466,8 @@
     };
     const beam = sweep([0, 0, 0], bdir, L, rBeam);
     beam.kind = 'beam'; beam.ov = P.ovality; beam.id = 'beam';
+    const BA = P.beamArms || [];
+    if (BA.some((v) => v)) bendArms(beam, { a0: BA.slice(0, 3), a1: BA.slice(3, 6) });   // the species' own bend, under any Fine-tuning
     if (twB) { bendArms(beam, twB); turnAbout(beam, [0, 0, 0], twB.rot); }
     branches.push(beam);
 

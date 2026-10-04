@@ -28,6 +28,13 @@ Newest first within each section. Change one only when the owner asks.
   shorter G3 straight up off the bend. Fitted to the photo's points in the front view, with a whitetail's side profile
   (back a little, then forward), and slimmer than the other bucks, as in the photo. It needed the beam's inward turn to
   gather toward its end (`inCurlBias`, a species setting) and Tip curl to go to −160°.
+  **Refitted for the side** (owner: fine from the front, "really bad from the side"; it rose straight up and hooked
+  forward): now fitted in three dimensions, the photo's front view with a typical whitetail's profile for depth. The
+  beam goes up and back, then sweeps forward in a long low arc, the points standing up off its top. The beam's own
+  settings can't make that arc, so a species can now bend its beam with tangent arms (`beamArms`, as Fine-tune's,
+  applied under any Fine-tuning, so Reset keeps the species' shape).
+- **Lower pedicles by default** (owner, 2026-10-04, for balance): Pedicle height 5 mm (was 8), so the antlers sit
+  closer to the head.
 - **The skull cap is configurable** (a Skull cap group, shown only when it's the base style): shape (true to deer
   skulls, as a taxidermist cuts them: a Skull plate, the forehead and both antlers cut through the eye sockets, or the
   Upper skull, to the nose; the invented Shield and Rounded shapes were retired and open as a skull plate), front reach, back reach, width beyond the antlers, antler spacing, pedicle height,

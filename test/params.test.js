@@ -52,3 +52,18 @@ test('the beam turns in nearer its end as inCurlBias rises; 1 is the default', (
   assert.ok(out(beam({ inCurlBias: 2.5 })) > out(beam({ inCurlBias: 1 })) + 3, 'straighter outward run before the turn');
   assert.equal(Core.resolveParams({}).inCurlBias, 1);
 });
+
+// beamArms (species files only): the species' own tangent arms on the beam, under any Fine-tuning. Cleaned when read
+// (a list or the CLI's comma list), zero by default, and they bend the beam between its ends, which stay put.
+test('a species can bend its beam with tangent arms, under the Fine-tuning', () => {
+  assert.deepEqual(Core.resolveParams({}).beamArms, [0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(Core.resolveParams({ beamArms: '0.5,-0.25,9,x' }).beamArms, [0.5, -0.25, Core.ARM_MAX, 0, 0, 0]);
+  const P = Object.assign(Core.presetParams('eightpoint'), { mount: 'tunnel', autoFit: false });
+  const beam = (q) => Core.buildSkeleton(Object.assign({}, P, q)).branches.find((b) => b.id === 'beam').pts;
+  const a = beam({}), b = beam({ beamArms: [0, 0, 0, 0, 0, 0] }), m = Math.round(a.length / 2);
+  assert.ok(Math.hypot(...a[0].map((v, i) => v - b[0][i])) < 1e-6 && Math.hypot(...a.at(-1).map((v, i) => v - b.at(-1)[i])) < 1e-6, 'same ends');
+  assert.ok(Math.hypot(...a[m].map((v, i) => v - b[m][i])) > 5, 'bent between');
+  const t = beam({ tweaks: { beam: { a1: [0, 0.3, 0] } } });
+  assert.ok(Math.hypot(...t[m].map((v, i) => v - a[m][i])) > 1, 'Fine-tuning bends it further');
+  assert.deepEqual(Core.resolveParams(Object.assign({}, P, { tweaks: {} })).beamArms, P.beamArms, 'Reset all leaves the species’ own bend');
+});
