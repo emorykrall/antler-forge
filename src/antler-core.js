@@ -201,6 +201,7 @@
       { k: 'ringWander', label: 'Organic variation', min: 0, max: 1, step: 0.05, u: '', hint: 'How much the beams wander and the tines vary' },
       { k: 'jitter', label: 'Natural variation', min: 0, max: 1, step: 0.05, u: '' },
       { k: 'seed', label: 'Variation seed', min: 1, max: 9999, step: 1, u: '' },
+      { k: 'tweaks', label: 'Fine-tuning', type: 'tweaks', hint: 'Per-branch adjustments from the Fine-tune view, in the design file' },
     ] },
   ];
 
@@ -222,6 +223,7 @@
     ringThick: 9, ringStrands: 3, ringWeave: 2, ringDip: 18, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 26, ringFront: 'point',
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
+    tweaks: {},   // Fine-tune: { branch id: { rot: rotation vector (rad, head frame), len: ×, thick: ×, s: where it leaves its parent } }
     capTie: true, capShape: 'shield', capLength: 54, capBack: 40, capWidth: 0, capSpacing: 80, capPedicle: 8,   // the skull cap
   };
 
@@ -252,6 +254,21 @@
   // Crown designs retired in the controls review (2026-09-28), and the nearest one that's left
   const RETIRED = { tiara: 'fleur', lyre: 'fleur', whiplash: 'fleur', kokoshnik: 'fleur', laurel: 'circlet', sunburst: 'spines', loops: 'lattice', weave: 'lattice' };
   const COUNTS = ['tineCount', 'crownCount', 'forkDepth', 'ringStrands', 'ringWeave', 'ringTines', 'grooveCount', 'seed', 'smoothing'];   // whole numbers
+  // Fine-tune adjustments, as saved: only known shapes and sensible ranges survive (a design file is outside data).
+  const TWEAK_ID = /^(beam|brow|t\d|c\d)(\/\d){0,4}$/;
+  function cleanTweaks(t) {
+    const out = {};
+    if (!t || typeof t !== 'object') return out;
+    const num = (v, a, b, d) => { const x = Number(v); return isFinite(x) && v !== null && v !== '' ? clamp(x, a, b) : d; };
+    for (const id of Object.keys(t).slice(0, 80)) {
+      const w = t[id];
+      if (!TWEAK_ID.test(id) || !w || typeof w !== 'object') continue;
+      const rot = Array.isArray(w.rot) && w.rot.length === 3 ? w.rot.map((v) => num(v, -Math.PI, Math.PI, 0)) : [0, 0, 0];
+      const c = { rot, len: num(w.len, 0.3, 2.5, 1), thick: num(w.thick, 0.4, 2.5, 1), s: w.s == null ? null : num(w.s, 0.02, 0.97, null) };
+      if (vlen(rot) > 1e-6 || c.len !== 1 || c.thick !== 1 || c.s != null) out[id] = c;
+    }
+    return out;
+  }
   function resolveParams(p) {
     if (p && p.character == null && typeof p.ringSculpt === 'number') p = Object.assign({}, p, { character: 0.5 + p.ringSculpt / 2 });   // the old Sculpted slider
     if (p && p.character == null && typeof p.ringCharacter === 'number') p = Object.assign({}, p, { character: p.ringCharacter });   // its crown-only name
@@ -259,6 +276,7 @@
     if (RETIRED[P.ringPattern]) P.ringPattern = RETIRED[P.ringPattern];
     for (const g of PARAM_SPEC) for (const it of g.items) {
       if (it.type === 'text') P[it.k] = String(P[it.k] == null ? DEFAULTS[it.k] : P[it.k]).slice(0, 80);
+      else if (it.type === 'tweaks') P[it.k] = cleanTweaks(P[it.k]);
       else if (it.type === 'bool') P[it.k] = !!P[it.k];
       else if (it.type === 'select') { P[it.k] = String(P[it.k]); if (!it.options.some((o) => o[0] === P[it.k])) P[it.k] = String(DEFAULTS[it.k]); }
       else {
@@ -329,7 +347,16 @@
     const so = (P.seed % 97) * 1.37;
     const branches = [];
 
-    const L = P.beamLength, r0 = P.baseDia / 2, rt = Math.min(P.tipDia / 2, r0 * 0.8);
+    // Fine-tune: per-branch adjustments, by branch id (beam, brow, t0…, c0…, and forks: parent id + /n)
+    const TW = P.tweaks || {}, tw = (id) => TW[id] || null;
+    const turnAbout = (br, o, rv) => {   // turn a swept branch rigidly about the point o by the rotation vector rv
+      const ang = vlen(rv); if (ang < 1e-9) return;
+      const ax = mul(rv, 1 / ang), r = (v) => rotate(v, ax, ang);
+      br.pts = br.pts.map((p) => add(o, r(sub(p, o))));
+      if (br.F) br.F = r(br.F); if (br.d0) br.d0 = r(br.d0); if (br.baseT) br.baseT = r(br.baseT);
+    };
+    const twB = tw('beam');
+    const L = P.beamLength * (twB ? twB.len : 1), r0 = (P.baseDia / 2) * (twB ? twB.thick : 1), rt = Math.min(P.tipDia / 2, r0 * 0.8);
 
     /* ---- 1. plan every point that leaves the beam (needed for kinks + swelling) */
     const plan = [];
@@ -350,6 +377,9 @@
       if (fan) plan.push({ kind: 'crown', s: 0.4 + 0.56 * u + jit(0.02), len: P.crownLength * (0.75 + 0.45 * Math.sin(Math.PI * (0.25 + 0.75 * u))) * (1 + jit(0.15)), angle: (92 - 62 * u + jit(8)) * DEG, fan: true, curve: P.tineCurve * DEG * 0.8, thick: 0.6 });
       else plan.push({ kind: 'crown', s: 0.8 + 0.14 * u, len: P.crownLength * (1 - 0.25 * u) * (1 + jit(0.2)), angle: (38 + jit(10)) * DEG, cupAngle: (c * 360 / cc + 25 + jit(25)) * DEG, curve: P.tineCurve * DEG * 0.6, thick: 0.66 });
     }
+
+    // ids, and the Fine-tune adjustments to where each point leaves the beam, its length and thickness
+    { let ti = 0, ci = 0; for (const t of plan) { t.id = t.kind === 'brow' ? 'brow' : t.kind === 'tine' ? 't' + ti++ : 'c' + ci++; const w = tw(t.id); if (w) { if (w.s != null) t.s = w.s; t.len *= w.len; t.thick *= w.thick; t.tw = w; } } }
 
     /* ---- 2. main beam: lean/curl/spread, plus wander and a kink away from each tine */
     const lean = P.beamLean * DEG, curl = P.beamCurl * DEG, spread = P.beamSpread * DEG, incurl = P.beamInCurl * DEG;
@@ -378,7 +408,8 @@
       return Math.max(rt, r * ogive(s, 0.8));
     };
     const beam = sweep([0, 0, 0], bdir, L, rBeam);
-    beam.kind = 'beam'; beam.ov = P.ovality;
+    beam.kind = 'beam'; beam.ov = P.ovality; beam.id = 'beam';
+    if (twB) turnAbout(beam, [0, 0, 0], twB.rot);
     branches.push(beam);
 
     /* ---- 3. tines */
@@ -416,6 +447,8 @@
       else if (t.spiral) { let b0 = perp(UP, bt); if (vlen(b0) < 0.2) b0 = perp([0, 1, 0], bt); side = rotate(norm(b0), bt, t.i * 137.5 * DEG); }
       else side = rotate(norm(t.ref), bt, t.twist || 0);
       const br = makeTine(beam, t.s, t.len, t.angle, side, t.curve, t.thick, t.kind, idx + 1.3);
+      br.id = t.id; br.parent = 'beam'; br.s0 = t.s;
+      if (t.tw) turnAbout(br, br.pts[0], t.tw.rot);
       if (t.kind === 'crown') { br.ov = P.ovality + P.palmation * 0.2; }
       sideSum = add(sideSum, perp(br.d0, bt));
       tines.push(br);
@@ -426,15 +459,20 @@
     if (fan && cc) beam.ov = P.ovality + P.palmation * 0.25;
     for (const t of tines) branches.push(t);
 
+    const forkN = {};   // forks off each branch, numbered in the order they grow: the ids Fine-tune keys on
     function addForks(br, depth, sStart, sign) {
       if (depth <= 0) return;
-      const sf = sStart + (1 - sStart) * (sStart === 0 ? 0.42 : 0.3);   // first split low, so the Ys read as equal
+      const id = br.id + '/' + (forkN[br.id] = (forkN[br.id] || 0) + 1) % 10, w = tw(id);
+      let sf = sStart + (1 - sStart) * (sStart === 0 ? 0.42 : 0.3);   // first split low, so the Ys read as equal
+      if (w && w.s != null) sf = Math.max(sStart + 0.02, w.s);
       const rem = br.length * (1 - sf);
       if (rem < 10) return;
       const { t } = sampleAt(br, sf);
       let side = perp([0.55 * sign, 0.75 * sign, 0.35], t);
       if (vlen(side) < 0.2) side = perp([sign, 0, 0], t);
-      const child = makeTine(br, sf, rem * (0.9 + jit(0.2)), (P.forkAngle + jit(10)) * DEG, side, P.tineCurve * DEG * 0.15, 0.88, 'fork', depth * 3.1 + sf);
+      const child = makeTine(br, sf, rem * (0.9 + jit(0.2)) * (w ? w.len : 1), (P.forkAngle + jit(10)) * DEG, side, P.tineCurve * DEG * 0.15, 0.88 * (w ? w.thick : 1), 'fork', depth * 3.1 + sf);
+      child.id = id; child.parent = br.id; child.s0 = sf;
+      if (w) turnAbout(child, child.pts[0], w.rot);
       branches.push(child);
       addForks(child, depth - 1, 0, -sign);
       addForks(br, depth - 1, sf, sign);
@@ -455,6 +493,8 @@
       return [x * Math.cos(sp) + z1 * Math.sin(sp), y1, -x * Math.sin(sp) + z1 * Math.cos(sp)];
     };
     const place = (v) => add(rot(mul(v, S)), [0, 0, mount.baseZ]);
+    // Fine-tune works in the print frame on screen and stores turns in the head frame: this carries a direction back
+    const toHead = ([X, Y, Z]) => { const x = X * Math.cos(sp) - Z * Math.sin(sp), z1 = X * Math.sin(sp) + Z * Math.cos(sp); return [x, Y * Math.cos(rk) + z1 * Math.sin(rk), -Y * Math.sin(rk) + z1 * Math.cos(rk)]; };
     for (const br of branches) {
       br.pts = br.pts.map(place);
       br.rad = br.rad.map((r) => Math.max(r * S, MIN_R));   // no printed tip under 3 mm
@@ -487,7 +527,7 @@
     }
 
     return {
-      params: P, scale: S, branches, burr, palm, mount, r0: r0 * S,
+      params: P, scale: S, branches, burr, palm, mount, r0: r0 * S, toHead,
       texture: { groove: P.grooveDepth * grainOf(P), grooves: P.grooveCount, pearl: P.pearling * grainOf(P) * (1 + gigerOf(P)), knob: gigerOf(P) },
       fillet: P.fillet,
     };

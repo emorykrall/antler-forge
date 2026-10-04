@@ -37,6 +37,17 @@ Newest first within each section. Change one only when the owner asks.
 - **The skull cap follows the head.** Head circumference shows when the cap is selected and sets the cap's
   front-to-back curve; ear to ear it follows the headband's curve. The headband graphic follows the bust's head.
 
+## Fine-tune (both pages, 2026-10-04)
+
+- **A view in the view switch**: Print bed · On headband · Fine-tune · Try on. Headband antlers only (hidden for
+  crowns, for now). It shows one antler's skeleton over a ghost of its mesh, on the bust; the other antler is
+  always its mirror image.
+- **Drag dots in the camera's plane**: a branch's tip dot swings it about its base and stretches it; its base dot
+  slides it along the branch it grows from; dragging empty space turns the view; Front and Side change the plane.
+  A card names the picked branch and its length, with Thickness, Reset branch and Reset all.
+- **Saved as `tweaks`** in the design (library, autosave, design file), keyed by branch id and applied in the
+  engine, so the CLI builds the same STL. Changing species or Surprise me clears them (the branches change).
+
 ## Try-on sizing
 
 - **Size comes from a one-tap eye calibration.** Tap Calibrate, take glasses off, look at the

@@ -94,7 +94,12 @@ button,input,select{font:inherit;color:inherit}
 .measure-btn:hover{filter:brightness(1.05)}.measure-btn:active{transform:translateY(1px)}
 .measure-btn svg{width:22px;height:14px;flex:none;color:var(--gold)}
 .measure-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.stage.tutor-on .hud.bot{visibility:hidden}
+.stage.tutor-on .hud.bot,.stage.tune-on .hud.bot{visibility:hidden}
+/* ---------- fine-tune: the branch card over the viewport */
+.tune-card{justify-items:stretch}
+.tune-title{margin:0;font:400 17px/1.2 var(--f-display);color:var(--vp-active);text-align:center}
+.tune-hint{margin:0;font-size:12.5px;line-height:1.4;opacity:.85;text-align:center}
+.tune-card output{font:500 12px/1 var(--f-mono);min-width:44px;text-align:right}
 /* ---------- the library (saved designs) */
 .stage.lib-on #vp,.stage.lib-on .hud.bot,.stage.lib-on .progress,.stage.lib-on [aria-label="Camera"]{visibility:hidden}
 .count{display:inline-block;min-width:18px;margin-left:6px;padding:1px 5px;border-radius:999px;background:rgba(255,255,255,.14);font:500 11px/1.4 var(--f-mono);text-align:center}
@@ -268,7 +273,8 @@ details[open] summary::after{transform:rotate(-135deg)}
   .ar-note{top:calc(var(--chrome) + 124px);font-size:13.5px}
   .hs-ring{width:160px}
   .ar-bar{padding:7px 8px;gap:6px}
-  .stage.ar-on,.stage.lib-on,.stage.tutor-on{height:74vh}
+  .stage.ar-on,.stage.lib-on,.stage.tutor-on,.stage.tune-on{height:74vh}
+  .tune-card{padding:7px 10px;gap:5px}.tune-title{font-size:15px}.tune-hint{font-size:11.5px;line-height:1.3}
   .tutor{padding:10px 12px}.tutor h3{font-size:17px}.tutor p{font-size:13px;line-height:1.4;margin-bottom:4px}.tutor p.tip{font-size:13.5px}
   .lib-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
   .card-body{padding:10px 11px 12px}
@@ -389,6 +395,7 @@ details[open] summary::after{transform:rotate(-135deg)}
         <div class="seg" role="group" aria-label="View">
           <button id="v-print" aria-pressed="false">Print bed</button>
           <button id="v-wear" aria-pressed="true">On headband</button>
+          <button id="v-tune" aria-pressed="false" title="Move, stretch and thicken the branches of one antler (the other mirrors it)">Fine-tune</button>
           <button id="v-ar" aria-pressed="false">Try on</button>
         </div>
         <div class="seg small" role="group" aria-label="Camera">
@@ -408,6 +415,12 @@ details[open] summary::after{transform:rotate(-135deg)}
       <p id="tutor-p"></p>
       <p class="tip" id="tutor-tip"></p>
       <div class="row"><button class="btn" id="tutor-back">Back</button><button class="btn primary" id="tutor-next">Next</button></div>
+    </div>
+    <div class="ar-bar tune-card" id="tune-card" role="region" aria-label="Fine-tune" hidden>
+      <p class="tune-title" id="tune-title"></p>
+      <p class="tune-hint" id="tune-hint"></p>
+      <div class="ar-row" id="tune-thick-row"><label for="tune-thick">Thickness</label><input type="range" id="tune-thick" min="0.4" max="2.5" step="0.05"><output id="tune-thick-out"></output></div>
+      <div class="ar-row"><button class="chipbtn" id="tune-reset">Reset branch</button><button class="chipbtn" id="tune-reset-all">Reset all</button></div>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="err" id="gl-err" hidden>3D preview needs WebGL. The controls and STL export still work.</div>
@@ -487,7 +500,11 @@ for (const [k, v] of Object.entries(C.PRESETS)) {
   if (v.set !== (YJ ? 'campfire' : undefined)) continue;   // each edition shows its own species
   const b = document.createElement('button');
   b.className = 'chip'; b.textContent = v.label; b.dataset.k = k; b.id = 'preset-' + k;
-  b.addEventListener('click', () => { P = C.presetParams(k, P); syncControls(); changed(); });
+  b.addEventListener('click', () => {
+    const tuned = Object.keys(P.tweaks || {}).length;
+    P = C.presetParams(k, P); syncControls(); changed();
+    if (tuned) toast('Fine-tuning cleared: the new species has its own branches.');
+  });
   presetsEl.appendChild(b);
 }
 // Lengths are stored and built in millimetres; people see inches.
@@ -582,6 +599,8 @@ function syncControls() {
 function applyStyle() {
   for (const b of $('styles').children) b.setAttribute('aria-pressed', String(b.dataset.style === P.style));
   $('v-wear').textContent = P.style === 'crown' ? 'On head' : 'On headband';
+  $('v-tune').hidden = P.style === 'crown';   // Fine-tune is for headband antlers (for now)
+  if (P.style === 'crown' && view === 'tune') setView('wear');
   for (const k in inputs) {
     const { it, wrap } = inputs[k];
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
@@ -640,6 +659,7 @@ try {
   root = new THREE.Group(); scene.add(root);
   mats.antler = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.0 });
   mats.head = new THREE.MeshStandardMaterial({ color: 0x1c2a21, roughness: 0.9, transparent: true, opacity: 0.4, depthWrite: false });
+  mats.ghost = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, transparent: true, opacity: 0.32, depthWrite: false });   // Fine-tune: the mesh behind the skeleton
   mats.tie = new THREE.MeshStandardMaterial({ color: new THREE.Color('#7B3326').convertSRGBToLinear(), roughness: 1, side: THREE.DoubleSide });   // the skull cap's strap: faded red cloth
   mats.band = new THREE.MeshToonMaterial({ color: new THREE.Color(YJ ? '#3B2B20' : '#6A4A2E').convertSRGBToLinear(), side: THREE.DoubleSide });   // on the shade, the band is in shadow too
 } catch (e) { glOK = false; $('gl-err').hidden = false; }
@@ -805,6 +825,20 @@ function crownFit(p, sk) {
 }
 // The pair as worn: each antler seated on the band at the chosen angle, left mirrored.
 // A crown is one piece, placed whole.
+// Where the right antler (its print frame) sits on the bust: on the band at the chosen angle, or on its pedicle on the
+// skull cap. The left is its mirror image (x → −x).
+function rightAntlerMatrix(sk) {
+  const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+  if (sk.params.mount === 'skull' && shown && shown.cap) {
+    const pl = shown.cap.place;
+    return new THREE.Matrix4().makeBasis(new THREE.Vector3(...pl.X), new THREE.Vector3(...pl.Y), new THREE.Vector3(...pl.Z))
+      .setPosition(new THREE.Vector3(...pl.Q)).premultiply(new THREE.Matrix4().makeTranslation(0, 0, cz));
+  }
+  const a = P.bandAngle * Math.PI / 180;
+  const n = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), t = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
+  return new THREE.Matrix4().makeBasis(t, new THREE.Vector3(0, 1, 0), n)
+    .setPosition(new THREE.Vector3(Rb * Math.sin(a), 0, cz + Rb * Math.cos(a)).addScaledVector(n, -sk.mount.tunnelCZ));
+}
 function antlerPair(sk) {
   const g = new THREE.Group();
   if (sk.params.style === 'crown') { const c = antlerObject(); c.applyMatrix4(crownFit(sk.params, sk).M); g.add(c); return g; }
@@ -813,20 +847,164 @@ function antlerPair(sk) {
     const pl = shown.cap.place, up = new THREE.Matrix4().makeTranslation(0, 0, cz);
     const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(pl.toBand)); c.applyMatrix4(up); g.add(c);
     if (pl.slots && pl.slots.length && faunGroup && view !== 'ar') g.add(strapObject(pl, cz));
-    const M = new THREE.Matrix4().makeBasis(new THREE.Vector3(...pl.X), new THREE.Vector3(...pl.Y), new THREE.Vector3(...pl.Z)).setPosition(new THREE.Vector3(...pl.Q));
-    const right = antlerObject(); right.applyMatrix4(M); right.applyMatrix4(up);
-    const left = antlerObject(); left.applyMatrix4(M); left.applyMatrix4(up); left.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+    const M = rightAntlerMatrix(sk);
+    const right = antlerObject(); right.applyMatrix4(M);
+    const left = antlerObject(); left.applyMatrix4(M); left.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
     g.add(right, left);
     return g;
   }
-  const a = P.bandAngle * Math.PI / 180;
-  const n = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), t = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
-  const M = new THREE.Matrix4().makeBasis(t, new THREE.Vector3(0, 1, 0), n);
-  M.setPosition(new THREE.Vector3(Rb * Math.sin(a), 0, cz + Rb * Math.cos(a)).addScaledVector(n, -sk.mount.tunnelCZ));
+  const M = rightAntlerMatrix(sk);
   const right = antlerObject(); right.applyMatrix4(M);
   const left = antlerObject(); left.applyMatrix4(M); left.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
   g.add(right, left);
   return g;
+}
+
+/* ------------------------------------------------------------ fine-tune (the skeleton editor) */
+// One antler's skeleton over a ghost of its mesh, on the bust as worn; the other antler is its mirror image. Drag
+// the dot at a branch's tip to swing it about its base and stretch it; drag the dot at its base to slide it along
+// the branch it grows from; pick a branch to set its thickness. Drags move in the plane facing the camera (switch
+// between Front and Side to move the other way); dragging anywhere else turns the view. The adjustments are saved
+// in P.tweaks (applied in the engine's buildAt, keyed by branch id) as turns in the head frame. While dragging only
+// the skeleton is redrawn, at a fixed scale; the mesh follows when the drag ends.
+const TUNE = { sel: null, drag: null, group: null, skel: null, handles: [] };
+const tuneName = (id) => {
+  if (id === 'beam') return 'Main beam';
+  if (id === 'brow') return 'Brow tine';
+  const f = id.split('/'), head = f[0][0] === 't' ? `Tine ${Number(f[0].slice(1)) + 1}` : f[0][0] === 'c' ? `Crown point ${Number(f[0].slice(1)) + 1}` : f[0] === 'brow' ? 'Brow tine' : 'Main beam';
+  return f.length > 1 ? `Fork ${f.slice(1).join('.')} on the ${head === 'Main beam' ? 'main beam' : head.toLowerCase()}` : head;
+};
+function tuneSkeleton(scale) { return C.buildSkeleton(scale ? Object.assign({}, P, { autoFit: false, scale }) : P); }
+function skeletonLines(sk, g, withHandles) {
+  const hr = Math.min(6, Math.max(2.2, (sk.fit ? sk.fit.h : 150) * 0.02));
+  const sel = TUNE.sel, lineMat = (on) => new THREE.LineBasicMaterial({ color: on ? 0xF0A44C : withHandles ? 0xF2E9D8 : 0x8C8577, transparent: true, opacity: withHandles ? 1 : 0.5, depthTest: false });
+  for (const br of sk.branches) {
+    const on = withHandles && br.id === sel;
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(br.pts.map((p) => new THREE.Vector3(...p))), lineMat(on));
+    line.renderOrder = 9; g.add(line);
+    if (!withHandles) continue;
+    for (const kind of br.id === 'beam' ? ['tip'] : ['tip', 'base']) {
+      const p = kind === 'tip' ? br.pts[br.pts.length - 1] : br.pts[0];
+      const m = new THREE.Mesh(new THREE.SphereGeometry(kind === 'tip' ? hr : hr * 0.75, 16, 12),
+        new THREE.MeshBasicMaterial({ color: on ? 0xF0A44C : kind === 'tip' ? 0xE7B83F : 0x9A8F7E, transparent: true, opacity: 0.95, depthTest: false }));
+      m.position.set(...p); m.renderOrder = 10; m.userData = { id: br.id, kind };
+      g.add(m); TUNE.handles.push(m);
+    }
+  }
+}
+function tuneObject() {
+  const g = new THREE.Group();
+  if (!faunGroup) faunGroup = YJ ? buildShade() : buildFaun();
+  faunGroup.scale.setScalar(1); g.add(faunGroup); g.add(bandObject());
+  const sk = TUNE.drag ? TUNE.drag.sk : tuneSkeleton();
+  TUNE.skel = sk; TUNE.handles = [];
+  const M = rightAntlerMatrix(sk), Cz = 92 - P.hbRadius + P.hbThick / 2 + 1;
+  if (P.mount === 'skull' && shown && shown.cap) { const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(shown.cap.place.toBand)); c.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, Cz)); g.add(c); }
+  const A = new THREE.Group(), L = new THREE.Group();
+  A.applyMatrix4(M); L.applyMatrix4(M); L.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+  if (shown) { A.add(new THREE.Mesh(shown.geo, mats.ghost)); L.add(new THREE.Mesh(shown.geo, mats.ghost)); }
+  skeletonLines(sk, A, true); skeletonLines(sk, L, false);
+  g.add(A, L); TUNE.group = A;
+  return g;
+}
+function tuneShow(on) {
+  $('stage').classList.toggle('tune-on', on); $('tune-card').hidden = !on;
+  if (!on) { TUNE.drag = null; TUNE.sel = null; if (controls) controls.enabled = true; }
+  tuneCard();
+}
+function tuneCard() {
+  if ($('tune-card').hidden) return;
+  const id = TUNE.sel, sk = TUNE.skel, br = id && sk ? sk.branches.find((b) => b.id === id) : null, tw = id && P.tweaks ? P.tweaks[id] : null;
+  const tuned = Object.keys(P.tweaks || {}).length;
+  if (!br) {
+    $('tune-title').textContent = 'Fine-tune';
+    $('tune-hint').textContent = 'Drag a gold dot to swing and stretch a branch, a grey dot to slide it along. Drag anywhere else to turn the view. The other antler mirrors this one.';
+  } else {
+    const len = Math.hypot(...br.pts[br.pts.length - 1].map((v, i) => v - br.pts[0][i]));
+    $('tune-title').textContent = `${tuneName(id)} · ${inch(len, 1)} in`;
+    $('tune-hint').textContent = 'Gold dot: swing and stretch. Grey dot: slide along. Front and Side change the plane you drag in.';
+  }
+  $('tune-thick-row').hidden = !br;
+  if (br) { const t = tw ? tw.thick : 1; $('tune-thick').value = t; $('tune-thick-out').value = '×' + t.toFixed(2); }
+  $('tune-reset').hidden = !tw; $('tune-reset-all').hidden = !tuned;
+}
+function setTweak(id, change) {
+  const cur = (P.tweaks && P.tweaks[id]) || { rot: [0, 0, 0], len: 1, thick: 1, s: null };
+  P.tweaks = Object.assign({}, P.tweaks, { [id]: Object.assign({}, cur, change) });
+}
+{
+  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), vp = $('vp');
+  const pointerRay = (e) => { const r = vp.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, camera); };
+  const V = (p) => new THREE.Vector3(...p);
+  let frame = 0;
+  const redraw = () => { if (frame) return; frame = requestAnimationFrame(() => { frame = 0; rebuildScene(); tuneCard(); }); };
+  vp.addEventListener('pointerdown', (e) => {   // capture: claim the drag before the camera controls see it
+    if (view !== 'tune' || !glOK || !TUNE.handles.length) return;
+    pointerRay(e);
+    const hit = ray.intersectObjects(TUNE.handles, false)[0];
+    if (!hit) return;
+    const { id, kind } = hit.object.userData, sk = TUNE.skel, br = sk.branches.find((b) => b.id === id);
+    if (!br) return;
+    controls.enabled = false;
+    const cur = (P.tweaks && P.tweaks[id]) || { rot: [0, 0, 0], len: 1, thick: 1, s: null };
+    TUNE.group.updateMatrixWorld(true);
+    TUNE.sel = id;
+    TUNE.drag = {
+      id, kind, sk, scale: sk.fit.scale, moved: false, cur: JSON.parse(JSON.stringify(cur)),
+      plane: new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()), hit.object.getWorldPosition(new THREE.Vector3())),
+      inv: TUNE.group.matrixWorld.clone().invert(), B: V(br.pts[0]), T0: V(br.pts[br.pts.length - 1]),
+      parent: br.parent ? sk.branches.find((b) => b.id === br.parent).pts.map(V) : null, toHead: sk.toHead,
+    };
+    try { vp.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault(); redraw();
+  }, { capture: true });
+  window.addEventListener('pointermove', (e) => {
+    const d = TUNE.drag;
+    if (!d) return;
+    pointerRay(e);
+    const X = new THREE.Vector3();
+    if (!ray.ray.intersectPlane(d.plane, X)) return;
+    X.applyMatrix4(d.inv);   // into the antler's print frame
+    if (d.kind === 'tip') {   // swing about the base and stretch to reach the pointer
+      const a = d.T0.clone().sub(d.B), b = X.clone().sub(d.B);
+      if (b.length() < 2) return;
+      const q = new THREE.Quaternion().setFromUnitVectors(a.clone().normalize(), b.clone().normalize());
+      const ang = 2 * Math.acos(Math.min(1, Math.abs(q.w))), s = Math.sin(ang / 2) || 1, sg = q.w < 0 ? -1 : 1;
+      const axP = [sg * q.x / s, sg * q.y / s, sg * q.z / s], axH = new THREE.Vector3(...d.toHead(axP)).normalize();
+      const qd = new THREE.Quaternion().setFromAxisAngle(axH, ang), r0 = new THREE.Vector3(...d.cur.rot), a0 = r0.length();
+      const q0 = a0 > 1e-9 ? new THREE.Quaternion().setFromAxisAngle(r0.clone().normalize(), a0) : new THREE.Quaternion();
+      const qn = qd.multiply(q0); if (qn.w < 0) { qn.x = -qn.x; qn.y = -qn.y; qn.z = -qn.z; qn.w = -qn.w; }
+      const an = 2 * Math.acos(Math.min(1, qn.w)), sn = Math.sin(an / 2);
+      const rot = sn > 1e-6 ? [qn.x / sn * an, qn.y / sn * an, qn.z / sn * an] : [0, 0, 0];
+      setTweak(d.id, { rot, len: Math.min(2.5, Math.max(0.3, d.cur.len * b.length() / a.length())) });
+    } else if (d.parent) {   // slide the base along the branch it grows from
+      let best = Infinity, sBest = 0;
+      for (let i = 0; i < d.parent.length - 1; i++) {
+        const p = d.parent[i], q = d.parent[i + 1], seg = q.clone().sub(p), t = Math.max(0, Math.min(1, X.clone().sub(p).dot(seg) / seg.lengthSq()));
+        const dist = p.clone().addScaledVector(seg, t).distanceTo(X);
+        if (dist < best) { best = dist; sBest = (i + t) / (d.parent.length - 1); }
+      }
+      setTweak(d.id, { s: Math.min(0.95, Math.max(0.03, sBest)) });
+    }
+    d.moved = true;
+    d.sk = tuneSkeleton(d.scale);
+    redraw();
+  });
+  const end = () => {
+    const d = TUNE.drag;
+    if (!d) return;
+    TUNE.drag = null; controls.enabled = true;
+    if (d.moved) changed();   // the mesh, the size check and the autosave catch up
+    rebuildScene(); tuneCard();
+  };
+  window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end);
+  $('tune-thick').addEventListener('input', () => {
+    if (!TUNE.sel) return;
+    setTweak(TUNE.sel, { thick: Number($('tune-thick').value) }); $('tune-thick-out').value = '×' + Number($('tune-thick').value).toFixed(2);
+    changed();
+  });
+  $('tune-reset').addEventListener('click', () => { if (!TUNE.sel) return; const t = Object.assign({}, P.tweaks); delete t[TUNE.sel]; P.tweaks = t; changed(); rebuildScene(); tuneCard(); });
+  $('tune-reset-all').addEventListener('click', () => { P.tweaks = {}; changed(); rebuildScene(); tuneCard(); toast('Fine-tuning cleared.'); });
 }
 
 /* ------------------------------------------------------------ the faun (wear-view bust) */
@@ -1052,6 +1230,7 @@ function rebuildScene() {
   while (root.children.length) root.remove(root.children[0]);
   if (tutor) { root.add(tutorObject()); return; }   // the measuring tutorial owns the view while it's open
   if (importing) { root.add(alignObject()); if (!importing.framed) { fitCamera(); importing.framed = true; } return; }
+  if (view === 'tune') { root.add(tuneObject()); const fk = 'tune|' + P.preset + '|' + P.mount + '|' + (shown ? 1 : 0); if (fk !== lastFitKey) { fitCamera(); lastFitKey = fk; } return; }
   if (view === 'print') {
     if (!shown) root.add(bedObject());
     else {   // every part as it prints (right and mirrored left antler, the skull cap if there is one), on as many plates as they need
@@ -1079,15 +1258,16 @@ function rebuildScene() {
 function fitCamera() {
   if (tutor) return;   // the tutorial places its own camera
   const box = new THREE.Box3();
-  if (view === 'print') { root.traverse((o) => { if (o.isMesh && o.material === mats.antler) box.expandByObject(o); }); if (box.isEmpty()) box.setFromObject(root); }   // the parts, not the beds
+  if (view === 'tune' && TUNE.group) { TUNE.group.updateMatrixWorld(true); box.setFromObject(TUNE.group); }
+  else if (view === 'print') { root.traverse((o) => { if (o.isMesh && o.material === mats.antler) box.expandByObject(o); }); if (box.isEmpty()) box.setFromObject(root); }   // the parts, not the beds
   else {   // frame the head and antlers; the cloak can run off the bottom
     root.updateMatrixWorld(true);
     root.traverse((o) => { if (o.isMesh && !o.userData.nofit && !(o.parent && o.parent.userData.nofit)) box.expandByObject(o); });
   }
   const c = box.getCenter(new THREE.Vector3()), s = box.getSize(new THREE.Vector3());
   const r = Math.max(s.x, s.y, s.z) * 0.62;
-  const dist = r / Math.sin((camera.fov * Math.PI) / 360) * (view === 'print' ? 1.1 : 1.2);
-  const DIRS = { print: { '34': [0.75, -0.62, 0.32], front: [0, 1, 0.1], side: [1, 0, 0.1] }, wear: { '34': [0.45, 1, 0.3], front: [0, 1, 0.08], side: [1, 0, 0.08] } };
+  const dist = r / Math.sin((camera.fov * Math.PI) / 360) * (view === 'print' ? 1.1 : view === 'tune' ? 1.45 : 1.2);
+  const DIRS = { print: { '34': [0.75, -0.62, 0.32], front: [0, 1, 0.1], side: [1, 0, 0.1] }, wear: { '34': [0.45, 1, 0.3], front: [0, 1, 0.08], side: [1, 0, 0.08] }, tune: { '34': [0.7, 1, 0.25], front: [0, 1, 0.05], side: [1, 0, 0.05] } };
   const dir = new THREE.Vector3(...DIRS[view][camView]);
   camera.position.copy(c).addScaledVector(dir.normalize(), dist);
   camera.near = dist / 50; camera.far = dist * 20; camera.updateProjectionMatrix();
@@ -1344,6 +1524,8 @@ function updateReadout() {
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
   if (P.style !== 'crown' && P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
+  const nTuned = Object.keys(P.tweaks || {}).length;
+  if (nTuned) notes.push(`Fine-tuned: ${nTuned} branch${nTuned > 1 ? 'es' : ''}.`);
   const nPlates = fits ? platesNow().length : 0;
   if (nPlates > 1) notes.push(`Needs ${nPlates} separate prints: the parts don’t all fit on the plate at once (each one does on its own).`);
   const msg = $('msg');
@@ -1551,7 +1733,7 @@ async function downloadSTLs() {
 $('primary').addEventListener('click', () => ($('primary').dataset.action === 'download' ? downloadSTLs() : build()));
 $('save-design').addEventListener('click', saveToLibrary);
 
-const VIEWS = [['v-print', 'print'], ['v-wear', 'wear'], ['v-ar', 'ar'], ['v-lib', 'library']];
+const VIEWS = [['v-print', 'print'], ['v-wear', 'wear'], ['v-tune', 'tune'], ['v-ar', 'ar'], ['v-lib', 'library']];
 let backView = 'wear';   // where the Library button returns to
 for (const [id, v] of VIEWS) $(id).addEventListener('click', () => setView(v === 'library' && view === 'library' ? backView : v));
 function setView(v) {
@@ -1563,6 +1745,7 @@ function setView(v) {
   if (was === v) return;
   if (was === 'ar') arExit();
   if (was === 'library') libExit();
+  if (was === 'tune' || v === 'tune') tuneShow(v === 'tune');
   if (v === 'ar') arEnter();
   else if (v === 'library') libEnter();
   else rebuildScene();
