@@ -8,13 +8,13 @@ Newest first within each section. Change one only when the owner asks.
 - **A second page, same source.** `yellowjackets.html` beside the storybook page, built from the same
   `designer.src.html` with its own blocks (`src/editions/yellowjackets.html`), so fixes reach both. Named
   "Antler Forge: Yellowjackets" by the owner; a fan-made edition, with a not-affiliated note under About the files.
-- **Art direction: 1990s album covers from the show's soundtrack** (owner, 2026-10-04, after rejecting the storybook
-  frame, then a varsity/camcorder chrome whose blinking REC was confusing). The soundtrack (Smashing Pumpkins, Liz
-  Phair, Garbage, Tori Amos, Massive Attack, Radiohead, Blur, Nirvana, The Cranberries…) led to three samples; the
-  owner chose a mix of two: a **flash snapshot of the woods at night** (birch trunks blown out by an on-camera flash,
-  falling to black, grain, a red light leak, 35mm edge print) **taped into a photocopied zine** (paper panel,
-  ransom-note title, masking-tape labels, marker lore, a red scrawl, paper boxes with hard black edges). The show's
-  yellow is the one accent. No sparks: it's a still photo. The antlers sit on the dark photo, where bone reads best.
+- **Art direction: 1990s album covers from the show's soundtrack** (owner, 2026-10-04). Rejected on the way: the
+  storybook frame; a varsity/camcorder chrome (its blinking REC was confusing); a photocopied-zine chrome (paper panel,
+  ransom-note title, hard shadows: "too comic book, too bright"). Settled: a **flash snapshot of the woods at night**
+  (birch trunks caught by an on-camera flash, dimmed so the antlers stay the brightest thing, falling to black, grain,
+  a faint red light leak, 35mm edge print) with **quiet zine touches** (dim masking tape on the photo's corners and
+  under the section labels). Dark panel, thin 1 px edges, typewriter type (Courier Prime) with a plain lowercase
+  title (Archivo Black), one muted yellow accent. No sparks: it's a still photo.
 - **Species, loosely after the show's found-bone headpieces:** Trial crown (short, rough, gnarled), Queen's lyre
   (tall, slender, tips curving in), Spikes (curved spikes with one small point), Non-typical (gnarled, points every
   way). Small and irregular rather than trophy racks. Same controls as the storybook page.
