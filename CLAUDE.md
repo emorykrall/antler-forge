@@ -38,10 +38,15 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   code branches on `YJ`. Each edition shows its own species (`PRESETS[*].set`: none = storybook, `'campfire'` =
   Yellowjackets) and keeps its own autosave and library (`antler-forge-yj-design-v1`, `antler-forge-yj-library-v1`).
   The Yellowjackets edition makes headband antlers only (no crown style) and offers the skull cap base.
-- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` builds a bone
-  shell over the band (band frame: origin at the band arc's centre) with a pedicle and D-shaped peg per antler,
+- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` carves a real deer
+  skull: `src/deer-skull.js` is the Smithsonian's CC0 white-tailed deer scan as a signed distance grid (half the
+  skull, mirrored; made by `tools/convert-skull.js` from the scan's OBJ, which isn't bundled; credited in NOTICE;
+  inlined as `/*__SKULL__*/` into the Yellowjackets page only, `require`d in Node). `skullForm` cuts it along a
+  plane through the eye sockets (`CUT`), bends it gently over the head (`BEND`, a flatter curve than the head's, so
+  it still reads as a skull) and hollows it to a `CAP_T` shell, over the band (band frame: origin at the band arc's
+  centre), with a pedicle (on the scan's own cut pedicle) and D-shaped peg per antler,
   a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
-  slots; its front-to-back curve comes from `headCirc`, its outline and pedicles from the `cap*` settings (the
+  slots; its curve comes from `headCirc`, its scale (`capSpacing`), cuts, snout length and width from the `cap*` settings (the
   'Skull cap' group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down (the rim is a plane).
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
   the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group.

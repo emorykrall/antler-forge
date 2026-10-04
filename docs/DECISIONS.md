@@ -33,6 +33,16 @@ Newest first within each section. Change one only when the owner asks.
   points, with the preorbital vacuities (openings beside the nasal bones). Every cap shape has the supraorbital
   foramina (small holes with grooves running forward) and a zigzag suture between the antlers. Trial crown was retuned to that crown's antlers (upright,
   close-set, a low point, a tine part-way up, a fork at the top), and the page opens on Trial crown with this cap.
+- **The skull cap is a real deer's skull** (owner: the modelled skull "still doesn't look like a real deer skull",
+  a major issue; approved downloading the Smithsonian scan). It's carved from the Smithsonian's CC0 3D scan of a
+  white-tailed deer's skull (USNM PAL), made symmetric, cut as a taxidermist cuts one (through the eye sockets; the
+  plate also sawn across the forehead, the upper skull keeping its snout to the nasal tip) and hollowed to a bone
+  shell. The invented details of the modelled skull (foramina, sutures, nasal notch, vacuities) are gone: the scan has
+  the real ones. It bends only gently over the head, so the snout runs forward over the forehead as a skull would
+  rather than curling down it (bending it fully round the head made a beak). The cap settings now mean: antler spacing
+  sets the skull's size; front reach is where a plate is sawn, or the snout's length (shorter like a younger deer's);
+  back reach is where the braincase is sawn; width stretches the skull outside the antlers. On a skull the antler's
+  burr sits straight on the pedicle (no headband flare).
 - **Wear view: a silhouette, not a character.** The owner rejected a hooded figure and soft, featured busts:
   the figure is flat black, hard-edged, like a cut-paper locket silhouette (profile, hair up, a long neck). It is
   built from drawn side and front outlines.

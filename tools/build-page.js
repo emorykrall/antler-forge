@@ -13,10 +13,11 @@ const repo = path.join(__dirname, '..');
 const out = path.resolve(process.argv[2] || path.join(repo, 'dist'));
 const core = fs.readFileSync(repo + '/src/antler-core.js', 'utf8');
 const headScan = fs.readFileSync(repo + '/src/head-scan.js', 'utf8');
+const deerSkull = fs.readFileSync(repo + '/src/deer-skull.js', 'utf8');   // the skull cap's scan, for the edition that offers the cap
 const src = fs.readFileSync(repo + '/src/designer.src.html', 'utf8');
 const EDITIONS = [
   { name: 'storybook', file: null, out: 'antler-forge', site: 'index.html' },
-  { name: 'yellowjackets', file: 'src/editions/yellowjackets.html', out: 'yellowjackets', site: 'yellowjackets.html' },
+  { name: 'yellowjackets', file: 'src/editions/yellowjackets.html', out: 'yellowjackets', site: 'yellowjackets.html', skull: true },
 ];
 
 function edition(ed) {
@@ -30,7 +31,7 @@ function edition(ed) {
       page = page.replace(re, (all, a, b) => a + body + b);
     }
   }
-  return page.replace('/*__CORE__*/', () => core).replace('/*__HEADSCAN__*/', () => headScan);
+  return page.replace('/*__SKULL__*/', () => (ed.skull ? deerSkull : '')).replace('/*__CORE__*/', () => core).replace('/*__HEADSCAN__*/', () => headScan);
 }
 const full = (page) => '<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'
   + '<style>body{margin:0}[hidden]{display:none!important}</style></head><body>\n' + page + '\n</body></html>\n';

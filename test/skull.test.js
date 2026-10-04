@@ -34,6 +34,14 @@ test('the skull cap holds up across its shapes and the ends of its settings', ()
   }
 });
 
+test('the upper skull, to the nose (the Yellowjackets default), is a light cap too, its pedicles capSpacing apart', () => {
+  const sk = cap('trial', { capShape: 'nasal' }), r = Core.validateMesh(Core.meshAntler(sk, 1.0));
+  assert.ok(r.watertight && r.shells === 1 && sk.fit.fits);
+  assert.ok(r.volume < 95000, `a light cap (${(r.volume / 1000).toFixed(0)} cm³)`);
+  const g = sk.spec, span = 2 * Math.hypot(g.B0[0], g.B0[2]) * Math.sin(Math.atan2(g.B0[0], g.B0[2]));
+  assert.ok(Math.abs(span - g.P.capSpacing) < 6, `pedicles ${span.toFixed(0)} mm apart`);
+});
+
 test('designs saved with the retired cap shapes open as a skull plate', () => {
   assert.equal(Core.resolveParams({ capShape: 'shield' }).capShape, 'plate');
   assert.equal(Core.resolveParams({ capShape: 'round' }).capShape, 'plate');
