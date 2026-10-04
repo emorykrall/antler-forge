@@ -48,3 +48,29 @@ test('heavily adjusted antlers still print as one watertight solid, on every bas
     assert.ok(sk.branches.every((b) => Math.min(...b.rad) >= 1.5), `${name}: tips at least 1.5 mm`);
   }
 });
+
+// The other antler is this one's mirror image across the middle of the head. Fine-tune turns stay put in the head frame,
+// so a slider moved afterwards can carry a turned branch across: the engine turns it back out just far enough.
+test('fine-tuned branches and moved sliders never reach the other antler', () => {
+  const gapOf = (P) => {   // distance from the middle of the head, less the branch's radius, at the closest point
+    const sk = Core.buildSkeleton(P), q = sk.params;
+    let O, X, Y, Z;
+    if (q.mount === 'skull') { const g = Core.skullSpec(P); O = g.Q; X = g.F.X; Y = g.F.Y; Z = g.F.Z; }
+    else { const a = q.bandAngle * Math.PI / 180, n = [Math.sin(a), 0, Math.cos(a)]; O = [(q.hbRadius - sk.mount.tunnelCZ) * n[0], 0, 0]; X = [Math.cos(a), 0, -Math.sin(a)]; Y = [0, 1, 0]; Z = n; }
+    let m = Infinity;
+    for (const br of sk.branches) br.pts.forEach((p, i) => { m = Math.min(m, O[0] + X[0] * p[0] + Y[0] * p[1] + Z[0] * p[2] - br.rad[i]); });
+    return { m, sk };
+  };
+  let seed = 11; const r = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  let turned = 0;
+  for (const preset of ['trial', 'lyre', 'buck', 'whitetail']) for (const mount of ['skull', 'tunnel']) for (let k = 0; k < 4; k++) {
+    const base = design(preset, mount), tweaks = {};
+    for (const br of Core.buildSkeleton(base).branches) if (r() < 0.5) tweaks[br.id] = { rot: [(r() - 0.5) * 2, (r() - 0.5) * 2.4, (r() - 0.5)], len: 0.6 + r() * 1.2, thick: 1 };
+    const P = Object.assign({}, base, { tweaks, beamSpread: -20 + r() * 60, beamInCurl: -60 + r() * 60, beamCurl: r() * 150, bandAngle: 10 + r() * 30 });
+    const { m, sk } = gapOf(P);
+    assert.ok(m >= 1.99, `${preset} on ${mount}: ${m.toFixed(1)} mm from the middle of the head`);
+    if (Object.keys(sk.fit.cleared).length) turned++;
+  }
+  assert.ok(turned > 0, 'some of these needed a branch turned out');
+  assert.deepEqual(Core.buildSkeleton(design('lyre', 'skull')).fit.cleared, { beam: 1 }, 'Queen’s lyre’s beams curl in to the middle on the skull cap');
+});

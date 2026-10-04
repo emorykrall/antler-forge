@@ -26,7 +26,9 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   controls, three.js scene, faun (wear-view bust), measuring tutorial, meshing worker, files, try-on (AR), library, lore,
   fireflies. Views: `print`, `wear`, `tune`, `ar`, `library` (switch with `setView`). `tune` is
   Fine-tune: one antler's skeleton with drag handles; adjustments go in `P.tweaks` (per branch id: a turn about the
-  branch's base in the head frame, length, thickness, where it leaves its parent), applied in the engine's `buildAt`. The library is
+  branch's base in the head frame, length, thickness, where it leaves its parent), applied in the engine's `buildAt`.
+  `keepClear` then turns any branch that comes within `MID_GAP` of the middle of the head (where the mirrored antler is)
+  outward about its base just far enough; the turns are in `fit.cleared` and the page's status line says so. The library is
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
   autosave is `antler-forge-design-v3`. The viewport pill must say whether it shows the coarse
   preview or the final built mesh.

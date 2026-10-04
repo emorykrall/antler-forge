@@ -1526,6 +1526,8 @@ function updateReadout() {
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
   if (P.style !== 'crown' && P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
+  const turnedOut = fit && fit.cleared ? Object.entries(fit.cleared) : [];   // the engine keeps each antler clear of the other
+  if (turnedOut.length) notes.push(`Turned ${turnedOut.map(([id, deg]) => `the ${tuneName(id).replace(/^(Main|Brow|Tine|Fork|Crown)/, (w) => w.toLowerCase())} out ${deg}°`).join(', ')} so the antlers clear each other.`);
   const nTuned = Object.keys(P.tweaks || {}).length;
   if (nTuned) notes.push(`Fine-tuned: ${nTuned} branch${nTuned > 1 ? 'es' : ''}.`);
   const nPlates = fits ? platesNow().length : 0;

@@ -341,6 +341,31 @@
   }
   const safeCross = (a, b, fb) => { const c = cross(a, b); return vlen(c) > 1e-3 ? norm(c) : fb; };
 
+  // Keep an antler on its own side of the head. mid gives the middle of the head in the print frame: a point's distance
+  // from it is mid.ox + mid.ex · p, and the other antler is the mirror image. A branch that comes within MID_GAP of the
+  // middle (a tip curled in, a Fine-tune turn the sliders have since carried across) is turned outward about its base,
+  // with everything growing from it, just far enough to clear. Returns the branches turned, { id: degrees }.
+  const MID_GAP = 2;
+  function keepClear(branches, mid) {
+    const kids = {}, cleared = {};
+    for (const br of branches) if (br.parent) (kids[br.parent] = kids[br.parent] || []).push(br);
+    const family = (br) => [br].concat(...(kids[br.id] || []).map(family));
+    const gap = (br) => { let m = Infinity, w = 0; br.pts.forEach((p, i) => { const g = mid.ox + dot(mid.ex, p) - br.rad[i] - MID_GAP; if (g < m) { m = g; w = i; } }); return { m, w }; };
+    for (const br of branches) {   // parents come before their branches
+      const g0 = gap(br); if (g0.m >= 0) continue;
+      const o = br.pts[0], q = sub(br.pts[g0.w], o), ax = cross(q, mid.ex);
+      if (vlen(ax) < 1e-6) continue;
+      const k = norm(ax), fam = family(br), turn = (v, th) => rotate(v, k, th);
+      const at = (th) => { let m = Infinity; for (const b of fam) b.pts.forEach((p, i) => { m = Math.min(m, mid.ox + dot(mid.ex, add(o, turn(sub(p, o), th))) - b.rad[i] - MID_GAP); }); return m; };
+      let lo = 0, hi = Math.PI / 2;
+      if (at(hi) < 0) hi = Math.PI / 2;   // as far as it goes
+      else for (let it = 0; it < 24; it++) { const th = (lo + hi) / 2; if (at(th) >= 0) hi = th; else lo = th; }
+      for (const b of fam) { b.pts = b.pts.map((p) => add(o, turn(sub(p, o), hi))); if (b.F) b.F = turn(b.F, hi); }
+      cleared[br.id] = Math.round(hi / DEG);
+    }
+    return cleared;
+  }
+
   function buildAt(P, S) {
     const rnd = rng(P.seed * 7919 + 13);
     const J = P.jitter, W = P.wobble;
@@ -502,8 +527,11 @@
       br.rad = br.rad.map((r) => Math.max(r * S, MIN_R));   // no printed tip under 3 mm
       br.length *= S;
       br.F = rot(br.F || [1, 0, 0]);
-      parallelFrames(br);
     }
+    // the other antler is this one's mirror image across the middle of the head: keep every branch clear of it
+    const ba = P.bandAngle * DEG, midline = P._mid || { ox: (P.hbRadius - mount.tunnelCZ) * Math.sin(ba), ex: [Math.cos(ba), 0, Math.sin(ba)] };
+    const cleared = keepClear(branches, midline);
+    for (const br of branches) parallelFrames(br);
 
     // palm: one flat plate whose outline wraps the beam and the lower part of each fan point
     let palm = null;
@@ -529,7 +557,7 @@
     }
 
     return {
-      params: P, scale: S, branches, burr, palm, mount, r0: r0 * S, toHead,
+      params: P, scale: S, branches, burr, palm, mount, r0: r0 * S, toHead, cleared,
       texture: { groove: P.grooveDepth * grainOf(P), grooves: P.grooveCount, pearl: P.pearling * grainOf(P) * (1 + gigerOf(P)), knob: gigerOf(P) },
       fillet: P.fillet,
     };
@@ -1376,6 +1404,7 @@
   }
   function buildSkeleton(params) {
     const P = applyMacros(resolveParams(params));
+    if (P.style !== 'crown' && P.mount === 'skull') { const g = skullSpec(params); P._mid = { ox: g.Q[0], ex: [g.F.X[0], g.F.Y[0], g.F.Z[0]] }; }   // on its pedicle
     let S = P.scale, sk, m;
     let over = Infinity;
     for (let it = 0; it < 10; it++) {
@@ -1401,7 +1430,7 @@
       }
       if (over > 1 && Math.max(m.xyRatio, m.zRatio) > 1) { S = P.scale; sk = buildAt(P, S); m = measureSkeleton(sk); }   // the band itself is too big for this bed
     }
-    sk.fit = Object.assign({ scale: S, requested: P.scale, shrunk: S < P.scale - 1e-6, fits: Math.max(m.xyRatio, m.zRatio) <= 1 }, m);
+    sk.fit = Object.assign({ scale: S, requested: P.scale, shrunk: S < P.scale - 1e-6, fits: Math.max(m.xyRatio, m.zRatio) <= 1, cleared: sk.cleared || {} }, m);
     return sk;
   }
 

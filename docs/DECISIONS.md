@@ -70,6 +70,10 @@ Newest first within each section. Change one only when the owner asks.
 - **A view in the view switch**: Print bed · On headband · Fine-tune · Try on. Headband antlers only (hidden for
   crowns, for now). It shows one antler's skeleton over a ghost of its mesh, on the bust; the other antler is
   always its mirror image.
+- **The antlers never run into each other** (owner: fine-tuning, then sliders, made them interfere). A branch that
+  comes within 2 mm of the middle of the head is turned outward about its base, with everything on it, just far
+  enough to clear; the status line names what was turned and by how much. Done in the engine, so the page and the
+  CLI agree, and a drag in Fine-tune stops at the middle.
 - **Drag dots in the camera's plane**: a branch's tip dot swings it about its base and stretches it; its base dot
   slides it along the branch it grows from; dragging empty space turns the view; Front and Side change the plane.
   A card names the picked branch and its length, with Thickness, Reset branch and Reset all.
