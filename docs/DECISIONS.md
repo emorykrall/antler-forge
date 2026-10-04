@@ -19,6 +19,13 @@ Newest first within each section. Change one only when the owner asks.
 - **The skull cap is configurable** (a Skull cap group, shown only when it's the base style): shape (Shield,
   Rounded, Long nasal point), front reach, back reach, width beyond the antlers, antler spacing, pedicle height,
   and the strap slots.
+- **Long nasal point, after the trial crown** (owner's photo) **and a real deer skull's dorsal view**: the skull
+  face comes down the front of the head so it's seen face-on (about 1.5 in further than Front reach), with volume
+  (a ridge of nasal bone, thick rims round the eye sockets). Its outline is the skull's: widest at the orbital rims
+  just in front of the antlers, narrowing smoothly (no sharp inside corners) to nasal bones that end in two short
+  points, with the preorbital vacuities (openings beside the nasal bones). Every cap shape has the supraorbital
+  foramina (small holes with grooves running forward) and a zigzag suture between the antlers. Trial crown was retuned to that crown's antlers (upright,
+  close-set, a low point, a tine part-way up, a fork at the top), and the page opens on Trial crown with this cap.
 - **Wear view: a silhouette, not a character.** The owner rejected a hooded figure and soft, featured busts:
   the figure is flat black, hard-edged, like a cut-paper locket silhouette (profile, hair up, a long neck). It is
   built from drawn side and front outlines.

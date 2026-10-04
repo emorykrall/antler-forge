@@ -485,7 +485,7 @@ const EDITION = /*@edition*/'storybook'/*@/edition*/, YJ = EDITION === 'yellowja
 const STORE = YJ ? 'antler-forge-yj-design-v1' : 'antler-forge-design-v3';
 
 /* ------------------------------------------------------------ state */
-let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull' }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on its skull cap
+let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull', capShape: 'nasal' }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on a skull with its nasal bones
 try { const s = localStorage.getItem(STORE); if (s) P = C.resolveParams(JSON.parse(s)); } catch (e) {}
 if ((C.PRESETS[P.preset] || {}).set !== (YJ ? 'campfire' : undefined) && C.PRESETS[P.preset]) P = C.presetParams(YJ ? 'trial' : 'whitetail', P);   // the other edition's species
 if (YJ) P.style = 'headband';   // the Yellowjackets edition makes headband antlers only
