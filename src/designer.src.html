@@ -611,7 +611,7 @@ function applyStyle() {
       + (odd ? ' That’s an unusual shape: worth measuring again.' : '') : '';
     line.style.color = odd ? 'var(--warn)' : '';
   }
-  for (const d of document.querySelectorAll('details[data-only]')) d.hidden = d.dataset.only !== P.style;
+  for (const d of document.querySelectorAll('details[data-only]')) d.hidden = d.dataset.only === 'skull' ? !(P.style !== 'crown' && P.mount === 'skull') : d.dataset.only !== P.style;
 }
 for (const b of $('styles').children) b.addEventListener('click', () => { P.style = b.dataset.style; syncControls(); changed(); });
 if (YJ) { $('styles').hidden = true; $('styles').previousElementSibling.hidden = true; $('presets').previousElementSibling.style.marginTop = '0'; }
@@ -2533,6 +2533,10 @@ const LORE = {
   lyre: 'Tall and slender, the tips bending in toward each other as if listening to the trees.',
   spikes: 'A young buck’s first spikes, curved like a question nobody wants to answer.',
   feral: 'Grown wrong and grown anyway: drop tines, kickers, points going every way at once.',
+  buck: 'The one that walks out of the tree line at dusk: ten points, every tine reaching straight up.',
+  velvet: 'Still growing, still soft-edged: thick, blunt points under a skin of summer velvet.',
+  forkhorn: 'Second year in the woods. A fork on each side and a lot left to prove.',
+  mulebuck: 'Every point splits again, the way the trail does when you’re already lost.',
 };
 const NAME_A = ['Mossbound', 'Hollow', 'Lantern', 'Thornlit', 'Silver-birch', 'Elder', 'Hushwood', 'Fernlight', 'Rimefrost', 'Wren', 'Barrow', 'Gloaming', 'Briar', 'Starwood', 'Lichen', 'Wildwood', 'Ashen', 'Duskfall', 'Old Oak', 'Deepfern'];
 const YJ_A = ['Black Spruce', 'Hollow', 'Winterbound', 'Smoke', 'Lakeside', 'Ember', 'Frostbitten', 'Cabin', 'Ridge', 'Snowmelt', 'Wolf-hour', 'Ashfall', 'Deadfall', 'Long Night', 'Thaw', 'Hunter’s', 'Firelit', 'Bone-white', 'Pine Hollow', 'Last Light'];

@@ -13,6 +13,12 @@ Newest first within each section. Change one only when the owner asks.
 - **Species, loosely after the show's found-bone headpieces:** Trial crown (short, rough, gnarled), Queen's lyre
   (tall, slender, tips curving in), Spikes (curved spikes with one small point), Non-typical (gnarled, points every
   way). Small and irregular rather than trophy racks. Same controls as the storybook page.
+- **More species from the owner's reference photos** (whitetail and mule deer bucks): Typical buck (10 points,
+  tines straight up off a forward-sweeping beam), Velvet buck (thick, smooth, blunt), Forkhorn (a young buck's fork)
+  and Mule buck (forked points).
+- **The skull cap is configurable** (a Skull cap group, shown only when it's the base style): shape (Shield,
+  Rounded, Long nasal point), front reach, back reach, width beyond the antlers, antler spacing, pedicle height,
+  and the strap slots.
 - **Wear view: a silhouette, not a character.** The owner rejected a hooded figure and soft, featured busts:
   the figure is flat black, hard-edged, like a cut-paper locket silhouette (profile, hair up, a long neck). It is
   built from drawn side and front outlines.

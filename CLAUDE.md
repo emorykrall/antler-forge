@@ -39,7 +39,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
 - **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` builds a bone
   shell over the band (band frame: origin at the band arc's centre) with a pedicle and D-shaped peg per antler,
   a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
-  slots; its front-to-back curve comes from `headCirc`. It prints rim-down (the rim is a plane).
+  slots; its front-to-back curve comes from `headCirc`, its outline and pedicles from the `cap*` settings (the
+  'Skull cap' group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down (the rim is a plane).
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
   the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group.
 - `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map), and
