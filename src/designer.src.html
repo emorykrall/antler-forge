@@ -2836,7 +2836,7 @@ if (YJ) (function sparks() {
   let w = 0, h = 0, dpr = 1;
   function size() { dpr = Math.min(2, window.devicePixelRatio || 1); w = cv.clientWidth; h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr; }
   const spawn = (s, fresh) => Object.assign(s, {
-    x: 0.5 + (Math.random() + Math.random() + Math.random() - 1.5) * 0.32, y: fresh ? 0.45 + Math.random() * 0.6 : 1.02,
+    x: 0.5 + (Math.random() + Math.random() - 1) * 0.75, y: fresh ? 0.45 + Math.random() * 0.6 : 1.02,   // across the frame, so they show either side of the figure
     vy: 0.05 + Math.random() * 0.08, ph: Math.random() * 6.28, wav: 0.4 + Math.random() * 1.2,
     life: 0, span: 2.6 + Math.random() * 3.4, r: 0.7 + Math.random() * 1.1,
   });

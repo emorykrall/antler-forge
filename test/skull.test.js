@@ -25,13 +25,18 @@ for (const preset of SPECIES) {
 }
 
 test('the skull cap holds up across its shapes and the ends of its settings', () => {
-  const cases = [{ capShape: 'round' }, { capShape: 'nasal', capLength: 85 },
+  const cases = [{ capShape: 'plate' }, { capShape: 'plate', capLength: 85, capWidth: 24 }, { capShape: 'nasal', capLength: 85 },
     { capLength: 30, capBack: 20, capWidth: -6, capSpacing: 60, capPedicle: 4 },
     { capLength: 85, capBack: 60, capWidth: 24, capSpacing: 110, capPedicle: 24, capTie: false }];
   for (const q of cases) {
     const sk = cap('buck', q), r = Core.validateMesh(Core.meshAntler(sk, 1.2));
     assert.ok(r.watertight && r.shells === 1 && r.volume > 0 && sk.fit.fits, JSON.stringify(q));
   }
+});
+
+test('designs saved with the retired cap shapes open as a skull plate', () => {
+  assert.equal(Core.resolveParams({ capShape: 'shield' }).capShape, 'plate');
+  assert.equal(Core.resolveParams({ capShape: 'round' }).capShape, 'plate');
 });
 
 test('pegs and sockets never scale, and the socket clears the peg by half the Fit clearance', () => {

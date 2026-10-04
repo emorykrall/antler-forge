@@ -8,21 +8,23 @@ Newest first within each section. Change one only when the owner asks.
 - **A second page, same source.** `yellowjackets.html` beside the storybook page, built from the same
   `designer.src.html` with its own blocks (`src/editions/yellowjackets.html`), so fixes reach both. Named
   "Antler Forge: Yellowjackets" by the owner; a fan-made edition, with a not-affiliated note under About the files.
-- **Art direction: 1990s album covers from the show's soundtrack** (owner, 2026-10-04). Rejected on the way: the
-  storybook frame; a varsity/camcorder chrome (its blinking REC was confusing); a photocopied-zine chrome (paper panel,
-  ransom-note title, hard shadows: "too comic book, too bright"). Settled: a **flash snapshot of the woods at night**
-  (birch trunks caught by an on-camera flash, dimmed so the antlers stay the brightest thing, falling to black, grain,
-  a faint red light leak, 35mm edge print) with **quiet zine touches** (dim masking tape on the photo's corners and
-  under the section labels). Dark panel, thin 1 px edges, typewriter type (Courier Prime) with a plain lowercase
-  title (Archivo Black), one muted yellow accent. No sparks: it's a still photo.
+- **Art direction: the show's own** (owner, 2026-10-04; rejected on the way: the storybook frame, a varsity/camcorder
+  chrome with a confusing blinking REC, a photocopied-zine chrome that was "too comic book, too bright", and a flash
+  photo of birch woods). Chrome after Yellowjackets' logo and titles (Digital Kitchen; the logo is Corner Store JF):
+  a yellow vintage script title with a brush underscore and a faint CRT colour split, tracked grotesk capitals,
+  clean grotesk controls, and the show's saturated greens, browns and yellow (its cinematographers avoided grey and
+  gloomy). The viewport: a **Canadian boreal forest at night** (black spruce spires with clumped tops, balsam fir,
+  Canadian Shield ridges, mist between the rows), **lit by a fire below the frame, with sparks** rising either side
+  of the figure. No birches.
 - **Species, loosely after the show's found-bone headpieces:** Trial crown (short, rough, gnarled), Queen's lyre
   (tall, slender, tips curving in), Spikes (curved spikes with one small point), Non-typical (gnarled, points every
   way). Small and irregular rather than trophy racks. Same controls as the storybook page.
 - **More species from the owner's reference photos** (whitetail and mule deer bucks): Typical buck (10 points,
   tines straight up off a forward-sweeping beam), Velvet buck (thick, smooth, blunt), Forkhorn (a young buck's fork)
   and Mule buck (forked points).
-- **The skull cap is configurable** (a Skull cap group, shown only when it's the base style): shape (Shield,
-  Rounded, Long nasal point), front reach, back reach, width beyond the antlers, antler spacing, pedicle height,
+- **The skull cap is configurable** (a Skull cap group, shown only when it's the base style): shape (true to deer
+  skulls, as a taxidermist cuts them: a Skull plate, the forehead and both antlers cut through the eye sockets, or the
+  Upper skull, to the nose; the invented Shield and Rounded shapes were retired and open as a skull plate), front reach, back reach, width beyond the antlers, antler spacing, pedicle height,
   and the strap slots.
 - **Long nasal point, after the trial crown** (owner's photo) **and a real deer skull's dorsal view**: the skull
   face comes down the front of the head so it's seen face-on (about 1.5 in further than Front reach), with volume
