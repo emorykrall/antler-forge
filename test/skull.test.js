@@ -27,7 +27,9 @@ for (const preset of SPECIES) {
 test('the skull cap holds up across its shapes and the ends of its settings', () => {
   const cases = [{ capShape: 'plate' }, { capShape: 'plate', capLength: 85, capWidth: 24 }, { capShape: 'nasal', capLength: 85 },
     { capLength: 30, capBack: 20, capWidth: -6, capSpacing: 60, capPedicle: 4 },
-    { capLength: 85, capBack: 60, capWidth: 24, capSpacing: 110, capPedicle: 24, capTie: false }];
+    { capLength: 85, capBack: 60, capWidth: 24, capSpacing: 110, capPedicle: 24, capTie: false },
+    { capShape: 'nasal', capSnoutWidth: 1.6, capTaper: 0, capTip: 30, capDroop: 1 }, { capShape: 'nasal', capLength: 85, capSnoutWidth: 0.6, capTaper: 1, capTip: 6, capDroop: 0 },
+    { capShape: 'plate', capSnoutWidth: 1.6, capWidth: 24, capDroop: 1 }, { capShape: 'nasal', capLength: 30, capSnoutWidth: 0.6, capTip: 30, headCirc: 660 }];
   for (const q of cases) {
     const sk = cap('buck', q), r = Core.validateMesh(Core.meshAntler(sk, 1.2));
     assert.ok(r.watertight && r.shells === 1 && r.volume > 0 && sk.fit.fits, JSON.stringify(q));
@@ -63,6 +65,31 @@ test('the skull cap is one even shell over a clean hollow, the same left and rig
     assert.ok(t > 2.2 && t < 7, `x ${x}, s ${s}: shell ${t.toFixed(1)} mm (${runs[1]})`);
   }
   assert.ok(n > 30, `checked ${n} columns`);
+});
+
+// The cap rests on the head (the head circumference's typical head, under the band's inner surface): its rim lies on
+// it across and behind the antlers, and nothing reaches inside it; the band runs under the cap in a groove that follows it.
+test('the skull cap sits on the head: the rim on it, nothing inside it, the band in a groove along it', () => {
+  for (const headCirc of [520, 571.5, 640]) {
+    const sk = cap('trial', { capShape: 'nasal', headCirc }), g = sk.spec, H = g.head, f = sk.fields[0].f, M = sk.toBand;
+    const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
+    const onHead = (x, y) => { const r = H.ryAt(y); return [x, y, H.zc + H.R * Math.sqrt(Math.max(0, 1 - (x / H.R) ** 2 - (y / r) ** 2))]; };
+    const gap = (x, y) => {   // straight up from the head to the cap's first solid
+      const p = onHead(x, y); for (let d = 0; d < 30; d += 0.25) if (f(...toPrint([p[0], p[1], p[2] + d])) < 0) return d; return Infinity;
+    };
+    for (const y of [g.form.sB + 6, g.form.sB / 2]) for (const x of [0, 15]) assert.ok(gap(x, y) > 15, `${headCirc}: hollow over the head at x ${x}, y ${y.toFixed(0)}`);
+    let rim = 0;
+    for (const p of g.rim) {
+      if (p[1] > 0 || p[1] < g.form.sB + 4) continue;   // behind the antlers, where it should lie on the head
+      const q = onHead(p[0], p[1]); assert.ok(p[2] - q[2] < 1.5, `${headCirc}: the rim at x ${p[0].toFixed(0)}, y ${p[1].toFixed(0)} is ${(p[2] - q[2]).toFixed(1)} mm off the head`); rim++;
+    }
+    assert.ok(rim > 4, 'checked the rim behind the antlers');
+    for (const x of [-20, 0, 20]) {   // inside the head: empty; the band's groove: empty, and cap above it
+      const p = onHead(x, 0);
+      assert.ok(f(...toPrint([p[0], p[1], p[2] - 2])) > 0, `${headCirc}: nothing inside the head at x ${x}`);
+      assert.ok(f(...toPrint([p[0], p[1], p[2] + g.band.t / 2])) > 0 && f(...toPrint([p[0], 0, p[2] + g.band.t + 1.5])) < 0, `${headCirc}: the band's groove at x ${x}`);
+    }
+  }
 });
 
 test('designs saved with the retired cap shapes open as a skull plate', () => {

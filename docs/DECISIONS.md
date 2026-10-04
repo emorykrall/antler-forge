@@ -47,6 +47,13 @@ Newest first within each section. Change one only when the owner asks.
   accuracy"). Only a thin plate of the skull's top is kept (5–20 mm deep: its real surface and the eye-socket
   notches, not the deep sides, orbit rims hanging below or the tall snout), bent to lie on the head. The snout is
   shortened (Front reach sets how much) and narrows to a rounded nasal point at the hairline.
+- **The cap sits on the head, not on the band's curve** (owner, 2026-10-04: it should sit lower and follow the head,
+  particularly at the back and round the antlers' bases). It rests on the head the Head circumference gives (the crowns'
+  typical head), its underside down to the scalp, with the band in a groove bent to the head; across and behind the
+  antlers its rim lies on the head. The wear view's bust takes that head's size, as it does for a crown.
+- **Front shape controls** (owner asked for width, length, taper "and whatever else makes sense"): beside Front reach,
+  Snout width, Snout taper (blunt ↔ long point) and Nose tip (the upper skull only), and Snout curve, from running
+  straight forward as a deer's does (as before, the default is halfway) to lying on the forehead.
 - **Wear view: a silhouette, not a character.** The owner rejected a hooded figure and soft, featured busts:
   the figure is flat black, hard-edged, like a cut-paper locket silhouette (profile, hair up, a long neck). It is
   built from drawn side and front outlines.
@@ -77,6 +84,8 @@ Newest first within each section. Change one only when the owner asks.
 - **Drag dots in the camera's plane**: a branch's tip dot swings it about its base and stretches it; its base dot
   slides it along the branch it grows from; dragging empty space turns the view; Front and Side change the plane.
   A card names the picked branch and its length, with Thickness, Reset branch and Reset all.
+- **Tangent arms** (owner, 2026-10-04): the picked branch shows a square handle off each end, like a Bézier curve's;
+  dragging one bends the branch where it starts or ends while both ends stay put. Only the picked branch shows its arms.
 - **Saved as `tweaks`** in the design (library, autosave, design file), keyed by branch id and applied in the
   engine, so the CLI builds the same STL. Changing species or Surprise me clears them (the branches change).
 

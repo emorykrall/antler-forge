@@ -608,6 +608,7 @@ function applyStyle() {
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
     wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
       || (k === 'capTie' && !cap)   // the skull cap's own settings: head size (its curve) and the cloth tie
+      || ((k === 'capTaper' || k === 'capTip') && P.capShape !== 'nasal')   // the snout's point: the upper skull only
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
   }
@@ -727,13 +728,25 @@ function bedObject() {
   return g;
 }
 
+// Where the bust stands: under the skull cap it takes the head the cap is fitted to (the wearer's head circumference,
+// C.capHead), its crown on the band line; otherwise it's the faun's own size (a crown's head is crownFit's).
+function bustFit(p) {
+  if (p.style === 'crown' || p.mount !== 'skull') return { f: [1, 1, 1], y: 0 };
+  const r = C.capHead(p).r, f = [r[0] / 74, r[1] / 92, r[2] / 92];   // the faun's skull (74 × 92 × 92 at y = −6)
+  return { f, y: 6 * f[1] };
+}
+const bandZ = (p) => 92 * bustFit(p).f[2] - p.hbRadius + p.hbThick / 2 + 1;   // the band's centre: its inside 1 mm over the crown
+function placeBust() {
+  const b = bustFit(P);
+  faunGroup.scale.set(...b.f); faunGroup.position.set(0, b.y, 0);
+}
 function wearObject() {
   const g = new THREE.Group();
   if (!faunGroup) faunGroup = YJ ? buildShade() : buildFaun();   // the Yellowjackets edition wears its antlers on a shade
   const crown = P.style === 'crown', scanned = crown && P.headSource === 'scan' && ensureScan(P) && crownFit(P).scan;
   if (scanned) g.add(scanHeadObject(P));   // a clay bust of an imported scan instead of the faun
   else {
-    if (crown) faunGroup.scale.set(...crownFit(P).f); else faunGroup.scale.setScalar(1);   // the faun takes the crown's head shape
+    if (crown) { faunGroup.scale.set(...crownFit(P).f); faunGroup.position.set(0, 0, 0); } else placeBust();   // the faun takes the crown's head shape
     g.add(faunGroup);
   }
   if (!crown) g.add(bandObject());
@@ -765,10 +778,11 @@ function ribbonGeometry(pts, normals, width) {   // a flat strip along pts, lyin
   return geo;
 }
 function bandObject() {
-  const key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, EDITION].join('|');
+  const cz = bandZ(P), key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, cz, EDITION].join('|');
   if (!bandCache || bandCache.key !== key) {
-    const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1, centre = new THREE.Vector3(0, 0, cz);
-    const free = Math.max(P.mount === 'skull' ? 30 : P.bandAngle, 20) * Math.PI / 180 + 0.2;   // on its own curve this far from the top
+    const Rb = P.hbRadius, centre = new THREE.Vector3(0, 0, cz);
+    // on its own curve this far from the top; under the skull cap it's bent to the head all the way (glued in the cap's groove)
+    const free = P.mount === 'skull' ? -1 : Math.max(P.bandAngle, 20) * Math.PI / 180 + 0.2;
     const pts = [], nrm = [];
     for (let i = 0; i <= 120; i++) {
       const th = -2.0 + (4.0 * i) / 120, dir = new THREE.Vector3(Math.sin(th), 0, Math.cos(th));
@@ -830,7 +844,7 @@ function crownFit(p, sk) {
 // Where the right antler (its print frame) sits on the bust: on the band at the chosen angle, or on its pedicle on the
 // skull cap. The left is its mirror image (x → −x).
 function rightAntlerMatrix(sk) {
-  const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+  const Rb = P.hbRadius, cz = bandZ(P);
   if (sk.params.mount === 'skull' && shown && shown.cap) {
     const pl = shown.cap.place;
     return new THREE.Matrix4().makeBasis(new THREE.Vector3(...pl.X), new THREE.Vector3(...pl.Y), new THREE.Vector3(...pl.Z))
@@ -844,7 +858,7 @@ function rightAntlerMatrix(sk) {
 function antlerPair(sk) {
   const g = new THREE.Group();
   if (sk.params.style === 'crown') { const c = antlerObject(); c.applyMatrix4(crownFit(sk.params, sk).M); g.add(c); return g; }
-  const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+  const Rb = P.hbRadius, cz = bandZ(P);
   if (sk.params.mount === 'skull' && shown && shown.cap) {   // on the skull cap: the cap on the band, each antler on its pedicle
     const pl = shown.cap.place, up = new THREE.Matrix4().makeTranslation(0, 0, cz);
     const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(pl.toBand)); c.applyMatrix4(up); g.add(c);
@@ -865,7 +879,8 @@ function antlerPair(sk) {
 /* ------------------------------------------------------------ fine-tune (the skeleton editor) */
 // One antler's skeleton over a ghost of its mesh, on the bust as worn; the other antler is its mirror image. Drag
 // the dot at a branch's tip to swing it about its base and stretch it; drag the dot at its base to slide it along
-// the branch it grows from; pick a branch to set its thickness. Drags move in the plane facing the camera (switch
+// the branch it grows from; the picked branch's square handles are its tangent arms, which bend it between its ends
+// (as a Bézier curve's do); pick a branch to set its thickness. Drags move in the plane facing the camera (switch
 // between Front and Side to move the other way); dragging anywhere else turns the view. The adjustments are saved
 // in P.tweaks (applied in the engine's buildAt, keyed by branch id) as turns in the head frame. While dragging only
 // the skeleton is redrawn, at a fixed scale; the mesh follows when the drag ends.
@@ -892,15 +907,32 @@ function skeletonLines(sk, g, withHandles) {
       m.position.set(...p); m.renderOrder = 10; m.userData = { id: br.id, kind };
       g.add(m); TUNE.handles.push(m);
     }
+    if (!on) continue;
+    for (const [kind, p, q] of tuneArms(br)) {   // the picked branch's tangent arms: lines to small square handles
+      const arm = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(...p), new THREE.Vector3(...q)]),
+        new THREE.LineDashedMaterial({ color: 0xF2E9D8, dashSize: hr * 0.8, gapSize: hr * 0.5, depthTest: false }));
+      arm.computeLineDistances(); arm.renderOrder = 9; g.add(arm);
+      const m = new THREE.Mesh(new THREE.BoxGeometry(hr * 1.5, hr * 1.5, hr * 1.5), new THREE.MeshBasicMaterial({ color: 0xF2E9D8, transparent: true, opacity: 0.95, depthTest: false }));
+      m.position.set(...q); m.renderOrder = 10; m.userData = { id: br.id, kind };
+      g.add(m); TUNE.handles.push(m);
+    }
   }
+}
+// A branch's tangent arms: from each end, ARM_SHOW of the tangent there (a Bézier curve's control point would be a
+// third; a little further keeps the handle clear of the dots on a short tine). Returns [kind, end, handle] for the
+// base (a0) and tip (a1).
+const ARM_SHOW = 0.45;
+function tuneArms(br) {
+  const P = br.pts, n = P.length - 1, d = (a, b, k) => a.map((v, i) => v + (b[i] - a[i]) * k);
+  return [['a0', P[0], d(P[0], P[1], n * ARM_SHOW)], ['a1', P[n], d(P[n], P[n - 1], n * ARM_SHOW)]];
 }
 function tuneObject() {
   const g = new THREE.Group();
   if (!faunGroup) faunGroup = YJ ? buildShade() : buildFaun();
-  faunGroup.scale.setScalar(1); g.add(faunGroup); g.add(bandObject());
+  placeBust(); g.add(faunGroup); g.add(bandObject());
   const sk = TUNE.drag ? TUNE.drag.sk : tuneSkeleton();
   TUNE.skel = sk; TUNE.handles = [];
-  const M = rightAntlerMatrix(sk), Cz = 92 - P.hbRadius + P.hbThick / 2 + 1;
+  const M = rightAntlerMatrix(sk), Cz = bandZ(P);
   if (P.mount === 'skull' && shown && shown.cap) { const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(shown.cap.place.toBand)); c.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, Cz)); g.add(c); }
   const A = new THREE.Group(), L = new THREE.Group();
   A.applyMatrix4(M); L.applyMatrix4(M); L.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
@@ -920,11 +952,11 @@ function tuneCard() {
   const tuned = Object.keys(P.tweaks || {}).length;
   if (!br) {
     $('tune-title').textContent = 'Fine-tune';
-    $('tune-hint').textContent = 'Drag a gold dot to swing and stretch a branch, a grey dot to slide it along. Drag anywhere else to turn the view. The other antler mirrors this one.';
+    $('tune-hint').textContent = 'Drag a gold dot to swing and stretch a branch, a grey dot to slide it along. Pick a branch to bend it with its arms. Drag anywhere else to turn the view. The other antler mirrors this one.';
   } else {
     const len = Math.hypot(...br.pts[br.pts.length - 1].map((v, i) => v - br.pts[0][i]));
     $('tune-title').textContent = `${tuneName(id)} · ${inch(len, 1)} in`;
-    $('tune-hint').textContent = 'Gold dot: swing and stretch. Grey dot: slide along. Front and Side change the plane you drag in.';
+    $('tune-hint').textContent = 'Gold dot: swing and stretch. Grey dot: slide along. Square handles: bend the branch where it starts and where it ends. Front and Side change the plane you drag in.';
   }
   $('tune-thick-row').hidden = !br;
   if (br) { const t = tw ? tw.thick : 1; $('tune-thick').value = t; $('tune-thick-out').value = '×' + t.toFixed(2); }
@@ -954,7 +986,7 @@ function setTweak(id, change) {
     TUNE.drag = {
       id, kind, sk, scale: sk.fit.scale, moved: false, cur: JSON.parse(JSON.stringify(cur)),
       plane: new THREE.Plane().setFromNormalAndCoplanarPoint(camera.getWorldDirection(new THREE.Vector3()), hit.object.getWorldPosition(new THREE.Vector3())),
-      inv: TUNE.group.matrixWorld.clone().invert(), B: V(br.pts[0]), T0: V(br.pts[br.pts.length - 1]),
+      inv: TUNE.group.matrixWorld.clone().invert(), B: V(br.pts[0]), T0: V(br.pts[br.pts.length - 1]), H: V(hit.object.position.toArray()), len: br.length,
       parent: br.parent ? sk.branches.find((b) => b.id === br.parent).pts.map(V) : null, toHead: sk.toHead,
     };
     try { vp.setPointerCapture(e.pointerId); } catch (err) {}
@@ -979,6 +1011,14 @@ function setTweak(id, change) {
       const an = 2 * Math.acos(Math.min(1, qn.w)), sn = Math.sin(an / 2);
       const rot = sn > 1e-6 ? [qn.x / sn * an, qn.y / sn * an, qn.z / sn * an] : [0, 0, 0];
       setTweak(d.id, { rot, len: Math.min(2.5, Math.max(0.3, d.cur.len * b.length() / a.length())) });
+    } else if (d.kind === 'a0' || d.kind === 'a1') {   // a tangent arm: the curve's control point follows the pointer
+      // the handle sits ARM_SHOW of the tangent out, so the tangent changes by the move over that (the tip's arm
+      // points back along the branch); into the head frame, then back through the branch's own turn
+      const dv = X.clone().sub(d.H).multiplyScalar((d.kind === 'a0' ? 1 : -1) / ARM_SHOW);
+      const v = new THREE.Vector3(...d.toHead(dv.toArray())).divideScalar(d.len), r0 = new THREE.Vector3(...d.cur.rot), a0 = r0.length();
+      if (a0 > 1e-9) v.applyAxisAngle(r0.normalize(), -a0);
+      const base = d.cur[d.kind] || [0, 0, 0], M = C.ARM_MAX;
+      setTweak(d.id, { [d.kind]: base.map((b, i) => Math.max(-M, Math.min(M, b + v.getComponent(i)))) });
     } else if (d.parent) {   // slide the base along the branch it grows from
       let best = Infinity, sBest = 0;
       for (let i = 0; i < d.parent.length - 1; i++) {
@@ -1827,7 +1867,7 @@ function arRefreshPair() {
   if (AR.pair) AR.root.remove(AR.pair);
   const cf = P.style === 'crown' ? crownFit(P) : null, f = cf ? cf.f : [1, 1, 1];   // the head that hides the back of a crown takes its shape
   if (cf && cf.scan) { const r = C.ringSpec(P).head.r; AR.occ.scale.set(r[0], r[1], r[2]); AR.occ.position.set(0, 0, 0); }
-  else { AR.occ.scale.set(72 * f[0], 90 * f[1], 90 * f[2]); AR.occ.position.set(0, -6 * f[1], 0); }
+  else { const b = cf ? { f, y: 0 } : bustFit(P); AR.occ.scale.set(72 * b.f[0], 90 * b.f[1], 90 * b.f[2]); AR.occ.position.set(0, -6 * b.f[1] + b.y, 0); }   // under the skull cap, the head it's fitted to
   AR.pair = antlerPair(C.buildSkeleton(P));
   AR.root.add(AR.pair);
   arRender();

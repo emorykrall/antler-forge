@@ -31,6 +31,23 @@ test('an adjustment changes its own branch: turned, stretched, thickened, moved 
   assert.ok(moved.branches.find((b) => b.id === 'brow').s0 === 0.25, 'the brow tine leaves the beam where it was put');
 });
 
+test('tangent arms bend a branch between its ends, which stay put, and its forks follow', () => {
+  const P = design('buck', 'tunnel', { autoFit: false }), base = Core.buildSkeleton(P);
+  const sk = Core.buildSkeleton(Object.assign({}, P, { tweaks: { beam: { a0: [0, 0.6, 0], a1: [0, -0.5, 0.3] }, t1: { a1: [0.4, 0.4, 0] } } }));
+  const b0 = base.branches.find((b) => b.id === 'beam'), b1 = sk.branches.find((b) => b.id === 'beam');
+  const far = (a, b) => Math.hypot(...sub(a, b));
+  assert.ok(far(b0.pts[0], b1.pts[0]) < 1e-6 && far(tip(base, 'beam'), tip(sk, 'beam')) < 1e-6, 'the beam starts and ends where it did');
+  const mid = Math.round(b0.n / 2);
+  assert.ok(far(b0.pts[mid], b1.pts[mid]) > 5, 'and bends between');
+  assert.ok(dot(norm(sub(b0.pts[1], b0.pts[0])), norm(sub(b1.pts[1], b1.pts[0]))) < Math.cos(0.2), 'it leaves the pedicle at a new angle');
+  assert.ok(far(tip(base, 't0'), tip(sk, 't0')) > 1, 'tines on the beam move with it');
+  assert.ok(far(tip(base, 't1'), tip(sk, 't1')) > 1, 'a bent tine stays on the beam');
+  const kept = Core.resolveParams({ tweaks: { t0: { a0: [9, 0.1, 0], a1: [0, 0, 0] } } }).tweaks;
+  assert.deepEqual(kept, { t0: { rot: [0, 0, 0], len: 1, thick: 1, s: null, a0: [Core.ARM_MAX, 0.1, 0] } }, 'arms are cleaned and kept');
+  const r = Core.validateMesh(Core.meshAntler(Core.buildSkeleton(design('buck', 'skull', { tweaks: { beam: { a0: [1.5, -1, 0], a1: [-1.5, 1, 1] }, t0: { a0: [0, 2, 0], a1: [2, 0, 0] } } })), 1.2));
+  assert.ok(r.watertight && r.shells === 1 && r.volume > 0, 'a hard bend still prints as one solid');
+});
+
 test('adjustments survive a design file, junk is dropped, and a species change clears them', () => {
   const tweaks = { t0: { rot: [0.1, -0.2, 0.3], len: 1.2, thick: 0.9, s: 0.4 } };
   const P = Core.resolveParams(JSON.parse(JSON.stringify(Object.assign(design('buck', 'tunnel'), { tweaks }))));
@@ -72,5 +89,5 @@ test('fine-tuned branches and moved sliders never reach the other antler', () =>
     if (Object.keys(sk.fit.cleared).length) turned++;
   }
   assert.ok(turned > 0, 'some of these needed a branch turned out');
-  assert.deepEqual(Core.buildSkeleton(design('lyre', 'skull')).fit.cleared, { beam: 1 }, 'Queen’s lyre’s beams curl in to the middle on the skull cap');
+  assert.deepEqual(Core.buildSkeleton(design('lyre', 'skull', { capSpacing: 70 })).fit.cleared, { beam: 4 }, 'Queen’s lyre’s beams curl in to the middle on a narrow skull cap');
 });

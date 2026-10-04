@@ -26,7 +26,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   controls, three.js scene, faun (wear-view bust), measuring tutorial, meshing worker, files, try-on (AR), library, lore,
   fireflies. Views: `print`, `wear`, `tune`, `ar`, `library` (switch with `setView`). `tune` is
   Fine-tune: one antler's skeleton with drag handles; adjustments go in `P.tweaks` (per branch id: a turn about the
-  branch's base in the head frame, length, thickness, where it leaves its parent), applied in the engine's `buildAt`.
+  branch's base in the head frame, length, thickness, where it leaves its parent, and tangent arms `a0`/`a1` that bend
+  it between its fixed ends like a Bézier curve's handles), applied in the engine's `buildAt`.
   `keepClear` then turns any branch that comes within `MID_GAP` of the middle of the head (where the mirrored antler is)
   outward about its base just far enough; the turns are in `fit.cleared` and the page's status line says so. The library is
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
@@ -45,13 +46,15 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   skull, mirrored; made by `tools/convert-skull.js` from the scan's OBJ, which isn't bundled; credited in NOTICE;
   inlined as `/*__SKULL__*/` into the Yellowjackets page only, `require`d in Node). `skullForm` keeps only a thin
   plate of its top (`CUT_DEPTH` below the upper surface, as the trial crown in the show), bends it over the head (`BEND`),
-  tapers the shortened snout to a rounded nasal point and hollows it to a `CAP_T` shell, over the band (band frame: origin at the band arc's
-  centre), with a pedicle (on the scan's own cut pedicle) and D-shaped peg per antler,
+  tapers the shortened snout to a rounded nasal point and hollows it to a `CAP_T` shell, resting on the head (`capHead`: the head
+  circumference's typical head, its top under the band's inner surface; the band runs under the cap in a groove bent to it; band frame:
+  origin at the band arc's centre), with a pedicle (on the scan's own cut pedicle) and D-shaped peg per antler,
   a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
-  slots; its curve comes from `headCirc`, its scale (`capSpacing`), cuts, snout length and width from the `cap*` settings (the
-  'Skull cap' group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down (the rim is a plane).
+  slots; its curve comes from `headCirc`, its scale (`capSpacing`), cuts, snout length, width, taper, tip and curve from the `cap*`
+  settings (the 'Skull cap' group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down (the rim is a plane).
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
-  the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group.
+  the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group. Under the cap the wear view's bust takes that head
+  (`bustFit`), as it takes a crown's.
 - `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map), and
   `fromHeadTurn` (the built-in camera scan: a smooth head fitted to segmentation outlines from many
   head angles, meshed and measured like an import). Inlined after the engine in the same script
