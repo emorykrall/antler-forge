@@ -3,6 +3,34 @@
 Settled product decisions, with the reason for each, so they don't get reopened by accident.
 Newest first within each section. Change one only when the owner asks.
 
+## Antler Forge: Yellowjackets (second edition, 2026-10-03)
+
+- **A second page, same source.** `yellowjackets.html` beside the storybook page, built from the same
+  `designer.src.html` with its own blocks (`src/editions/yellowjackets.html`), so fixes reach both. Named
+  "Antler Forge: Yellowjackets" by the owner; a fan-made edition, with a not-affiliated note under About the files.
+- **Mood: campfire night.** Black spruce, firelight from below, sparks instead of fireflies, typewriter display
+  type, handwritten lore and names. Always dark. Antler lighting stays neutral (true filament colour).
+- **Species, loosely after the show's found-bone headpieces:** Trial crown (short, rough, gnarled), Queen's lyre
+  (tall, slender, tips curving in), Spikes (curved spikes with one small point), Non-typical (gnarled, points every
+  way). Small and irregular rather than trophy racks. Same controls as the storybook page.
+- **Wear view: a silhouette, not a character.** The owner rejected a hooded figure and soft, featured busts:
+  the figure is flat black, hard-edged, like a cut-paper locket silhouette (profile, hair up, a long neck). It is
+  built from drawn side and front outlines.
+- **Headband antlers only**: no crown style (so no head measuring tutorial or head scans on this page).
+- **Skull cap: minimal, three parts, glued.** A deer's skull cap (frontal plate) over the band, about
+  4.6 × 3.5 in, pedicles at a deer's spacing (about 3 in apart). Antlers glue onto D-shaped pegs (pegs on the cap,
+  sockets in the antlers, so each antler keeps a wide flat base to print on). The headband glues into a groove
+  under the cap. Owner chose glue over snap clips and a press fit. It prints rim-down with tree supports inside only.
+- **How the skull cap stays on** (owner, after a cloth tie to the nape didn't make sense): the piece is top-heavy,
+  so the failure to stop is rocking forward and back about the ear-to-ear line, which a headband alone allows.
+  Four bobby-pin grooves on the outside at the rim (two front, two back) are always built in: a pin slides on from
+  the edge, top prong in the groove, bottom prong in the hair. (Loops under the cap were tried and rejected: hard to
+  reach while wearing it, and they pressed toward the scalp.) Strap slots (a switch, on by
+  default) take one loop of ½ in elastic or a cloth strip that runs round the back of the head under the bump of
+  the skull, where it can't ride up. The wear view draws the strap so how it holds is visible.
+- **The skull cap follows the head.** Head circumference shows when the cap is selected and sets the cap's
+  front-to-back curve; ear to ear it follows the headband's curve. The headband graphic follows the bust's head.
+
 ## Try-on sizing
 
 - **Size comes from a one-tap eye calibration.** Tap Calibrate, take glasses off, look at the

@@ -1,7 +1,7 @@
 'use strict';
 const Core = require('../src/antler-core.js');
 
-const MOUNTS = ['tunnel', 'clip', 'flat', 'none'];
+const MOUNTS = ['tunnel', 'clip', 'flat', 'none', 'skull'];
 const PRESETS = Object.keys(Core.PRESETS);
 const RES = 1.0;
 

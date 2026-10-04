@@ -1,7 +1,7 @@
-<title>Antler Forge</title>
+<!--@title--><title>Antler Forge</title><!--@/title-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!--@fonts--><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap"><!--@/fonts-->
 <style>
 /* Palette drawn from John Bauer's moss-grey-brown forests, Rackham's muted washes and
    silhouette cuts, and Kazuo Oga's layered green light. Viewport lighting stays neutral
@@ -293,17 +293,18 @@ details[open] summary::after{transform:rotate(-135deg)}
   .tutor{padding:8px 12px}.tutor h3{font-size:16px}.tutor p{font-size:12.5px;line-height:1.35;margin-bottom:2px}.tutor p.tip{display:none}
 }
 </style>
+<!--@theme--><!--@/theme-->
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="vine" viewBox="0 0 44 44"><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M6 40C6 20 14 8 40 6"/><path d="M12 22c-4-1-6-4-6-8 4 1 6 4 6 8zM22 12c-1-4 1-7 5-8 0 4-2 7-5 8z"/><circle cx="6" cy="6" r="2.2"/><path d="M9 9c3 3 3 7 0 10"/></g></symbol>
-  <symbol id="swash" viewBox="0 0 170 12"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M2 6C30 2 60 10 80 6"/><path d="M90 6c20-4 50 4 78 0"/><path d="M85 1.5c-3 2-3 7 0 9 3-2 3-7 0-9z" fill="currentColor"/></g></symbol>
+  <!--@vine--><symbol id="vine" viewBox="0 0 44 44"><g fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M6 40C6 20 14 8 40 6"/><path d="M12 22c-4-1-6-4-6-8 4 1 6 4 6 8zM22 12c-1-4 1-7 5-8 0 4-2 7-5 8z"/><circle cx="6" cy="6" r="2.2"/><path d="M9 9c3 3 3 7 0 10"/></g></symbol><!--@/vine-->
+  <!--@swash--><symbol id="swash" viewBox="0 0 170 12"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><path d="M2 6C30 2 60 10 80 6"/><path d="M90 6c20-4 50 4 78 0"/><path d="M85 1.5c-3 2-3 7 0 9 3-2 3-7 0-9z" fill="currentColor"/></g></symbol><!--@/swash-->
   <symbol id="orn" viewBox="0 0 46 14"><g fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"><path d="M23 1.5c-3 2.5-3 8.5 0 11 3-2.5 3-8.5 0-11z" fill="currentColor" fill-opacity=".25"/><path d="M19 7c-5-4-10-4-15 0 5 4 10 4 15 0zM27 7c5-4 10-4 15 0-5 4-10 4-15 0z"/></g></symbol>
-  <symbol id="sprig" viewBox="0 0 16 16"><path d="M8 15V3M8 6.5C6.2 6.2 4.8 4.8 4.5 3c1.8.3 3.2 1.7 3.5 3.5zM8 9.5c1.8-.3 3.2-1.7 3.5-3.5-1.8.3-3.2 1.7-3.5 3.5zM8 12.5C6.2 12.2 4.8 10.8 4.5 9c1.8.3 3.2 1.7 3.5 3.5z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <!--@sprig--><symbol id="sprig" viewBox="0 0 16 16"><path d="M8 15V3M8 6.5C6.2 6.2 4.8 4.8 4.5 3c1.8.3 3.2 1.7 3.5 3.5zM8 9.5c1.8-.3 3.2-1.7 3.5-3.5-1.8.3-3.2 1.7-3.5 3.5zM8 12.5C6.2 12.2 4.8 10.8 4.5 9c1.8.3 3.2 1.7 3.5 3.5z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></symbol><!--@/sprig-->
 </svg>
 
 <div class="app">
   <section class="stage" id="stage" aria-label="3D preview">
-    <svg class="glade" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <!--@glade--><svg class="glade" viewBox="0 0 1200 600" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
       <defs>
         <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A5847"/><stop offset=".55" stop-color="#20342A"/><stop offset="1" stop-color="#101A14"/></linearGradient>
         <linearGradient id="shaft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4E7B8" stop-opacity=".22"/><stop offset="1" stop-color="#F4E7B8" stop-opacity="0"/></linearGradient>
@@ -320,7 +321,7 @@ details[open] summary::after{transform:rotate(-135deg)}
       <rect y="560" width="1200" height="40" fill="#0E1812"/>
       <g fill="#0B140F"><path d="M38.2 586.5 Q21.8 592.0 3.7 577.2 Q26.9 572.4 37.0 572.9Z M38.2 586.5 Q55.3 589.1 70.6 571.3 Q46.9 570.7 37.0 572.9Z M37.0 572.9 Q21.5 577.0 5.9 560.5 Q27.7 557.8 37.0 559.2Z M37.0 572.9 Q52.6 577.0 68.1 560.6 Q46.4 557.8 37.0 559.2Z M37.0 559.2 Q22.3 561.4 10.4 543.0 Q30.6 543.0 38.9 545.5Z M37.0 559.2 Q50.6 565.2 67.0 550.6 Q47.6 545.2 38.9 545.5Z M38.9 545.5 Q25.2 545.6 17.9 525.4 Q36.2 528.2 43.2 531.9Z M38.9 545.5 Q50.0 553.4 67.5 541.1 Q51.0 532.9 43.2 531.9Z M43.2 531.9 Q30.8 530.1 29.4 508.8 Q45.1 514.1 50.5 518.9Z M43.2 531.9 Q51.1 541.5 70.1 531.5 Q57.3 521.0 50.5 518.9Z M50.5 518.9 Q39.6 515.5 45.0 494.3 Q57.8 501.6 61.3 506.9Z M50.5 518.9 Q54.8 529.3 75.4 522.0 Q66.9 509.9 61.3 506.9Z M61.3 506.9 Q51.9 502.6 64.7 483.3 Q74.5 491.6 76.0 497.0Z M61.3 506.9 Q61.8 517.3 84.4 512.7 Q80.4 500.4 76.0 497.0Z M76.0 497.0 Q67.9 492.2 87.9 477.1 Q95.2 485.4 94.8 490.2Z M76.0 497.0 Q72.9 506.0 97.9 504.7 Q98.2 493.6 94.8 490.2Z M94.8 490.2 Q87.4 485.2 114.0 476.6 Q119.4 484.1 117.5 487.8Z M94.8 490.2 Q88.6 496.6 116.4 499.4 Q120.1 490.9 117.5 487.8Z M117.5 487.8 Q110.2 482.8 141.8 483.2 Q146.3 489.3 143.4 491.3Z M117.5 487.8 Q109.2 490.6 139.7 498.7 Q145.7 494.0 143.4 491.3Z M23.8 589.8 Q9.9 587.4 2.4 570.0 Q20.9 575.5 28.1 579.7Z M23.8 589.8 Q35.2 598.2 52.9 591.5 Q36.1 581.9 28.1 579.7Z M28.1 579.7 Q15.3 576.6 10.2 559.0 Q27.0 565.5 33.2 570.1Z M28.1 579.7 Q37.8 588.6 55.2 583.0 Q40.5 572.7 33.2 570.1Z M33.2 570.1 Q21.8 565.9 20.0 548.3 Q34.6 556.1 39.7 561.1Z M33.2 570.1 Q40.8 579.6 58.1 575.6 Q46.1 564.3 39.7 561.1Z M39.7 561.1 Q29.8 555.8 32.0 538.6 Q44.1 547.7 47.8 553.1Z M39.7 561.1 Q44.7 571.1 62.0 569.1 Q53.1 556.9 47.8 553.1Z M47.8 553.1 Q39.6 546.9 46.4 531.1 Q55.7 541.1 57.9 546.6Z M47.8 553.1 Q50.0 563.1 67.3 563.4 Q62.0 550.8 57.9 546.6Z M57.9 546.6 Q51.4 539.9 63.0 526.6 Q69.5 537.0 70.0 542.3Z M57.9 546.6 Q57.1 555.9 74.5 558.7 Q72.9 546.6 70.0 542.3Z M70.0 542.3 Q65.0 535.4 81.2 526.3 Q85.1 536.2 84.1 540.8Z M70.0 542.3 Q66.5 550.0 84.2 555.6 Q86.0 545.0 84.1 540.8Z M84.1 540.8 Q80.2 534.0 100.1 530.6 Q102.0 539.6 100.0 543.0Z M84.1 540.8 Q78.5 546.2 96.7 555.0 Q101.0 546.9 100.0 543.0Z M100.0 543.0 Q96.7 536.4 118.8 540.1 Q119.7 547.8 116.9 549.8Z M100.0 543.0 Q93.1 545.5 111.5 558.2 Q117.5 553.2 116.9 549.8Z M116.9 549.8 Q113.8 543.4 136.2 555.3 Q136.7 561.6 133.8 562.1Z M116.9 549.8 Q109.8 548.9 128.1 566.4 Q134.3 565.0 133.8 562.1Z M84.4 592.6 Q73.6 588.6 69.8 573.9 Q83.9 580.9 89.1 585.3Z M84.4 592.6 Q92.3 600.8 107.4 598.2 Q95.2 588.2 89.1 585.3Z M89.1 585.3 Q79.3 580.9 77.5 566.3 Q90.0 573.9 94.4 578.5Z M89.1 585.3 Q95.7 593.8 110.3 592.0 Q99.9 581.6 94.4 578.5Z M94.4 578.5 Q85.8 573.5 86.7 559.2 Q97.3 567.6 100.7 572.3Z M94.4 578.5 Q99.3 587.2 113.5 586.7 Q105.4 575.9 100.7 572.3Z M100.7 572.3 Q93.5 566.6 97.4 553.3 Q105.9 562.4 108.1 567.2Z M100.7 572.3 Q103.4 581.1 117.3 582.2 Q111.9 571.1 108.1 567.2Z M108.1 567.2 Q102.4 561.0 109.8 549.3 Q115.9 558.8 116.9 563.6Z M108.1 567.2 Q108.6 575.7 122.1 578.6 Q119.6 567.6 116.9 563.6Z M116.9 563.6 Q112.7 557.1 123.5 548.1 Q127.2 557.5 126.9 561.9Z M116.9 563.6 Q115.0 571.1 128.3 576.0 Q128.6 565.9 126.9 561.9Z M126.9 561.9 Q124.0 555.5 137.9 550.3 Q139.5 559.0 138.1 562.6Z M126.9 561.9 Q123.1 567.8 136.1 574.8 Q139.0 566.4 138.1 562.6Z M138.1 562.6 Q136.1 556.5 152.2 556.3 Q152.3 564.0 150.2 566.6Z M138.1 562.6 Q132.9 566.4 145.8 576.1 Q150.4 569.9 150.2 566.6Z M150.2 566.6 Q148.7 560.7 165.6 566.4 Q165.0 572.8 162.4 574.2Z M150.2 566.6 Q144.3 567.8 156.8 580.5 Q162.3 577.1 162.4 574.2Z M162.4 574.2 Q161.1 568.5 177.2 580.6 Q176.4 586.0 174.0 586.1Z M162.4 574.2 Q156.8 572.8 168.5 589.1 Q173.8 588.5 174.0 586.1Z M1166.8 586.5 Q1149.7 589.1 1134.4 571.3 Q1158.1 570.7 1168.0 572.9Z M1166.8 586.5 Q1183.2 592.0 1201.3 577.2 Q1178.1 572.4 1168.0 572.9Z M1168.0 572.9 Q1152.4 577.0 1136.9 560.6 Q1158.6 557.8 1168.0 559.2Z M1168.0 572.9 Q1183.5 577.0 1199.1 560.5 Q1177.3 557.8 1168.0 559.2Z M1168.0 559.2 Q1154.4 565.2 1138.0 550.6 Q1157.4 545.2 1166.1 545.5Z M1168.0 559.2 Q1182.7 561.4 1194.6 543.0 Q1174.4 543.0 1166.1 545.5Z M1166.1 545.5 Q1155.0 553.4 1137.5 541.1 Q1154.0 532.9 1161.8 531.9Z M1166.1 545.5 Q1179.8 545.6 1187.1 525.4 Q1168.8 528.2 1161.8 531.9Z M1161.8 531.9 Q1153.9 541.5 1134.9 531.5 Q1147.7 521.0 1154.5 518.9Z M1161.8 531.9 Q1174.2 530.1 1175.6 508.8 Q1159.9 514.1 1154.5 518.9Z M1154.5 518.9 Q1150.2 529.3 1129.6 522.0 Q1138.1 509.9 1143.7 506.9Z M1154.5 518.9 Q1165.4 515.5 1160.0 494.3 Q1147.2 501.6 1143.7 506.9Z M1143.7 506.9 Q1143.2 517.3 1120.6 512.7 Q1124.6 500.4 1129.0 497.0Z M1143.7 506.9 Q1153.1 502.6 1140.3 483.3 Q1130.5 491.6 1129.0 497.0Z M1129.0 497.0 Q1132.1 506.0 1107.1 504.7 Q1106.8 493.6 1110.2 490.2Z M1129.0 497.0 Q1137.1 492.2 1117.1 477.1 Q1109.8 485.4 1110.2 490.2Z M1110.2 490.2 Q1116.4 496.6 1088.6 499.4 Q1084.9 490.9 1087.5 487.8Z M1110.2 490.2 Q1117.6 485.2 1091.0 476.6 Q1085.6 484.1 1087.5 487.8Z M1087.5 487.8 Q1095.8 490.6 1065.3 498.7 Q1059.3 494.0 1061.6 491.3Z M1087.5 487.8 Q1094.8 482.8 1063.2 483.2 Q1058.7 489.3 1061.6 491.3Z M1180.8 589.9 Q1169.8 598.7 1151.8 592.6 Q1168.3 582.5 1176.2 580.0Z M1180.8 589.9 Q1194.7 587.1 1201.6 569.4 Q1183.2 575.6 1176.2 580.0Z M1176.2 580.0 Q1166.8 589.3 1149.2 584.3 Q1163.6 573.4 1170.7 570.5Z M1176.2 580.0 Q1188.9 576.5 1193.3 558.7 Q1176.8 565.8 1170.7 570.5Z M1170.7 570.5 Q1163.5 580.3 1146.1 577.0 Q1157.7 565.2 1164.0 561.8Z M1170.7 570.5 Q1182.1 566.0 1183.2 548.3 Q1168.9 556.6 1164.0 561.8Z M1164.0 561.8 Q1159.3 572.0 1142.0 570.6 Q1150.4 558.0 1155.6 554.1Z M1164.0 561.8 Q1173.7 556.2 1170.9 539.1 Q1159.1 548.6 1155.6 554.1Z M1155.6 554.1 Q1153.7 564.2 1136.5 565.1 Q1141.3 552.3 1145.3 548.0Z M1155.6 554.1 Q1163.6 547.6 1156.2 532.0 Q1147.2 542.4 1145.3 548.0Z M1145.3 548.0 Q1146.4 557.3 1129.1 560.7 Q1130.3 548.5 1133.0 544.0Z M1145.3 548.0 Q1151.6 541.0 1139.5 528.2 Q1133.4 538.8 1133.0 544.0Z M1133.0 544.0 Q1136.8 551.7 1119.3 557.9 Q1117.1 547.4 1118.9 543.1Z M1133.0 544.0 Q1137.8 537.0 1121.3 528.4 Q1117.7 538.5 1118.9 543.1Z M1118.9 543.1 Q1124.7 548.3 1106.8 557.7 Q1102.2 549.8 1103.1 545.8Z M1118.9 543.1 Q1122.5 536.2 1102.5 533.4 Q1100.9 542.5 1103.1 545.8Z M1103.1 545.8 Q1110.1 548.1 1092.1 561.4 Q1086.0 556.6 1086.4 553.2Z M1103.1 545.8 Q1106.1 539.2 1084.2 543.6 Q1083.6 551.3 1086.4 553.2Z M1086.4 553.2 Q1093.5 552.1 1075.8 570.2 Q1069.5 569.0 1069.9 566.1Z M1086.4 553.2 Q1089.3 546.7 1067.3 559.3 Q1067.0 565.7 1069.9 566.1Z M1115.6 593.1 Q1108.3 601.2 1093.9 599.3 Q1105.2 589.4 1110.9 586.4Z M1115.6 593.1 Q1125.8 589.0 1128.9 574.8 Q1115.7 582.0 1110.9 586.4Z M1110.9 586.4 Q1104.9 594.7 1091.0 593.5 Q1100.5 583.3 1105.6 580.1Z M1110.9 586.4 Q1120.1 581.9 1121.4 567.9 Q1109.7 575.6 1105.6 580.1Z M1105.6 580.1 Q1101.3 588.6 1087.7 588.6 Q1095.2 578.0 1099.5 574.5Z M1105.6 580.1 Q1113.7 575.0 1112.5 561.5 Q1102.6 569.9 1099.5 574.5Z M1099.5 574.5 Q1097.1 583.0 1084.0 584.5 Q1088.9 573.7 1092.3 569.9Z M1099.5 574.5 Q1106.2 568.8 1102.0 556.2 Q1094.3 565.2 1092.3 569.9Z M1092.3 569.9 Q1092.1 578.0 1079.4 581.3 Q1081.4 570.7 1083.9 566.7Z M1092.3 569.9 Q1097.5 563.8 1090.1 552.8 Q1084.7 562.2 1083.9 566.7Z M1083.9 566.7 Q1085.9 573.8 1073.5 579.0 Q1072.8 569.3 1074.3 565.4Z M1083.9 566.7 Q1087.7 560.4 1077.1 552.2 Q1073.9 561.3 1074.3 565.4Z M1074.3 565.4 Q1078.1 571.0 1066.0 578.2 Q1063.0 570.2 1063.7 566.6Z M1074.3 565.4 Q1076.9 559.2 1063.6 554.7 Q1062.3 563.1 1063.7 566.6Z M1063.7 566.6 Q1068.8 570.0 1057.0 579.6 Q1052.4 573.9 1052.5 570.7Z M1063.7 566.6 Q1065.4 560.6 1050.2 560.9 Q1050.3 568.3 1052.5 570.7Z M1052.5 570.7 Q1058.1 571.7 1046.7 584.2 Q1041.3 581.1 1041.1 578.3Z M1052.5 570.7 Q1053.6 565.0 1037.7 570.8 Q1038.6 577.1 1041.1 578.3Z M1041.1 578.3 Q1046.5 576.8 1036.0 592.7 Q1030.8 592.3 1030.6 589.9Z M1041.1 578.3 Q1042.1 572.8 1027.2 584.8 Q1028.2 589.9 1030.6 589.9Z"/></g>
       <g fill="none" stroke="#0B140F" stroke-width="3" stroke-linecap="round"><path d="M40.0 600.0 L38.2 586.5 L37.0 572.9 L37.0 559.2 L38.9 545.5 L43.2 531.9 L50.5 518.9 L61.3 506.9 L76.0 497.0 L94.8 490.2 L117.5 487.8 L143.4 491.3 M20.0 600.0 L23.8 589.8 L28.1 579.7 L33.2 570.1 L39.7 561.1 L47.8 553.1 L57.9 546.6 L70.0 542.3 L84.1 540.8 L100.0 543.0 L116.9 549.8 L133.8 562.1 M80.0 600.0 L84.4 592.6 L89.1 585.3 L94.4 578.5 L100.7 572.3 L108.1 567.2 L116.9 563.6 L126.9 561.9 L138.1 562.6 L150.2 566.6 L162.4 574.2 L174.0 586.1 M1165.0 600.0 L1166.8 586.5 L1168.0 572.9 L1168.0 559.2 L1166.1 545.5 L1161.8 531.9 L1154.5 518.9 L1143.7 506.9 L1129.0 497.0 L1110.2 490.2 L1087.5 487.8 L1061.6 491.3 M1185.0 600.0 L1180.8 589.9 L1176.2 580.0 L1170.7 570.5 L1164.0 561.8 L1155.6 554.1 L1145.3 548.0 L1133.0 544.0 L1118.9 543.1 L1103.1 545.8 L1086.4 553.2 L1069.9 566.1 M1120.0 600.0 L1115.6 593.1 L1110.9 586.4 L1105.6 580.1 L1099.5 574.5 L1092.3 569.9 L1083.9 566.7 L1074.3 565.4 L1063.7 566.6 L1052.5 570.7 L1041.1 578.3 L1030.6 589.9"/></g>
-    </svg>
+    </svg><!--@/glade-->
     <div class="frame" aria-hidden="true">
       <svg class="tl" viewBox="0 0 44 44"><use href="#vine"/></svg><svg class="tr" viewBox="0 0 44 44"><use href="#vine"/></svg>
       <svg class="bl" viewBox="0 0 44 44"><use href="#vine"/></svg><svg class="br" viewBox="0 0 44 44"><use href="#vine"/></svg>
@@ -378,7 +379,7 @@ details[open] summary::after{transform:rotate(-135deg)}
     </div>
     <div class="hud top">
       <div class="brand">
-        <h1>Antler Forge</h1><svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg><div class="plate" id="plate" aria-live="polite"></div>
+        <!--@brand--><h1>Antler Forge</h1><!--@/brand--><svg class="swash" viewBox="0 0 170 12" aria-hidden="true"><use href="#swash"/></svg><div class="plate" id="plate" aria-live="polite"></div>
         <div class="brand-actions">
           <button class="chipbtn libbtn" id="save-design" title="Keep this design in your library"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12l-4-3-4 3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M8 5v4M6 7h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>Save to library</button>
           <button class="chipbtn libbtn" id="v-lib" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12l-4-3-4 3z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>Library<span class="count" id="lib-count" hidden></span></button>
@@ -441,6 +442,7 @@ details[open] summary::after{transform:rotate(-135deg)}
           <p>The download is a zip with a right and a mirrored left antler, the design file, and print notes. Both STLs are single closed solids, checked for open and non-manifold edges before you get them.</p>
           <p>Each antler is one complete part, standing on its flat base and turned on the plate if that's what it takes to fit the P2S. The print notes list Bambu Studio settings for your filament: tree supports, a brim, and the right nozzle for PLA Wood. Sizes are in inches; the slicer settings stay in millimetres, as Bambu Studio uses them.</p>
           <p>Save to library keeps designs in this browser, on this device. The STL zip also holds a design file; <code>node tools/build-antlers.js &lt;name&gt;-design.json --res 0.35</code> builds it at higher resolution offline (a crown fitted to a head scan finds its scan in the same folder).</p>
+          <!--@about--><!--@/about-->
         </div>
       </details>
     </div>
@@ -464,11 +466,16 @@ details[open] summary::after{transform:rotate(-135deg)}
 'use strict';
 const C = window.AntlerCore;
 const $ = (id) => document.getElementById(id);
-const STORE = 'antler-forge-design-v3';
+// The page is built in two editions from this one source (tools/build-page.js swaps the marked blocks):
+// 'storybook' (this page, the faun's forest) and 'yellowjackets' (src/editions/yellowjackets.html).
+const EDITION = /*@edition*/'storybook'/*@/edition*/, YJ = EDITION === 'yellowjackets';
+const STORE = YJ ? 'antler-forge-yj-design-v1' : 'antler-forge-design-v3';
 
 /* ------------------------------------------------------------ state */
-let P = C.presetParams('whitetail');
+let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull' }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on its skull cap
 try { const s = localStorage.getItem(STORE); if (s) P = C.resolveParams(JSON.parse(s)); } catch (e) {}
+if ((C.PRESETS[P.preset] || {}).set !== (YJ ? 'campfire' : undefined) && C.PRESETS[P.preset]) P = C.presetParams(YJ ? 'trial' : 'whitetail', P);   // the other edition's species
+if (YJ) P.style = 'headband';   // the Yellowjackets edition makes headband antlers only
 let view = 'wear', camView = '34';
 let built = null;       // last full-resolution build {mesh, report, key, params}
 let building = false;
@@ -477,6 +484,7 @@ const keyOf = (p) => JSON.stringify(Object.assign({}, p, { filament: 0 })); // c
 /* ------------------------------------------------------------ controls */
 const presetsEl = $('presets');
 for (const [k, v] of Object.entries(C.PRESETS)) {
+  if (v.set !== (YJ ? 'campfire' : undefined)) continue;   // each edition shows its own species
   const b = document.createElement('button');
   b.className = 'chip'; b.textContent = v.label; b.dataset.k = k; b.id = 'preset-' + k;
   b.addEventListener('click', () => { P = C.presetParams(k, P); syncControls(); changed(); });
@@ -516,7 +524,8 @@ C.PARAM_SPEC.forEach((g) => {
       inp.addEventListener('change', () => { P[it.k] = inp.checked; changed(); });
     } else if (it.type === 'select') {
       inp = document.createElement('select'); inp.id = id;
-      for (const [v, l] of it.options) { const o = document.createElement('option'); o.value = v; o.textContent = l; inp.appendChild(o); }
+      for (const [v, l] of it.options) { if (v === 'skull' && !YJ) continue;   // the skull cap belongs to the Yellowjackets edition
+        const o = document.createElement('option'); o.value = v; o.textContent = l; inp.appendChild(o); }
       w.appendChild(inp);
       inp.addEventListener('change', () => { P[it.k] = inp.value; changed(); });
     } else {
@@ -568,14 +577,16 @@ function syncControls() {
   b.innerHTML = '<svg viewBox="0 0 22 14" aria-hidden="true"><rect x="1" y="2" width="20" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>'
     + '<path d="M5 2v4M9 2v3M13 2v4M17 2v3" stroke="currentColor" stroke-width="1.3"/></svg>How to measure your head';
   inputs.headCirc.wrap.appendChild(b);
+  if (YJ) b.hidden = true;   // the tutorial is acted out on the faun; here the hint says where the tape goes
 }
 function applyStyle() {
   for (const b of $('styles').children) b.setAttribute('aria-pressed', String(b.dataset.style === P.style));
   $('v-wear').textContent = P.style === 'crown' ? 'On head' : 'On headband';
   for (const k in inputs) {
     const { it, wrap } = inputs[k];
-    const scanning = P.headSource === 'scan';
-    wrap.hidden = !!(it.only && it.only !== P.style) || (k === 'ringGap' && P.ringBase === 'closed')
+    const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
+    wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
+      || (k === 'capTie' && !cap)   // the skull cap's own settings: head size (its curve) and the cloth tie
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
   }
@@ -603,6 +614,7 @@ function applyStyle() {
   for (const d of document.querySelectorAll('details[data-only]')) d.hidden = d.dataset.only !== P.style;
 }
 for (const b of $('styles').children) b.addEventListener('click', () => { P.style = b.dataset.style; syncControls(); changed(); });
+if (YJ) { $('styles').hidden = true; $('styles').previousElementSibling.hidden = true; $('presets').previousElementSibling.style.marginTop = '0'; }
 
 /* ------------------------------------------------------------ three.js scene */
 let renderer, scene, camera, controls, root, keyLight, glOK = true;
@@ -628,7 +640,8 @@ try {
   root = new THREE.Group(); scene.add(root);
   mats.antler = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.0 });
   mats.head = new THREE.MeshStandardMaterial({ color: 0x1c2a21, roughness: 0.9, transparent: true, opacity: 0.4, depthWrite: false });
-  mats.band = new THREE.MeshToonMaterial({ color: new THREE.Color('#6A4A2E').convertSRGBToLinear(), side: THREE.DoubleSide });
+  mats.tie = new THREE.MeshStandardMaterial({ color: new THREE.Color('#7B3326').convertSRGBToLinear(), roughness: 1, side: THREE.DoubleSide });   // the skull cap's strap: faded red cloth
+  mats.band = new THREE.MeshToonMaterial({ color: new THREE.Color(YJ ? '#3B2B20' : '#6A4A2E').convertSRGBToLinear(), side: THREE.DoubleSide });   // on the shade, the band is in shadow too
 } catch (e) { glOK = false; $('gl-err').hidden = false; }
 
 // Filament colour (Bambu hex codes) with a little cavity shading in the gutters and burr.
@@ -648,12 +661,24 @@ function filamentColors(mesh) {
 let shown = null;      // { mesh, key, kind, geo }
 function setShown(mesh, key, kind) {
   if (shown && shown.geo) shown.geo.dispose();
+  if (shown && shown.cap && shown.cap.geo && !(built && built.cap === shown.cap)) { shown.cap.geo.dispose(); shown.cap.geo = null; }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(mesh.positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(filamentColors(mesh), 3));
   geo.setIndex(new THREE.BufferAttribute(mesh.indices, 1));
   geo.computeVertexNormals();
   shown = { mesh, key, kind, geo, filament: P.filament };
+}
+// The skull cap (base style 'skull'), meshed beside the antler: { mesh, report, place: { toBand, Q, X, Y, Z } }.
+function capObject(cap) {
+  if (!cap.geo) {
+    cap.geo = new THREE.BufferGeometry();
+    cap.geo.setAttribute('position', new THREE.BufferAttribute(cap.mesh.positions, 3));
+    cap.geo.setIndex(new THREE.BufferAttribute(cap.mesh.indices, 1));
+    cap.geo.computeVertexNormals();
+  }
+  if (cap.filament !== P.filament) { cap.geo.setAttribute('color', new THREE.BufferAttribute(filamentColors(cap.mesh), 3)); cap.filament = P.filament; }
+  const m = new THREE.Mesh(cap.geo, mats.antler); m.castShadow = true; m.receiveShadow = true; return m;
 }
 function antlerObject() {
   if (shown.filament !== P.filament) { shown.geo.setAttribute('color', new THREE.BufferAttribute(filamentColors(shown.mesh), 3)); shown.filament = P.filament; }
@@ -674,21 +699,89 @@ function bedObject() {
 
 function wearObject() {
   const g = new THREE.Group();
-  if (!faunGroup) faunGroup = buildFaun();
+  if (!faunGroup) faunGroup = YJ ? buildShade() : buildFaun();   // the Yellowjackets edition wears its antlers on a shade
   const crown = P.style === 'crown', scanned = crown && P.headSource === 'scan' && ensureScan(P) && crownFit(P).scan;
   if (scanned) g.add(scanHeadObject(P));   // a clay bust of an imported scan instead of the faun
   else {
     if (crown) faunGroup.scale.set(...crownFit(P).f); else faunGroup.scale.setScalar(1);   // the faun takes the crown's head shape
     g.add(faunGroup);
   }
-  if (!crown) {
-    const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(Rb, Rb, P.hbWidth, 96, 1, true, -1.95, 3.9), mats.band);
-    band.position.set(0, 0, cz); g.add(band);
-  }
+  if (!crown) g.add(bandObject());
   if (!shown) return g;
   g.add(antlerPair(C.buildSkeleton(P)));
   return g;
+}
+// The headband as worn: on its own curve (radius hbRadius) across the top, where the antlers or the skull cap sit,
+// then hugging the sides of the head (found by casting rays at the bust) down to just below the ears.
+let bandCache = null;
+function bustSurface(dir, from, lift) {   // where a ray toward `from` along −dir first meets the bust, lifted off it
+  const targets = [];
+  faunGroup.updateMatrixWorld(true);
+  faunGroup.traverse((o) => { if (o.isMesh && o.visible && o.material && o.material.side !== THREE.BackSide && !(o.parent && o.parent.userData.ear) && !o.userData.ear) targets.push(o); });
+  const ray = new THREE.Raycaster(from.clone().addScaledVector(dir, 500), dir.clone().negate(), 0, 600);
+  const hit = ray.intersectObjects(targets, false)[0];
+  return hit ? hit.point.addScaledVector(dir, lift) : null;
+}
+function ribbonGeometry(pts, normals, width) {   // a flat strip along pts, lying on the surface (normals), width mm
+  const pos = [], idx = [];
+  pts.forEach((p, i) => {
+    const t = pts[Math.min(pts.length - 1, i + 1)].clone().sub(pts[Math.max(0, i - 1)]).normalize();
+    const side = new THREE.Vector3().crossVectors(t, normals[i]).normalize().multiplyScalar(width / 2);
+    pos.push(p.x - side.x, p.y - side.y, p.z - side.z, p.x + side.x, p.y + side.y, p.z + side.z);
+    if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i);
+  });
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+  return geo;
+}
+function bandObject() {
+  const key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, EDITION].join('|');
+  if (!bandCache || bandCache.key !== key) {
+    const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1, centre = new THREE.Vector3(0, 0, cz);
+    const free = Math.max(P.mount === 'skull' ? 30 : P.bandAngle, 20) * Math.PI / 180 + 0.2;   // on its own curve this far from the top
+    const pts = [], nrm = [];
+    for (let i = 0; i <= 120; i++) {
+      const th = -2.0 + (4.0 * i) / 120, dir = new THREE.Vector3(Math.sin(th), 0, Math.cos(th));
+      const onCurve = centre.clone().addScaledVector(dir, Rb), w = Math.min(1, Math.max(0, (Math.abs(th) - free) / 0.45));
+      const sw = w * w * (3 - 2 * w), onHead = sw > 0 ? bustSurface(dir, new THREE.Vector3(0, 0, -10), P.hbThick / 2 + 0.6) : null;
+      pts.push(onHead ? onCurve.lerp(onHead, sw) : onCurve); nrm.push(new THREE.Vector3(0, 1, 0));
+    }
+    // a strip across the band's width (y), so build it from the path and the y axis
+    const pos = [], idx = [], hw = P.hbWidth / 2;
+    pts.forEach((p, i) => { pos.push(p.x, -hw, p.z, p.x, hw, p.z); if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i); });
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    if (bandCache) bandCache.geo.dispose();
+    bandCache = { key, geo };
+  }
+  return new THREE.Mesh(bandCache.geo, mats.band);
+}
+// The strap (skull cap, Strap slots on): one loop of elastic or cloth from the slot on each side of the cap, down
+// over the back of the head and round under the bump of the skull, where it can't ride up. Drawn over the hair.
+let strapCache = null;
+function strapObject(pl, cz) {
+  const key = JSON.stringify(pl.slots) + '|' + cz + '|' + EDITION;
+  if (!strapCache || strapCache.key !== key) {
+    const C0 = new THREE.Vector3(0, -6, -10), under = new THREE.Vector3(0, -0.8, -0.6).normalize();
+    const slerp3 = (a, b, u) => a.clone().lerp(b, u).normalize();
+    const half = (s) => {   // slot → down the side of the back of the head → under the skull's bump, in the middle
+      const slot = new THREE.Vector3(s * pl.slots[0].p[0], pl.slots[0].p[1], pl.slots[0].p[2] + cz);
+      const d0 = slot.clone().sub(C0).normalize(), side = new THREE.Vector3(s * 0.62, -0.68, -0.38).normalize();
+      const pts = [slot.clone()], nrm = [d0.clone()];
+      for (let i = 1; i <= 36; i++) {
+        const u = i / 36, dir = u < 0.6 ? slerp3(d0, side, u / 0.6) : slerp3(side, under, (u - 0.6) / 0.4);
+        const p = bustSurface(dir, C0, 1.8) || C0.clone().addScaledVector(dir, 110);
+        const lead = Math.max(0, 1 - u / 0.12);   // leaves the slot, then lies on the head
+        pts.push(lead > 0 ? p.lerp(slot.clone().addScaledVector(d0, 3), lead * lead) : p); nrm.push(dir);
+      }
+      return { pts, nrm };
+    };
+    const r = half(1), l = half(-1);
+    const pts = r.pts.concat(l.pts.slice(0, -1).reverse()), nrm = r.nrm.concat(l.nrm.slice(0, -1).reverse());
+    if (strapCache) strapCache.geo.dispose();
+    strapCache = { key, geo: ribbonGeometry(pts, nrm, 12.7) };
+  }
+  return new THREE.Mesh(strapCache.geo, mats.tie);
 }
 // Where a crown sits: it is built around a head ellipsoid sized from the head circumference, which
 // is the faun's skull scaled by f. Its print-frame mesh was lowered by ring.shift onto the bed.
@@ -708,6 +801,16 @@ function antlerPair(sk) {
   const g = new THREE.Group();
   if (sk.params.style === 'crown') { const c = antlerObject(); c.applyMatrix4(crownFit(sk.params, sk).M); g.add(c); return g; }
   const Rb = P.hbRadius, cz = 92 - Rb + P.hbThick / 2 + 1;
+  if (sk.params.mount === 'skull' && shown && shown.cap) {   // on the skull cap: the cap on the band, each antler on its pedicle
+    const pl = shown.cap.place, up = new THREE.Matrix4().makeTranslation(0, 0, cz);
+    const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(pl.toBand)); c.applyMatrix4(up); g.add(c);
+    if (pl.slots && pl.slots.length && faunGroup && view !== 'ar') g.add(strapObject(pl, cz));
+    const M = new THREE.Matrix4().makeBasis(new THREE.Vector3(...pl.X), new THREE.Vector3(...pl.Y), new THREE.Vector3(...pl.Z)).setPosition(new THREE.Vector3(...pl.Q));
+    const right = antlerObject(); right.applyMatrix4(M); right.applyMatrix4(up);
+    const left = antlerObject(); left.applyMatrix4(M); left.applyMatrix4(up); left.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
+    g.add(right, left);
+    return g;
+  }
   const a = P.bandAngle * Math.PI / 180;
   const n = new THREE.Vector3(Math.sin(a), 0, Math.cos(a)), t = new THREE.Vector3(Math.cos(a), 0, -Math.sin(a));
   const M = new THREE.Matrix4().makeBasis(t, new THREE.Vector3(0, 1, 0), n);
@@ -930,6 +1033,9 @@ function buildFaun() {
   return g;
 }
 
+/* ------------------------------------------------------------ edition code (the Yellowjackets shade: src/editions/yellowjackets.html) */
+/*@shade*//*@/shade*/
+
 let lastFitKey = '';
 function rebuildScene() {
   if (!glOK) return;
@@ -938,15 +1044,27 @@ function rebuildScene() {
   while (root.children.length) root.remove(root.children[0]);
   if (tutor) { root.add(tutorObject()); return; }   // the measuring tutorial owns the view while it's open
   if (importing) { root.add(alignObject()); if (!importing.framed) { fitCamera(); importing.framed = true; } return; }
-  if (view === 'print') { root.add(bedObject()); if (shown) { const a = antlerObject(); a.rotation.z = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180; root.add(a); } }
+  if (view === 'print') {
+    root.add(bedObject());
+    if (shown) {   // every part as it prints, side by side: right and (mirrored) left antler, and the skull cap if there is one
+      const parts = [], ang = (shown.fit ? shown.fit.angle : 0) * Math.PI / 180;
+      const right = antlerObject(); right.rotation.z = ang; parts.push(right);
+      if (P.style !== 'crown') { const left = antlerObject(); left.scale.x = -1; left.rotation.z = -ang; parts.push(left); }
+      if (shown.cap && P.mount === 'skull' && P.style !== 'crown') parts.push(capObject(shown.cap));
+      const boxes = parts.map((o) => { o.updateMatrixWorld(true); return new THREE.Box3().setFromObject(o); });
+      const gap = 12, total = boxes.reduce((w, b) => w + b.max.x - b.min.x, 0) + gap * (parts.length - 1);
+      let x = -total / 2;
+      parts.forEach((o, i) => { const b = boxes[i]; o.position.x = x - b.min.x; o.position.y = -(b.min.y + b.max.y) / 2; x += b.max.x - b.min.x + gap; root.add(o); });
+    }
+  }
   else root.add(wearObject());
-  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + (P.headMeasured ? P.headArcFB + '|' + P.headArcEE : '') + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + (shown ? 1 : 0);
+  const fitKey = view + '|' + P.style + '|' + P.headCirc + '|' + (P.headMeasured ? P.headArcFB + '|' + P.headArcEE : '') + '|' + P.preset + '|' + P.scale + '|' + P.beamLength + '|' + P.mount + '|' + (shown ? (shown.cap ? 2 : 1) : 0);
   if (fitKey !== lastFitKey && shown) { fitCamera(); lastFitKey = fitKey; }
 }
 function fitCamera() {
   if (tutor) return;   // the tutorial places its own camera
   const box = new THREE.Box3();
-  if (view === 'print') box.setFromObject(root.children[1] || root);
+  if (view === 'print') { if (root.children.length < 2) box.setFromObject(root); for (const o of root.children.slice(1)) box.expandByObject(o); }   // the parts, not the bed
   else {   // frame the head and antlers; the cloak can run off the bottom
     root.updateMatrixWorld(true);
     root.traverse((o) => { if (o.isMesh && !o.userData.nofit && !(o.parent && o.parent.userData.nofit)) box.expandByObject(o); });
@@ -1191,11 +1309,13 @@ document.addEventListener('keydown', (e) => { if (tutor && e.key === 'Escape') t
 /* ------------------------------------------------------------ status + readouts */
 function updateReadout() {
   const fresh = built && built.key === keyOf(P);
-  const r = fresh ? built.report : null, ok = !!(r && r.watertight && r.shells === 1);
-  const fit = fresh ? r.fit : shown ? shown.fit : null;
-  const fits = fit ? fit.fits : true;
-  const f = (x) => inch(x, 1);
-  $('dims').innerHTML = fit ? `${f(fit.w)} × ${f(fit.d)} × ${f(fit.h)} in${fits ? '<span class="fits"> · one piece on the P2S</span>' : ' · <span class="over">too big for the P2S</span>'}` : 'Shaping…';
+  const capOn = P.style !== 'crown' && P.mount === 'skull', cap = fresh ? built.cap : shown ? shown.cap : null;
+  const capOK = !capOn || !!(fresh && cap && cap.report.watertight && cap.report.shells === 1);
+  const r = fresh ? built.report : null, ok = !!(r && r.watertight && r.shells === 1) && capOK;
+  const fit = fresh ? r.fit : shown ? shown.fit : null, capFit = capOn && cap ? cap.report.fit : null;
+  const fits = (fit ? fit.fits : true) && (capFit ? capFit.fits : true);
+  const f = (x) => inch(x, 1), dimsOf = (q) => `${f(q.w)} × ${f(q.d)} × ${f(q.h)} in`;
+  $('dims').innerHTML = fit ? `${capFit ? 'antler ' : ''}${dimsOf(fit)}${capFit ? ` · cap ${dimsOf(capFit)}` : ''}${fits ? `<span class="fits"> · ${capFit ? 'each piece fits' : 'one piece on'} the P2S</span>` : ' · <span class="over">too big for the P2S</span>'}` : 'Shaping…';
   // Say plainly whether the view shows the coarse preview or the final, checked mesh.
   const st = $('status'), stale = !shown || shown.key !== keyOf(P);
   if (building) { st.className = 'pill busy'; st.lastChild.textContent = 'Building final mesh…'; }
@@ -1218,7 +1338,7 @@ function updateReadout() {
   const pb = $('primary');
   pb.disabled = building || (fresh && !ok);
   pb.dataset.action = ok ? 'download' : 'build';
-  const nStl = P.style === 'crown' ? 1 : 2;   // a crown is one piece; a headband pair is two
+  const nStl = P.style === 'crown' ? 1 : capOn ? 3 : 2;   // a crown is one piece; a headband pair is two; on a skull cap, three
   pb.textContent = building ? 'Building…' : ok ? `Download ${nStl > 1 ? 'STLs' : 'STL'} · ${Math.max(1, Math.round((84 + r.triangles * 50) * nStl / 1e6))} MB` : fresh ? 'Mesh failed its check' : 'Build final mesh';
 }
 
@@ -1238,7 +1358,7 @@ function changed() {
 let worker = null, running = null, queued = null, jobId = 0;
 function makeWorker() {
   try {
-    const src = $('antler-core').textContent + `
+    const src = $('antler-core').textContent + capJob.toString() + `
       self.onmessage = function (e) {
         var j = e.data;
         try {
@@ -1249,7 +1369,9 @@ function makeWorker() {
           var mesh = AntlerCore.meshAntler(sk, j.res, j.kind === 'build' ? function (p) { self.postMessage({ type: 'progress', id: j.id, p: p }); } : null);
           var report = j.kind === 'build' ? AntlerCore.validateMesh(mesh) : AntlerCore.meshBounds(mesh);
           report.fit = sk.fit;
-          self.postMessage({ type: 'done', id: j.id, mesh: mesh, report: report }, [mesh.positions.buffer, mesh.indices.buffer, mesh.attr.buffer]);
+          var cap = capJob(AntlerCore, j), bufs = [mesh.positions.buffer, mesh.indices.buffer, mesh.attr.buffer];
+          if (cap) bufs.push(cap.mesh.positions.buffer, cap.mesh.indices.buffer, cap.mesh.attr.buffer);
+          self.postMessage({ type: 'done', id: j.id, mesh: mesh, report: report, cap: cap }, bufs);
         } catch (err) { self.postMessage({ type: 'error', id: j.id, message: String(err && err.message || err) }); }
       };`;
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
@@ -1258,13 +1380,23 @@ function makeWorker() {
     return w;
   } catch (e) { return null; }
 }
+// The skull cap, for a design on one (base style 'skull'): its mesh, check or bounds, and where it goes on the band.
+// Runs in the worker (its source is copied there) and on the main thread.
+function capJob(Core, j) {
+  if (j.params.style === 'crown' || j.params.mount !== 'skull') return null;
+  var sk = Core.buildSkullCap(j.params), mesh = Core.meshAntler(sk, j.kind === 'build' ? j.res : Math.max(1, j.res));
+  var report = j.kind === 'build' ? Core.validateMesh(mesh) : Core.meshBounds(mesh), size = Core.meshBounds(mesh).size;
+  report.fit = Object.assign({}, sk.fit, { w: size[0], d: size[1], h: size[2] });   // the part's own size, not the box it was meshed in
+  var g = sk.spec;
+  return { mesh: mesh, report: report, place: { toBand: sk.toBand, Q: g.Q, X: g.F.X, Y: g.F.Y, Z: g.F.Z, slots: g.slots } };
+}
 function previewRes(p) {
   if (p.style === 'crown') return 1.3;
   const L = p.beamLength * p.scale;
   return Math.max(0.8, Math.min(1.6, L / 150));
 }
 function showBuilt() {
-  setShown(built.mesh, built.key, 'build'); shown.size = built.report.size; shown.fit = built.report.fit;
+  setShown(built.mesh, built.key, 'build'); shown.size = built.report.size; shown.fit = built.report.fit; shown.cap = built.cap;
 }
 function requestPreview() {
   const snap = JSON.parse(JSON.stringify(P)), key = keyOf(snap);
@@ -1289,14 +1421,15 @@ function pump() {
 function runInline(j) {
   running = j;
   setTimeout(() => {
-    let sk, mesh, rep;
+    let sk, mesh, rep, cap;
     try {
       ensureScan(j.params);
       sk = C.buildSkeleton(j.params);
       mesh = C.meshAntler(sk, j.res);
       rep = j.kind === 'build' ? C.validateMesh(mesh) : C.meshBounds(mesh); rep.fit = sk.fit;
+      cap = capJob(C, j);
     } catch (e) { failJob(j, e); return; }
-    finishJob(j, mesh, rep);
+    finishJob(j, mesh, rep, cap);
   }, 20);
 }
 function failJob(j, e) {   // the engine couldn't build this design: say so, and don't leave the page waiting
@@ -1311,20 +1444,20 @@ function onWorker(e) {
   if (!running || d.id !== running.id) return;
   if (d.type === 'error') { const j = running; running = null; runInline(j); return; }   // try once more on the main thread, where the error can be reported
   if (d.type === 'progress') { $('prog').style.width = (d.p * 100).toFixed(1) + '%'; $('primary').textContent = `Building… ${Math.round(d.p * 100)}%`; return; }
-  finishJob(running, d.mesh, d.report);
+  finishJob(running, d.mesh, d.report, d.cap);
 }
-function finishJob(j, mesh, report) {
+function finishJob(j, mesh, report, cap) {
   running = null;
   if (j.kind === 'build') {
     building = false; $('prog').style.width = '0';
-    built = { mesh, report, key: j.key, params: j.params };
-    if (j.key === keyOf(P)) { setShown(mesh, j.key, 'build'); shown.size = report.size; shown.fit = report.fit; }
+    built = { mesh, report, key: j.key, params: j.params, cap };
+    if (j.key === keyOf(P)) { setShown(mesh, j.key, 'build'); shown.size = report.size; shown.fit = report.fit; shown.cap = cap; }
     else toast('Settings changed while building. Build again to include them.');
     if (j.resolve) j.resolve(built);
   } else if (built && built.key === keyOf(P)) {
     if (!shown || shown.key !== built.key || shown.kind !== 'build') showBuilt();
   } else {
-    setShown(mesh, j.key, 'preview'); shown.size = report.size; shown.fit = report.fit;
+    setShown(mesh, j.key, 'preview'); shown.size = report.size; shown.fit = report.fit; shown.cap = cap;
   }
   rebuildScene(); updateReadout();
   if (shown) previewWaiters = previewWaiters.filter((w) => (w.key === shown.key ? (w.resolve(true), false) : true));
@@ -1379,19 +1512,20 @@ async function downloadSTLs() {
   let b = built && built.key === keyOf(P) ? built : await build();
   if (b === false) return;   // the build failed and said so
   if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
-  if (!b.report.watertight || b.report.shells !== 1) { toast('Mesh failed its check, so nothing was exported.'); return; }
+  if (!b.report.watertight || b.report.shells !== 1 || (b.cap && (!b.cap.report.watertight || b.cap.report.shells !== 1))) { toast('Mesh failed its check, so nothing was exported.'); return; }
   const params = Object.assign({}, b.params, { filament: P.filament });   // filament doesn't change the mesh, so it isn't in the build's key
   const base = slug();
   const angle = b.report.fit.angle, stls = params.style === 'crown'
     ? [{ name: base + '.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base, rotZ: angle })) }]   // one piece
     : [{ name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: angle })) },
-      { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -angle })) }];
+      { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -angle })) },
+      ...(b.cap ? [{ name: base + '-skull.stl', data: new Uint8Array(C.toSTL(b.cap.mesh, { name: base + ' skull cap', rotZ: b.cap.report.fit.angle })) }] : [])];
   const notesReport = Object.assign({}, b.report, { size: C.plateSize(b.mesh, angle) });   // size as it sits on the plate
   const zip = C.makeZip([
     ...stls,
     ...(params.headSource === 'scan' && scanStore.get(params.headScan) ? [{ name: base + '-head-scan.json', data: JSON.stringify(scanStore.get(params.headScan)) }] : []),
     { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params }, null, 2) },
-    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in' }) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in', cap: b.cap ? { report: Object.assign({}, b.cap.report, { size: C.plateSize(b.cap.mesh, b.cap.report.fit.angle) }), fit: b.cap.report.fit } : undefined }) },
   ]);
   offerFile(base + '.zip', zip);
 }
@@ -2196,7 +2330,7 @@ function flameBustObject(p) {
 // Saved designs live in this browser (localStorage), newest first. Each entry keeps the full
 // params, a ¾ headband snapshot and the printed size, so the library can be reviewed without
 // meshing anything. Opening one loads it into the editor; its STLs are built from there.
-const LIB_KEY = 'antler-forge-library-v1';
+const LIB_KEY = YJ ? 'antler-forge-yj-library-v1' : 'antler-forge-library-v1';   // each edition keeps its own library
 const libKey = (p) => keyOf(p) + '|' + p.filament;   // same shape and same filament = same design
 function libLoad() {
   let raw = null;
@@ -2255,7 +2389,7 @@ function snapshot() {
     root.remove(g);
     const out = document.createElement('canvas'); out.width = W; out.height = H;
     const ctx = out.getContext('2d'), bg = ctx.createLinearGradient(0, 0, 0, H);
-    bg.addColorStop(0, '#2D3F33'); bg.addColorStop(1, '#0E1511');
+    bg.addColorStop(0, YJ ? '#1E1612' : '#2D3F33'); bg.addColorStop(1, YJ ? '#070505' : '#0E1511');
     ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H); ctx.drawImage(snapR.domElement, 0, 0);
     return out.toDataURL('image/jpeg', 0.82);
   } catch (e) { return null; }
@@ -2377,15 +2511,21 @@ const LORE = {
   moose: 'Broad palms like the leaves of some enormous water plant, fringed with points.',
   spirit: 'Grown, not shed. Branches spiral outward the way roots find their way through stone.',
   fawn: 'Velvet buttons, the first promise of a crown.',
+  trial: 'Bone and cloth, tied on by firelight. Short, rough points that never tried to be pretty.',
+  lyre: 'Tall and slender, the tips bending in toward each other as if listening to the trees.',
+  spikes: 'A young buck’s first spikes, curved like a question nobody wants to answer.',
+  feral: 'Grown wrong and grown anyway: drop tines, kickers, points going every way at once.',
 };
 const NAME_A = ['Mossbound', 'Hollow', 'Lantern', 'Thornlit', 'Silver-birch', 'Elder', 'Hushwood', 'Fernlight', 'Rimefrost', 'Wren', 'Barrow', 'Gloaming', 'Briar', 'Starwood', 'Lichen', 'Wildwood', 'Ashen', 'Duskfall', 'Old Oak', 'Deepfern'];
+const YJ_A = ['Black Spruce', 'Hollow', 'Winterbound', 'Smoke', 'Lakeside', 'Ember', 'Frostbitten', 'Cabin', 'Ridge', 'Snowmelt', 'Wolf-hour', 'Ashfall', 'Deadfall', 'Long Night', 'Thaw', 'Hunter’s', 'Firelit', 'Bone-white', 'Pine Hollow', 'Last Light'];
+const YJ_B = ['Crown', 'Offering', 'Totem', 'Relic', 'Tribute', 'Oath', 'Marker', 'Headdress', 'Sign', 'Antlers'];
 const NAME_B = { default: ['Crown', 'Lyre', 'Candelabra', 'Bough', 'Diadem', 'Harp', 'Spire', 'Coronet', 'Branchwork', 'Tangle', 'Rack', 'Thicket'], moose: ['Palms', 'Fans', 'Shields', 'Leaves'], fawn: ['Buttons', 'Nubs', 'Buds'] };
 function rackName(p) {
   let h = 2166136261;
   for (const ch of p.preset + ':' + p.seed + ':' + Math.round(p.beamLength) + ':' + p.tineCount) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
   h >>>= 0;
-  const b = NAME_B[p.preset] || NAME_B.default;
-  return 'The ' + NAME_A[h % NAME_A.length] + ' ' + b[(h >>> 8) % b.length];
+  const a = YJ ? YJ_A : NAME_A, b = YJ ? YJ_B : NAME_B[p.preset] || NAME_B.default;
+  return 'The ' + a[h % a.length] + ' ' + b[(h >>> 8) % b.length];
 }
 let lastPlate = '';
 function updatePlate() {
@@ -2420,8 +2560,12 @@ $('surprise').addEventListener('click', () => {
   if (next.tineCount > 1 && Math.random() < 0.4) next.tineCount += Math.random() < 0.5 ? -1 : 1;
   next.tineCrest = 0.25 + Math.random() * 0.45;
   next.tineInward = Math.max(0, next.tineInward + 8 * r());
-  next.jitter = 0.05 + Math.random() * 0.15;
-  next.wobble = Math.max(0.05, Math.min(0.45, next.wobble + 0.1 * r()));
+  if (YJ) {   // these species are rough on purpose: vary their roughness rather than calming it
+    next.jitter *= 0.8 + 0.4 * Math.random(); next.wobble *= 0.85 + 0.3 * Math.random();
+  } else {
+    next.jitter = 0.05 + Math.random() * 0.15;
+    next.wobble = Math.max(0.05, Math.min(0.45, next.wobble + 0.1 * r()));
+  }
   next.seed = 1 + Math.floor(Math.random() * 9998);
   P = C.resolveParams(next);
   syncControls(); changed();
@@ -2431,7 +2575,7 @@ $('surprise').addEventListener('click', () => {
 /* ------------------------------------------------------------ fireflies */
 // A handful of fireflies drifting low over the ferns. Each one is mostly dark and
 // flashes on its own slow rhythm: a quick yellow-green swell, then a long fade.
-(function fireflies() {
+if (!YJ) (function fireflies() {
   const cv = $('motes'), ctx = cv.getContext('2d');
   const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   const N = 9, flies = [];
@@ -2468,6 +2612,51 @@ $('surprise').addEventListener('click', () => {
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, glow, 0, 6.283); ctx.fill();
       ctx.fillStyle = `rgba(250,255,210,${0.12 + 0.85 * k})`;
       ctx.beginPath(); ctx.arc(x, y, f.r * 0.8, 0, 6.283); ctx.fill();
+    }
+    if (!still) requestAnimationFrame(frame);
+  }
+  window.addEventListener('resize', size);
+  if (window.ResizeObserver) new ResizeObserver(size).observe(cv);
+  requestAnimationFrame(frame);
+})();
+
+/* ------------------------------------------------------------ sparks (Yellowjackets edition) */
+// Sparks rising from a fire below the frame: each one leaves the glow near the middle, climbs and wavers,
+// cooling from yellow-white through orange to a dull red before it winks out.
+if (YJ) (function sparks() {
+  const cv = $('motes'), ctx = cv.getContext('2d');
+  const still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const N = still ? 10 : 24, sparks = [];
+  let w = 0, h = 0, dpr = 1;
+  function size() { dpr = Math.min(2, window.devicePixelRatio || 1); w = cv.clientWidth; h = cv.clientHeight; cv.width = w * dpr; cv.height = h * dpr; }
+  const spawn = (s, fresh) => Object.assign(s, {
+    x: 0.5 + (Math.random() + Math.random() + Math.random() - 1.5) * 0.32, y: fresh ? 0.45 + Math.random() * 0.6 : 1.02,
+    vy: 0.05 + Math.random() * 0.08, ph: Math.random() * 6.28, wav: 0.4 + Math.random() * 1.2,
+    life: 0, span: 2.6 + Math.random() * 3.4, r: 0.7 + Math.random() * 1.1,
+  });
+  for (let i = 0; i < N; i++) { const s = spawn({}, true); s.life = Math.random() * s.span; sparks.push(s); }
+  const heat = (u) => u < 0.25 ? [255, 236, 170] : u < 0.6 ? [250, 160, 70] : [190, 70, 34];
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!w) size();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    for (const s of sparks) {
+      if (!still) {
+        s.life += dt; s.y -= s.vy * dt; s.ph += dt * s.wav * 2.4;
+        s.x += Math.sin(s.ph) * dt * 0.012;
+        if (s.life > s.span || s.y < 0.2) spawn(s, false);
+      }
+      const u = still ? 0.4 : s.life / s.span;
+      const fl = still ? 0.5 : 0.65 + 0.35 * Math.sin(now / 70 + s.ph * 5);
+      const a = Math.min(1, u / 0.08) * (1 - u) * fl, [r, g, b] = heat(u);
+      const x = s.x * w, y = s.y * h, glow = s.r * 5;
+      const gr = ctx.createRadialGradient(x, y, 0, x, y, glow);
+      gr.addColorStop(0, `rgba(${r},${g},${b},${0.45 * a})`); gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, glow, 0, 6.283); ctx.fill();
+      ctx.fillStyle = `rgba(255,${Math.min(255, g + 40)},${Math.min(255, b + 60)},${0.9 * a})`;
+      ctx.beginPath(); ctx.arc(x, y, s.r * 0.7, 0, 6.283); ctx.fill();
     }
     if (!still) requestAnimationFrame(frame);
   }

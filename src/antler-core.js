@@ -89,7 +89,8 @@
       { k: 'tineCount', label: 'Points', min: 0, max: 9, step: 1, u: '', hint: 'Tines along each beam' },
       { k: 'tineScale', label: 'Tine length', min: 0.4, max: 1.8, step: 0.05, u: '×', hint: 'All the tines together: along the beam, brow and crown points' },
       { k: 'browTine', label: 'Brow tine', type: 'bool' },
-      { k: 'mount', label: 'Base style', type: 'select', only: 'headband', options: [['tunnel', 'Flared · slide-on'], ['clip', 'Flared · snap-on'], ['flat', 'Flared · glue-on'], ['none', 'Burr only, flat cut']] },
+      { k: 'mount', label: 'Base style', type: 'select', only: 'headband', options: [['tunnel', 'Flared · slide-on'], ['clip', 'Flared · snap-on'], ['flat', 'Flared · glue-on'], ['none', 'Burr only, flat cut'], ['skull', 'On a skull cap (3 parts)']] },
+      { k: 'capTie', label: 'Strap slots', type: 'bool', only: 'headband', hint: 'Two slots at the back of the skull cap for a loop of ½ in elastic (or a strip of cloth, tied). It runs down and round the back of your head, under the bump at the back of your skull, and holds the cap down so the antlers can’t rock it forward or lift it off. Bobby pins slid onto the four grooves at the cap’s edge hold it too.' },
       { k: 'hbWidth', label: 'Headband width', min: 3, max: 40, step: 0.5, u: 'mm', only: 'headband', hint: 'Measure your band: the base is sized to fit it' },
     ] },
     { group: 'Antler form', tier: 'details', items: [
@@ -212,6 +213,7 @@
     ringThick: 9, ringStrands: 3, ringWeave: 2, ringDip: 18, ringTines: 8, ringTineStyle: 'spike', ringTineLength: 26, ringFront: 'point',
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
+    capTie: true,   // the skull cap's strap slots
   };
 
   // Tuned for silhouette first: a smooth curl, tine tips on one arch, calm surfaces.
@@ -224,6 +226,12 @@
     moose: { label: 'Moose', p: { character: 0.3, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 4, ringDrop: 4, ringTaper: 0.2, ringWander: 0.15, ringThick: 12, ringTines: 6, ringTineStyle: 'paddle', ringTineLength: 24, ringFront: 'none', beamLength: 170, baseDia: 32, beamTaper: 0.15, tipDia: 6, beamLean: -12, beamCurl: 25, curlBias: 1, beamSpread: 72, beamInCurl: -5, wobble: 0.1, tineCount: 1, tineDir: 'forward', tineStart: 0.22, tineEnd: 0.22, tineLength: 55, tineCrest: 0.5, tineTaper: 0, tineAngle: 70, tineFan: 0, tineCurve: 20, tineInward: 0, tineThick: 0.7, browTine: false, crownCount: 8, crownShape: 'fan', crownLength: 115, palmation: 1, ovality: 0.4, grooveDepth: 0.3, pearling: 0.3, burrSize: 4, fillet: 6, scale: 0.55 } },
     spirit: { label: 'Forest spirit', p: { character: 0.2, ringPattern: 'spines', ringStrands: 3, ringWeave: 3, ringDip: 22, ringLoopDepth: 18, ringWander: 0.75, ringAsym: 0.3, ringTines: 10, ringTineStyle: 'tendril', ringTineLength: 34, ringFront: 'none', beamLength: 320, baseDia: 25, beamTaper: 0.52, tipDia: 4, beamLean: -10, beamCurl: 64, curlBias: 1.6, beamSpread: 52, beamInCurl: -96, wobble: 0.45, tineCount: 7, tineDir: 'spiral', tineStart: 0.14, tineEnd: 0.9, tineLength: 90, tineCrest: 0.35, tineTaper: 0.55, tineRhythm: 0.85, tineAngle: 50, tineFan: 20, tineCurve: 42, tineInward: 12, tineThick: 0.72, browTine: false, forkDepth: 1, forkAngle: 28, forkTines: true, jitter: 0.3, seed: 21, ovality: 0.08, grooveDepth: 0.3, pearling: 0.15, fillet: 6, scale: 0.55 } },
     fawn: { label: 'Fawn nubs', p: { character: 0.3, ringPattern: 'band', ringStrands: 1, ringWeave: 1, ringDip: 6, ringRise: 3, ringDrop: 3, ringTaper: 0.1, ringWander: 0.15, ringTines: 12, ringTineStyle: 'button', ringTineLength: 8, ringFront: 'none', beamLength: 20, baseDia: 30, beamTaper: 0.3, tipDia: 18, baseHeight: 10, baseFlare: 1.6, beamLean: -10, beamCurl: 15, curlBias: 1, beamSpread: 30, beamInCurl: 0, wobble: 0.1, tineCount: 0, browTine: false, grooveDepth: 0.6, grooveCount: 11, pearling: 0.7, burrSize: 3, scale: 0.8 } },
+    // The campfire set (the wilderness page): loosely after the found-bone headpieces in Yellowjackets. Small,
+    // irregular, weathered antlers rather than trophy racks. `set` keeps them off the storybook page.
+    trial: { label: 'Trial crown', set: 'campfire', p: { character: 0.16, ringPattern: 'band', beamLength: 210, baseDia: 27, beamTaper: 0.42, tipDia: 5.5, beamLean: -16, beamCurl: 64, curlBias: 1.3, beamSpread: 46, beamInCurl: -64, wobble: 0.42, tineCount: 3, tineDir: 'up', tineStart: 0.32, tineEnd: 0.78, tineLength: 66, tineCrest: 0.25, tineTaper: 0.5, tineRhythm: 1.1, tineAngle: 66, tineFan: 12, tineCurve: 22, tineInward: 8, tineThick: 0.74, browTine: true, browDir: 'up', browLength: 26, browAngle: 70, browPos: 0.1, jitter: 0.4, seed: 96, ovality: 0.16, grooveDepth: 0.75, grooveCount: 8, pearling: 0.85, burrSize: 5, scale: 0.66 } },
+    lyre: { label: 'Queen’s lyre', set: 'campfire', p: { character: 0.3, ringPattern: 'band', beamLength: 330, baseDia: 21, beamTaper: 0.5, tipDia: 4.5, beamLean: -6, beamCurl: 26, curlBias: 1.6, beamSpread: 34, beamInCurl: -78, wobble: 0.16, tineCount: 2, tineDir: 'outward', tineStart: 0.4, tineEnd: 0.62, tineLength: 48, tineCrest: 0.5, tineTaper: 0.2, tineAngle: 42, tineFan: 0, tineCurve: 34, tineInward: -6, tineThick: 0.7, browTine: false, jitter: 0.12, seed: 31, ovality: 0.1, grooveDepth: 0.4, pearling: 0.35, burrSize: 3.5, scale: 0.6 } },
+    spikes: { label: 'Spikes', set: 'campfire', p: { character: 0.24, ringPattern: 'band', beamLength: 150, baseDia: 23, beamTaper: 0.55, tipDia: 4, beamLean: -24, beamCurl: 84, curlBias: 1.8, beamSpread: 30, beamInCurl: -44, wobble: 0.22, tineCount: 1, tineDir: 'up', tineStart: 0.5, tineEnd: 0.5, tineLength: 26, tineTaper: 0, tineAngle: 48, tineCurve: 30, tineThick: 0.66, browTine: false, jitter: 0.2, seed: 13, ovality: 0.12, grooveDepth: 0.55, grooveCount: 7, pearling: 0.6, burrSize: 4, scale: 0.72 } },
+    feral: { label: 'Non-typical', set: 'campfire', p: { character: 0.08, ringPattern: 'band', beamLength: 270, baseDia: 29, beamTaper: 0.4, tipDia: 5.5, beamLean: -20, beamCurl: 58, curlBias: 1.2, beamSpread: 52, beamInCurl: -50, wobble: 0.7, tineCount: 6, tineDir: 'spiral', tineStart: 0.2, tineEnd: 0.86, tineLength: 58, tineCrest: 0.4, tineTaper: 0.35, tineRhythm: 0.85, tineAngle: 82, tineFan: 34, tineCurve: 6, tineInward: 4, tineThick: 0.7, browTine: true, browDir: 'forward', browLength: 34, browAngle: 84, browPos: 0.08, forkDepth: 1, forkAngle: 34, forkTines: true, jitter: 0.7, seed: 666, ovality: 0.18, grooveDepth: 0.9, grooveCount: 8, pearling: 1.1, burrSize: 5.5, scale: 0.6 } },
   };
 
   // Crown designs retired in the controls review (2026-09-28), and the nearest one that's left
@@ -252,7 +260,7 @@
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
     if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
-      'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
+      'capTie', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
 
@@ -1338,6 +1346,12 @@
     return sgn * Math.sqrt(d);
   }
 
+  /* Skull cap (mount 'skull'): three parts, glued. Each antler has a round flared base with a D-shaped socket
+     up into it; the cap carries a pedicle for each antler, topped with a D-shaped peg (the flat faces the
+     midline, so an antler only goes on facing the right way). The headband glues into a groove under the cap.
+     Pegs and sockets never scale; the socket's gap is half the Fit clearance all round. */
+  const PEG = { r: 5, flat: 3.4, h: 12 }, SOCKET_WALL = 2.6;
+
   /* Flared pedicle base. Profile R(z) = rp + (Rf - rp)(1 - z/h)^k, stretched along the band. */
   const FLARE_K = 1.7;
   function mountSpec(P, baseR) {
@@ -1350,7 +1364,12 @@
       return m;
     }
     let zt = 0, need = 0;
-    if (P.mount !== 'flat') {
+    if (P.mount === 'skull') {   // a D-shaped socket up into the base, glued over the skull cap's peg; the base stays round
+      const gap = P.clearance / 2;
+      m.socket = { r: PEG.r + gap, flat: PEG.flat + gap, depth: PEG.h + 0.8 };
+      zt = m.socket.depth + 1.2; need = m.socket.r + SOCKET_WALL;
+      m.tunnelCZ = 0;
+    } else if (P.mount !== 'flat') {
       m.floor = Math.max(1.2, P.wall * 0.7);
       m.tw = P.hbWidth + P.clearance;
       m.th = P.hbThick + P.clearance + m.sag;
@@ -1371,9 +1390,151 @@
       m.h = Math.max(m.h, zt / (1 - Math.pow(gNeed, 1 / FLARE_K)));
     }
     m.rf = Math.max(rf, need + 0.5, m.rp);
-    m.ex = Math.max(1, P.padLength / 2 / m.rf);   // footprint stretched along the band
+    m.ex = P.mount === 'skull' ? 1 : Math.max(1, P.padLength / 2 / m.rf);   // footprint stretched along the band (round on a pedicle)
     m.baseZ = m.h - 0.5;
     return m;
+  }
+
+  /* --------------------------------------------------------------- skull cap */
+  // The top of a deer's skull, worn over the headband: a weathered bone shell shaped to the top of the head, a
+  // pedicle for each antler with a D-shaped peg on it, a groove underneath that the headband glues into, and two
+  // cord holes at the back for tying it on with cloth. Worn: the band goes on as usual and runs under the cap,
+  // right below the pedicles, so the antlers' weight goes straight down into it; the cap's front and back rest
+  // on the head. Printed rim-down, flat on the bed; the inside (which faces the hair) prints on tree supports.
+  //
+  // Band frame: origin at the centre of the band's arc, +X the wearer's right, +Y forward, +Z up; the band's
+  // middle surface is the circle of radius hbRadius in the XZ plane. The page places this frame on the head.
+  const CAP_T = 3, PED_H = 8, PED_X = 40;   // shell thickness; pedicle height; half the pedicles' spacing (a deer's)
+  const SLOT = { len: 15, w: 3.2 };           // a strap slot: ½ in elastic, lying flat
+  const PIN = { len: 14, w: 2.2, depth: 1 };   // a bobby-pin groove: on the outside, running in from the rim
+  const rotOf = (P, a) => {   // the antler's print frame in the band frame at band angle a (degrees): the same turn as buildAt
+    const sp = (P.splay - a) * DEG, rk = P.rake * DEG, cs = Math.cos(sp), ss = Math.sin(sp), ck = Math.cos(rk), sk = Math.sin(rk);
+    const inv = ([X, Y, Z]) => { const x = X * cs - Z * ss, z1 = X * ss + Z * cs; return [x, Y * ck + z1 * sk, -Y * sk + z1 * ck]; };
+    return { X: inv([1, 0, 0]), Y: inv([0, 1, 0]), Z: inv([0, 0, 1]) };
+  };
+  // Where the parts go, in the band frame: the shell, and for the right antler its print frame (origin Q, axes
+  // X, Y, Z) standing on its pedicle. The left is the mirror image (x → −x).
+  // The cap's outline seen from above, in front of the pedicles (behind them the rim plane shapes it): the full
+  // width beside the pedicles, tapering like a shield to a blunt point at yF, with a notch over each eye.
+  const CAP_TIP = 10;   // half the width of the blunt front point (mm)
+  const capHalfW = (y, x0, yF) => (y <= 0 ? 999 : y >= yF ? -1 : CAP_TIP + (x0 + 4 - CAP_TIP) * Math.pow(1 - Math.pow(y / yF, 1.8), 0.75) - 5 * Math.exp(-(((y - 0.5 * yF) / 8) ** 2)));
+  function skullSpec(params, antlerBase) {
+    const P = resolveParams(params);
+    const band = { r: P.hbRadius, w: P.hbWidth, t: P.hbThick, gap: P.clearance };
+    const rin = band.r + band.t / 2 + 0.6, rout = rin + CAP_T;   // the shell rests just over the band
+    // front to back it curves like the top of the wearer's head: typical proportions at their head circumference
+    const fb = P.headCirc / perimeter(1, RING_ASPECT) / Math.sqrt(1 - RING_SEAT * RING_SEAT), ry = Math.sqrt(fb * rin);
+    const a = Math.asin(PED_X / rout) / DEG;                     // the pedicles: a deer's spacing, wherever the antlers sit on a plain band
+    const F = rotOf(P, a), B0 = [rout * Math.sin(a * DEG), 0, rout * Math.cos(a * DEG)];
+    const rp = Math.max(antlerBase || 14, PEG.r + 6);            // the pedicle's top matches the antler's base
+    const Q = add(B0, mul(F.Z, PED_H));
+    // The rim is a plane (it's what the cap stands on to print) through the shell's sides at the pedicles (on a deer
+    // they stand at the plate's outer edges) and round the back; in front of the pedicles the plate tapers like a
+    // shield to a blunt point above the hairline (yF).
+    const x0 = Math.min(rin - 8, B0[0] + 0.8 * rp), z0 = Math.sqrt(Math.max(1, rin * rin - x0 * x0));
+    const yB = -0.42 * ry, zB = rin * Math.sqrt(1 - (yB / ry) ** 2), yF = 0.55 * ry;
+    const n = norm([0, zB - z0, -yB]), h0 = dot(n, [0, 0, z0]);   // tilted so the cap reaches further down at the front
+    const rimX = (y) => { const z = (h0 - n[1] * y) / n[2]; return Math.sqrt(Math.max(0, rin * rin * (1 - (y / ry) ** 2) - z * z)); };   // the rim's half-width at y
+    // a point on the shell above (x, y): its outward direction, and where it meets the outer surface
+    const onShell = (x, y) => {
+      const dir = norm([x, y, Math.sqrt(Math.max(1, rin * rin - x * x - (y * rin / ry) ** 2))]);
+      return { dir, p: mul(dir, 1 / Math.hypot(dir[0] / rout, dir[1] / (ry + CAP_T), dir[2] / rout)), q: mul(dir, 1 / Math.hypot(dir[0] / rin, dir[1] / ry, dir[2] / rin)) };
+    };
+    // the strap slots: behind the pedicles near the back rim, lying across the strap's run (right side)
+    let slots = [];
+    if (P.capTie) {
+      const y = 0.6 * yB, sl = onShell(Math.max(14, rimX(y) - 10), y);
+      sl.u = norm(perp([1, 0.35, 0], sl.dir));   // the slot's long axis
+      slots = [sl];
+    }
+    // the bobby-pin grooves (right side): at the front point and the back rim, each running in from the edge, so a
+    // pin slides on from outside: its top prong in the groove, its bottom prong in the hair under the edge
+    const inCap = (x, y) => dot(n, onShell(x, y).q) >= h0 && Math.abs(x) <= capHalfW(y, x0, yF);
+    const edge = (x, dy) => { let y = 0; while (Math.abs(y) < 2 * ry && inCap(x, y + dy)) y += dy; return y; };
+    const pins = [[7, 0.5], [12, -0.5]].map(([x, dy]) => {
+      const pn = onShell(x, edge(x, dy)), t = norm(perp([0, -Math.sign(dy), 0], pn.dir));   // t: from the edge inward
+      return Object.assign(pn, { t, s: cross(pn.dir, t) });
+    });
+    return { P, band, rin, rout, ry, a, rp, B0, Q, F, x0, yF, yB, n, h0, rimX, slots, pins, peg: PEG };
+  }
+  function buildSkullCap(params) {
+    const ant = buildSkeleton(params);   // the antlers as they'll be printed (after shrink-to-fit), for the pedicle size
+    const g = skullSpec(params, ant.mount.rf), P = g.P;
+    const Win = [g.rin, g.ry, g.rin], Wout = [g.rout, g.ry + CAP_T, g.rout];
+    const ellD = (p, r) => {   // approximate signed distance to an ellipsoid at the origin (iq)
+      const qx = p[0] / r[0], qy = p[1] / r[1], qz = p[2] / r[2], k0 = Math.hypot(qx, qy, qz), k1 = Math.hypot(qx / r[0], qy / r[1], qz / r[2]);
+      return k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -r[0];
+    };
+    const halfW = (y) => capHalfW(y, g.x0, g.yF);
+    const ribW = (g.band.w + g.band.gap) / 2 + 2.4, groW = (g.band.w + g.band.gap) / 2;
+    const bandIn = g.band.r - g.band.t / 2, bandOut = g.band.r + g.band.t / 2 + g.band.gap / 2;
+    const peds = [1, -1].map((s) => {
+      const fl = (v) => [s * v[0], v[1], v[2]];
+      const Q = fl(g.Q), Z = fl(g.F.Z), X = fl(g.F.X), A = add(fl(g.B0), mul(Z, -CAP_T));
+      return { Q, Z, X, A, L: vlen(sub(Q, A)), s };
+    });
+    const mir = (v) => [-v[0], v[1], v[2]];
+    const slots = g.slots.flatMap((sl) => [sl, { p: mir(sl.p), dir: mir(sl.dir), u: mir(sl.u) }]).map((sl) => Object.assign({}, sl, { w: cross(sl.dir, sl.u) }));
+    const pins = g.pins.flatMap((pn) => [pn, { p: mir(pn.p), dir: mir(pn.dir), t: mir(pn.t), s: mir(pn.s) }]);
+    const f = (p) => {   // band frame
+      const r = Math.hypot(p[0], p[2]);
+      // the shell, and the rib under the band line that holds the groove
+      let d = Math.max(-ellD(p, Win), ellD(p, Wout));
+      const rib = Math.max(Math.abs(p[1]) - ribW, bandIn - r, ellD(p, Wout));
+      d = Math.min(d, rib);
+      d = Math.max(d, Math.abs(p[0]) - halfW(p[1]));   // the outline
+      // weathered bone: a faint wander in the surface, and the suture down the middle of the forehead
+      if (d > -CAP_T - 1 && d < 2) {
+        d += 0.35 * (vnoise(p[0] * 0.18 + 7, p[1] * 0.18, p[2] * 0.18) - 0.5);
+        const zig = 1.1 * Math.sin(p[1] * 0.55) + 0.5 * Math.sin(p[1] * 1.7);
+        if (p[1] > -0.3 * g.ry && ellD(p, Wout) > -0.9) d = Math.max(d, 0.55 - Math.abs(p[0] - zig));
+      }
+      // the pedicles: short flared stumps of bone, and the D-shaped pegs on top
+      for (const q of peds) {
+        const w = sub(p, q.A), h = dot(w, q.Z), rad = vlen(sub(w, mul(q.Z, h))), u = clamp(h / q.L, 0, 1);
+        const rr = g.rp * (1.35 - 0.35 * u) * (1 + 0.04 * (vnoise(p[0] * 0.4, p[1] * 0.4, p[2] * 0.4) - 0.5));
+        d = smin(d, Math.max(rad - rr, -h, h - q.L), 5);
+        const wq = sub(p, q.Q), hq = dot(wq, q.Z), xq = dot(wq, q.X) * q.s;
+        const rq = vlen(sub(wq, mul(q.Z, hq)));
+        d = Math.min(d, Math.max(rq - PEG.r + Math.max(0, hq - PEG.h + 0.8), -PEG.flat - xq, hq - PEG.h, -hq - 1));   // chamfered at the top
+      }
+      // the groove the headband glues into, open toward the head; and the strap slots
+      d = Math.max(d, -Math.max(Math.abs(p[1]) - groW, r - bandOut));
+      for (const sl of slots) { const q = sub(p, sl.p); d = Math.max(d, -Math.max(Math.abs(dot(q, sl.u)) - SLOT.len / 2, Math.abs(dot(q, sl.w)) - SLOT.w / 2, dot(q, sl.dir) - 2, -dot(q, sl.dir) - CAP_T - 3)); }
+      // the bobby-pin grooves, cut into the outside from the rim inward
+      for (const pn of pins) {
+        const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s);
+        d = Math.max(d, -Math.max(Math.abs(b) - PIN.w / 2, -a - 8, a - PIN.len, -ellD(p, Wout) - PIN.depth));
+      }
+      return d;
+    };
+    // print frame: the rim plane is the bed (Z = 0), +Y toward the front point
+    const Zp = g.n, Xp = [1, 0, 0], Yp = cross(Zp, Xp), O = mul(Zp, g.h0);
+    const toBand = (x, y, z) => [O[0] + Xp[0] * x + Yp[0] * y + Zp[0] * z, O[1] + Xp[1] * x + Yp[1] * y + Zp[1] * z, O[2] + Xp[2] * x + Yp[2] * y + Zp[2] * z];
+    // its extent in the print frame: a generous box, then measured on a coarse grid, plus a margin
+    const top = g.rout + PED_H + PEG.h + 4, wide = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+    for (const x of [-g.rout - 6, g.rout + 6]) for (const y of [-g.ry - 10, g.ry + 10]) for (const z of [0, top]) {
+      const b = sub([x, y, z], O), pp = [dot(b, Xp), dot(b, Yp), dot(b, Zp)];
+      for (let j = 0; j < 3; j++) { wide[j] = Math.min(wide[j], pp[j]); wide[j + 3] = Math.max(wide[j + 3], pp[j]); }
+    }
+    const bb = [Infinity, Infinity, 0, -Infinity, -Infinity, -Infinity], st = 3;
+    for (let x = wide[0]; x <= wide[3]; x += st) for (let y = wide[1]; y <= wide[4]; y += st) for (let z = 0; z <= wide[5]; z += st) {
+      if (f(toBand(x, y, z)) > st) continue;
+      bb[0] = Math.min(bb[0], x); bb[1] = Math.min(bb[1], y); bb[3] = Math.max(bb[3], x); bb[4] = Math.max(bb[4], y); bb[5] = Math.max(bb[5], z);
+    }
+    for (let j = 0; j < 3; j++) { bb[j] -= 2 * st; bb[j + 3] += 2 * st; }
+    bb[2] = -2;
+    const field = (x, y, z) => f(toBand(x, y, z));
+    const sk = {
+      params: P, kind: 'skull', scale: 1, branches: [], fields: [{ f: field, bb }], mount: { type: 'cap' },
+      texture: { groove: 0, grooves: 9, pearl: 0, knob: 0 }, fillet: 2, r0: 0,
+      // print frame → band frame, as a column-major 4 × 4 (three.js Matrix4.fromArray)
+      toBand: [Xp[0], Xp[1], Xp[2], 0, Yp[0], Yp[1], Yp[2], 0, Zp[0], Zp[1], Zp[2], 0, O[0], O[1], O[2], 1],
+      spec: g,
+    };
+    const w = bb[3] - bb[0], dd = bb[4] - bb[1], fp = bestFootprint([[bb[0], bb[1]], [bb[3], bb[1]], [bb[3], bb[4]], [bb[0], bb[4]]], P.bedX - 2 * BED_MARGIN, P.bedY - 2 * BED_MARGIN);
+    sk.fit = { scale: 1, requested: 1, shrunk: false, angle: fp.angle, w, d: dd, h: bb[5], xyRatio: fp.ratio, zRatio: bb[5] / (P.bedZ - 1), fits: fp.ratio <= 1 && bb[5] <= P.bedZ - 1 };
+    return sk;
   }
 
   /* ----------------------------------------------------------------- mesher */
@@ -1445,8 +1606,9 @@
         keel: (br.keel || 0) * (1 - fa), facet: fa, half: crownPiece, len: br.length, k: skel.fillet * (1 - 0.4 * fa),
         extra: extra + Math.max(br.rad[0], 1) * ov, r0: skel.r0 });
     }
+    for (const fd of skel.fields || []) groups.push({ kind: 'field', f: fd.f, bb: fd.bb, k: 1 });   // a part drawn as a distance field (the skull cap)
     const m = skel.mount;
-    if (m.type !== 'crown') {   // a crown has no pedicle: its antlers rise straight from the ring
+    if (m.type !== 'crown' && m.type !== 'cap') {   // a crown has no pedicle: its antlers rise straight from the ring
       const rx = m.rf * m.ex + margin, ry = m.rf + margin;
       groups.push({ kind: 'pedicle', m, bb: [-rx, -ry, -margin, rx, ry, m.h + margin], k: skel.fillet * 1.2 });
     }
@@ -1602,6 +1764,11 @@
             const d = Math.hypot(rad - b.R, hs) - b.rm - bump;
             put(iy * nx + ix, d, g.k, 0.5 * (1 - bead));
           }
+        } else if (g.f) {
+          for (let iy = g.iy0; iy <= g.iy1; iy++) {
+            const y = oy + iy * v;
+            for (let ix = g.ix0; ix <= g.ix1; ix++) put(iy * nx + ix, g.f(ox + ix * v, y, z), g.k, 0);
+          }
         } else if (g.m) {
           const mm = g.m, H = mm.h;
           if (z > H + 2) continue;
@@ -1652,6 +1819,16 @@
         }
       }
       for (let o = 0; o < plane; o++) if (out[o] < -z) out[o] = -z;   // flat on the bed
+      if (m.socket && z < m.socket.depth + v) {   // the D-shaped socket up into the base, over the skull cap's peg (eased at the mouth)
+        const so = m.socket;
+        for (let iy = 0; iy < ny; iy++) {
+          const y = oy + iy * v, row = iy * nx;
+          for (let ix = 0; ix < nx; ix++) {
+            const x = ox + ix * v, hole = Math.max(Math.hypot(x, y) - so.r - Math.max(0, 0.8 - z), -so.flat - x, z - so.depth);
+            const o = row + ix; if (out[o] < -hole) out[o] = -hole;
+          }
+        }
+      }
       if (m.tw) {
         const tz = Math.abs(z - m.tunnelCZ) - m.th / 2;
         const hy = m.tw / 2;
@@ -1959,6 +2136,19 @@
 
   // opts.units === 'in' gives sizes in inches (with mm alongside) for the page; slicer settings
   // stay in millimetres either way, because that is what Bambu Studio asks for.
+  // The skull cap's part of the print notes: cap = { report, fit } for its mesh.
+  function skullNotes(P, cap, len) {
+    const s = cap.report.size, g = cap.report.volume / 1000 * 1.24;
+    return [
+      '',
+      'Skull cap',
+      `- ${s.map((x) => len(x)).join(' × ')}, about ${Math.round(g * 0.55)}–${Math.round(g * 0.7)} g. It prints rim-down on its own plate: the outside (the bone) prints clean, the inside rests on tree supports, which come out easily through the open underside.`,
+      `- Glue the headband into the groove under the cap (${len(P.hbWidth + P.clearance)} wide), centred, so the band runs under both pedicles. E6000 or epoxy; clamp or tape it while it cures.`,
+      '- Glue each antler onto its peg (CA or epoxy). Right and left are mirror images: check the flat of the D before the glue goes on.',
+      '- Four bobby-pin grooves at the edge (two at the front, two at the back): with the headband on, slide a bobby pin onto the edge at each groove, its top prong in the groove and its bottom prong into your hair.',
+      ...(P.capTie ? ['- Strap slots: thread a loop of ½ in elastic (about 14 in, sewn or knotted into a ring) through the two slots at the back and down round the back of your head, under the bump of your skull. Or a strip of cloth, tied there. It holds the cap down so the antlers can’t rock it forward or lift it.'] : []),
+    ];
+  }
   function printNotes(P, report, fit, opts) {
     const f = (x) => x.toFixed(1);
     const inches = !!(opts && opts.units === 'in'), toIn = (mm) => (mm / 25.4).toFixed(2);
@@ -1966,7 +2156,7 @@
     const s = report.size, fil = FILAMENTS[P.filament] || FILAMENTS.bone;
     const crown = P.style === 'crown';
     const mount = crown ? { closed: 'closed crown', openBack: 'crown open at the back', openFront: 'crown open at the front' }[P.ringBase]
-      : { tunnel: 'flared base with slide-on headband channel', clip: 'flared base with snap-on headband clip', flat: 'flared base for gluing', none: 'burr with a flat-cut base' }[P.mount];
+      : { tunnel: 'flared base with slide-on headband channel', clip: 'flared base with snap-on headband clip', flat: 'flared base for gluing', none: 'burr with a flat-cut base', skull: 'on a skull cap (three parts, glued)' }[P.mount];
     const grams = report.volume / 1000 * 1.24;
     const wood = P.filament === 'oak';
     return [
@@ -1975,7 +2165,7 @@
       `Design     ${(PRESETS[P.preset] || {}).label || 'Custom'} · antler scale ${((fit && fit.scale) || P.scale).toFixed(2)}× · ${mount}`,
       `Filament   ${fil.name}`,
       `Printer    Bambu Lab P2S (${inches ? '10.1 × 10.1 × 10.1 in' : '256 × 256 × 256 mm'})`,
-      `Each part  ${inches ? `${s.map(toIn).join(' × ')} in (${s.map((x) => x.toFixed(0)).join(' × ')} mm)` : `${f(s[0])} × ${f(s[1])} × ${f(s[2])} mm`}${fit && fit.angle ? ` (turned ${fit.angle}° on the plate to fit)` : ''}`,
+      `${P.mount === 'skull' && !crown ? 'Each antler' : 'Each part '} ${inches ? `${s.map(toIn).join(' × ')} in (${s.map((x) => x.toFixed(0)).join(' × ')} mm)` : `${f(s[0])} × ${f(s[1])} × ${f(s[2])} mm`}${fit && fit.angle ? ` (turned ${fit.angle}° on the plate to fit)` : ''}`,
       `Material   about ${Math.round(grams * 0.45)}–${Math.round(grams * 0.6)} g ${crown ? 'for the crown' : 'per antler'} at the settings below, plus supports`,
       `Mesh       ${report.triangles.toLocaleString()} triangles · one closed solid · watertight=${report.watertight}`,
       '',
@@ -1985,7 +2175,9 @@
       : crown ? `Sized for a head ${len(P.headCirc)} around${P.headMeasured ? `, ${len(P.headArcFB)} front to back and ${len(P.headArcEE)} ear to ear over the top` : ''}, plus ${len(P.ringFit)} comfort allowance.`
       : P.mount === 'tunnel' || P.mount === 'clip'
         ? `Headband channel: ${len(P.hbWidth + P.clearance)} wide × ${len(P.hbThick + P.clearance)} tall, plus curve allowance for a ${inches ? len(P.hbRadius) : P.hbRadius + ' mm'} band radius.`
+        : P.mount === 'skull' ? `Each antler's base has a D-shaped socket that fits over a peg on the skull cap (${len(2 * PEG.r)} across, ${len(PEG.h)} tall; ${len(P.clearance / 2)} gap all round for glue). The flat of the D faces the middle of the head, so each antler only goes on facing the right way.`
         : 'The base is flat for gluing to a headband or hair clip (E6000 or CA glue).',
+      ...(opts && opts.cap ? skullNotes(P, opts.cap, len) : []),
       '',
       inches ? 'Bambu Studio (settings in millimetres, as the slicer uses them)' : 'Bambu Studio',
       `- Filament preset: ${fil.preset}. Plate: Textured PEI.`,
@@ -2006,7 +2198,7 @@
 
   return {
     PARAM_SPEC, DEFAULTS, PRESETS, resolveParams, presetParams, ringSpec, headFromTape, capArc, registerHeadScan, hasHeadScan: (id) => SCANS.has(String(id)),
-    FILAMENTS, buildSkeleton, meshAntler, meshBounds, plateSize, validateMesh, toSTL, makeZip, printNotes,
+    FILAMENTS, buildSkeleton, buildSkullCap, skullSpec, PEG, meshAntler, meshBounds, plateSize, validateMesh, toSTL, makeZip, printNotes,
     _util: { add, sub, mul, dot, cross, norm, rotate },
   };
 });

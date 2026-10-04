@@ -6,7 +6,7 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-test('tools/build-page.js builds all three outputs', () => {
+test('tools/build-page.js builds all the outputs, in both editions', () => {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'antler-forge-'));
   try {
     execFileSync(process.execPath, [path.join(__dirname, '..', 'tools', 'build-page.js'), out], { stdio: 'pipe' });
@@ -21,6 +21,12 @@ test('tools/build-page.js builds all three outputs', () => {
     // the page asks for the tracker's binaries by these names, and file:// needs the .b64.js copies
     for (const f of ['face_mesh.js', 'face_mesh.binarypb.wasm', 'face_mesh_solution_packed_assets.data.wasm']) assert.ok(vendor.includes(f), f);
     for (const f of vendor.filter((f) => f.endsWith('.wasm'))) assert.ok(vendor.includes(f + '.b64.js'), f + '.b64.js');
+    // the Yellowjackets edition: its own page from the same source, with its blocks swapped in
+    const yj = fs.readFileSync(path.join(site, 'yellowjackets.html'), 'utf8');
+    assert.ok(yj.startsWith('<!doctype html>') && yj.includes('AntlerCore'), 'a full document with the engine');
+    assert.ok(yj.includes('<title>Antler Forge: Yellowjackets</title>') && yj.includes("'yellowjackets'/*@/edition*/") && yj.includes('function buildShade'), 'its blocks are swapped in');
+    assert.ok(!page.includes('function buildShade') && page.includes("'storybook'/*@/edition*/"), 'the storybook page keeps its own');
+    assert.ok(fs.existsSync(path.join(out, 'yellowjackets.html')) && fs.existsSync(path.join(out, 'yellowjackets-standalone.html')));
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }

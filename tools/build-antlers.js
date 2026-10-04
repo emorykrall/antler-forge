@@ -115,9 +115,18 @@ function main() {
   if (crown) { const f = path.join(outDir, `${base}.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: base, rotZ: fit.angle }))); written.push(f); }   // one piece
   else if (side === 'both' || side === 'right') { const f = path.join(outDir, `${base}-right.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: base + ' right', rotZ: fit.angle }))); written.push(f); }
   if (!crown && (side === 'both' || side === 'left')) { const f = path.join(outDir, `${base}-left.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { mirror: true, name: base + ' left', rotZ: -fit.angle }))); written.push(f); }
-  if (args.notes !== 'false') { const f = path.join(outDir, `${base}-print-notes.txt`); fs.writeFileSync(f, Core.printNotes(P, rep, fit)); written.push(f); }
+  let cap = null, capOK = true;
+  if (!crown && P.mount === 'skull') {   // the third part: the skull cap the antlers glue onto
+    const csk = Core.buildSkullCap(P), cmesh = Core.meshAntler(csk, res), crep = Core.validateMesh(cmesh);
+    crep.size = Core.plateSize(cmesh, csk.fit.angle);
+    cap = { report: crep, fit: csk.fit };
+    capOK = crep.watertight && crep.shells === 1 && csk.fit.fits;
+    console.log(`skull cap  ${f1(crep.size[0])} × ${f1(crep.size[1])} × ${f1(crep.size[2])} mm · ${f1(crep.volume / 1000)} cm³ · open edges ${crep.openEdges}, shells ${crep.shells} · ${csk.fit.fits ? 'fits' : 'DOES NOT FIT'} · watertight ${crep.watertight ? 'YES' : 'NO'}`);
+    const f = path.join(outDir, `${base}-skull.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(cmesh, { name: base + ' skull cap', rotZ: csk.fit.angle }))); written.push(f);
+  }
+  if (args.notes !== 'false') { const f = path.join(outDir, `${base}-print-notes.txt`); fs.writeFileSync(f, Core.printNotes(P, rep, fit, cap ? { cap } : undefined)); written.push(f); }
   for (const f of written) console.log(`wrote      ${path.relative(process.cwd(), f) || f}`);
-  return rep.watertight && rep.shells === 1 ? 0 : 1;
+  return rep.watertight && rep.shells === 1 && capOK ? 0 : 1;
 }
 
 process.exitCode = main();

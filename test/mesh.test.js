@@ -32,7 +32,8 @@ for (const preset of PRESETS) {
   // Default scales all fit already; the biggest scale forces the shrink-to-fit path.
   test(`${preset} at 1.6× scale: autoFit shrinks it onto the P2S`, () => {
     const sk = checkSolid(design(preset, 'tunnel', { scale: 1.6 }));
-    if (preset !== 'fawn') assert.ok(sk.fit.shrunk, 'expected autoFit to shrink it');
+    const full = Core.buildSkeleton(design(preset, 'tunnel', { scale: 1.6, autoFit: false }));   // small species fit even at 1.6×
+    if (!full.fit.fits) assert.ok(sk.fit.shrunk, 'expected autoFit to shrink it');
   });
 }
 

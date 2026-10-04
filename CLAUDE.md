@@ -8,7 +8,7 @@ plain JavaScript, no framework and no runtime or dev dependencies.
 
 ```bash
 npm test                                   # run before every commit (~35 s)
-npm run build                              # dist/antler-forge.html, dist/antler-forge-standalone.html, dist/site/
+npm run build                              # both editions: dist/{antler-forge,yellowjackets}{,-standalone}.html, dist/site/
 npm run serve                              # build, then serve dist/site on http://localhost:8080
 npm run build:stl -- --preset elk --scale 0.7 --mount clip   # right + left STL + print notes
 npm run build:stl -- design.json --res 0.35                  # the design file from the page's STL zip
@@ -28,6 +28,20 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   localStorage `antler-forge-library-v1` (params + JPEG snapshot + size per entry); the editor's
   autosave is `antler-forge-design-v3`. The viewport pill must say whether it shows the coarse
   preview or the final built mesh.
+- **Editions.** The page is built twice from `src/designer.src.html`: the storybook page (`index.html`) and
+  **Antler Forge: Yellowjackets** (`yellowjackets.html`, campfire-night theme, fan-made). `tools/build-page.js`
+  swaps each marked block (`<!--@name-->…<!--@/name-->` or `/*@name*/…/*@/name*/`) for the same-named block in
+  `src/editions/yellowjackets.html`: title, fonts, theme CSS, scenery, corner/sprig symbols, brand, about note,
+  `EDITION`, and `buildShade` (its wear-view bust: a flat-black cut-paper silhouette instead of the faun). Page
+  code branches on `YJ`. Each edition shows its own species (`PRESETS[*].set`: none = storybook, `'campfire'` =
+  Yellowjackets) and keeps its own autosave and library (`antler-forge-yj-design-v1`, `antler-forge-yj-library-v1`).
+  The Yellowjackets edition makes headband antlers only (no crown style) and offers the skull cap base.
+- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` builds a bone
+  shell over the band (band frame: origin at the band arc's centre) with a pedicle and D-shaped peg per antler,
+  a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
+  slots; its front-to-back curve comes from `headCirc`. It prints rim-down (the rim is a plane).
+  The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
+  the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group.
 - `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map), and
   `fromHeadTurn` (the built-in camera scan: a smooth head fitted to segmentation outlines from many
   head angles, meshed and measured like an import). Inlined after the engine in the same script
@@ -79,7 +93,7 @@ npm run samples                            # samples/*.stl, one per preset at 0.
 
 - Every export is **one watertight, consistently wound solid, flat at Z = 0**: 0 open edges,
   0 non-manifold edges, 1 shell, positive volume, for every preset × every base style
-  (`tunnel`, `clip`, `flat`, `none`). The mirrored left STL must have positive volume too.
+  (`tunnel`, `clip`, `flat`, `none`, `skull`), and the skull cap. The mirrored left STL must have positive volume too.
 - **Antler angles are in the head frame** (0° spread = straight up from the crown), so moving the
   base along the band (`bandAngle`) doesn't change how the antlers stand.
 - **Headband dimensions and the crown's band never scale.** `mountSpec` uses `hbWidth`, `hbThick`,
