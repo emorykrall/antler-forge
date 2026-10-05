@@ -606,7 +606,7 @@ function applyStyle() {
     const { it, wrap } = inputs[k];
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
     wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
-      || (k === 'capTie' && !cap)   // the skull cap's own settings: head size (its curve) and the cloth tie
+      || ((k === 'capTie' || k === 'capTieFront') && !cap)   // the skull cap's own settings: head size (its curve) and the ribbons
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
   }
@@ -1562,6 +1562,8 @@ function updateReadout() {
   const warns = [], notes = [];
   if (fit && !fits) warns.push('Too big to print in one piece. Lower the Size, or turn on “Shrink to fit the printer” under Advanced › Printer.');
   if (P.style !== 'crown' && P.mount === 'clip' && P.hbWidth < 6) warns.push('Snap clips need a band at least ¼ in wide.');
+  const noSlot = capOn && cap && cap.place && cap.place.missing ? cap.place.missing : [];   // ribbon slots asked for that don't fit
+  for (const w of noSlot) notes.push(w === 'front' ? 'No room for the front ribbon slots: lengthen Front reach.' : 'No room for the back ribbon slots: lengthen Back reach.');
   if (fit && fit.angle) notes.push(`Turned ${fit.angle}° on the plate.`);
   const turnedOut = fit && fit.cleared ? Object.entries(fit.cleared) : [];   // the engine keeps each antler clear of the other
   if (turnedOut.length) notes.push(`Turned ${turnedOut.map(([id, deg]) => `the ${tuneName(id).replace(/^(Main|Brow|Tine|Fork|Crown)/, (w) => w.toLowerCase())} out ${deg}°`).join(', ')} so the antlers clear each other.`);
@@ -1629,7 +1631,7 @@ function capJob(Core, j) {
   var W = j.params.bedX - 12, D = j.params.bedY - 12;   // the part's own size, not the box it was meshed in (6 mm brim margin)
   report.fit = Object.assign({}, sk.fit, { w: size[0], d: size[1], h: size[2], fits: ((size[0] <= W && size[1] <= D) || (size[1] <= W && size[0] <= D)) && size[2] <= j.params.bedZ - 1 });
   var g = sk.spec;
-  return { mesh: mesh, report: report, place: { toBand: sk.toBand, Q: g.Q, X: g.F.X, Y: g.F.Y, Z: g.F.Z, slots: g.slots } };
+  return { mesh: mesh, report: report, place: { toBand: sk.toBand, Q: g.Q, X: g.F.X, Y: g.F.Y, Z: g.F.Z, slots: g.slots, missing: g.slotsMissing } };
 }
 function previewRes(p) {
   if (p.style === 'crown') return 1.3;

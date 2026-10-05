@@ -80,20 +80,36 @@ test('the band channel underneath, and the ribbon slots through the plate', () =
     assert.ok(solid(onHead(x, half + 3, 1.5)), `the plate comes down beside it at x ${x}`);
     assert.ok(solid(onHead(x, 0, g.band.t + 1.5)), `the plate covers it at x ${x}`);
   }
-  assert.equal(g.slots.length, 2, 'two slots each side');
-  for (const sl of g.slots) {
-    for (const up of [1, 2.5, 4]) assert.ok(!solid(onHead(sl.x, sl.s, up)), `the slot at s ${sl.s.toFixed(0)} goes through`);
-    assert.ok(solid(onHead(sl.x - 5, sl.s, 2)) && solid(onHead(sl.x + 3.5, sl.s, 2)), 'with plate round it, and a strip between it and the edge');
-    let w = Infinity; for (let d = -9; d <= 9; d++) w = Math.min(w, g.form.wIn(sl.s + d));   // the edge's nearest point along it
-    assert.ok(w - sl.x < 9, `at the edge (${(w - sl.x).toFixed(1)} mm in)`);
-    const near = Math.max(0, Math.abs(sl.s) - 7);   // the slot's end nearest the antler, clear of its collar
-    assert.ok(Math.hypot(sl.x - g.form.X, near) > g.rp * 1.6, 'clear of the antler’s collar');
-    for (const pn of g.pins) assert.ok(Math.abs(pn.s - sl.s) > 8, 'clear of the bobby-pin grooves');
+  const both = cap('trial', { hbWidth: 24, capTieFront: true }), gb = both.spec, pb = probe(both);
+  assert.equal(g.slots.length, 1, 'a slot behind the band each side by default');
+  assert.deepEqual(gb.slots.map((sl) => Math.sign(sl.s)), [1, -1], 'and one in front too, when asked');
+  for (const sl of gb.slots) {
+    const at = (u, v) => [sl.x + sl.t[0] * u + sl.t[1] * v, sl.s + sl.t[1] * u - sl.t[0] * v];   // along it, and out toward the edge
+    for (const up of [1, 2.5, 4]) assert.ok(!pb.solid(pb.onHead(sl.x, sl.s, up)), `the slot at s ${sl.s.toFixed(0)} goes through`);
+    for (const v of [-4, 4]) { const [x, s] = at(0, v); assert.ok(pb.solid(pb.onHead(x, s, 2)), `with plate round it at s ${sl.s.toFixed(0)}`); }
+    for (let u = -7; u <= 7; u += 3.5) { const [x, s] = at(u, 1.6 + 3.5); assert.ok(gb.form.sdf(x, s) < 0, 'a whole strip of plate between it and the edge'); }
+    const [ex, es] = at(0, 1.6 + 9); assert.ok(gb.form.sdf(ex, es) > -2, 'near the edge');
+    for (let u = -7; u <= 7; u += 1) { const [x, s] = at(u, 0); assert.ok(Math.hypot(x - gb.form.X, s) > gb.rp * 1.6, 'clear of the antler’s collar'); }
+    for (const pn of gb.pins) assert.ok(Math.abs(pn.s - sl.s) > 8, 'clear of the bobby-pin grooves');
   }
   assert.equal(cap('trial', { capTie: false }).spec.slots.length, 0, 'no slots when they’re off');
 });
 
 // The edge: broken teeth all round (more with Jagged edge), coming to a point at the nose, curled just off the head.
+// Ribbon slots, front and back, appear wherever they're asked for and the plate reaches far enough past the band; where
+// it doesn't, the cap says which is missing (the page tells you what to lengthen).
+test('ribbon slots appear when they’re asked for, or the cap says why not', () => {
+  const cases = [{}, { capLength: 40 }, { capLength: 110 }, { capBack: 34 }, { capBack: 100 }, { capWidth: -6 }, { capWidth: 30 },
+    { capSpacing: 60 }, { capSpacing: 110 }, { capJag: 1 }, { capJag: 0 }, { headCirc: 520 }, { headCirc: 640 }];
+  for (const q of cases) for (const seed of [96, 3, 41]) {
+    const g = cap('trial', Object.assign({ capTie: true, capTieFront: true, seed }, q)).spec;
+    assert.deepEqual(g.slots.map((sl) => Math.sign(sl.s)), [1, -1], `${JSON.stringify(q)} seed ${seed}: ${g.slotsMissing}`);
+  }
+  const short = cap('trial', { capTie: true, capTieFront: true, capLength: 30, capBack: 20 }).spec;
+  assert.deepEqual(short.slotsMissing, ['front', 'back'], 'a plate too short for them says so');
+  assert.deepEqual(cap('trial', { capTie: false, capTieFront: false }).spec.slots, [], 'none when they’re off');
+});
+
 test('the plate’s jagged edge and its point', () => {
   const plain = cap('trial', { capJag: 0 }).spec.form, rough = cap('trial', { capJag: 1 }).spec.form;
   const wiggle = (f) => { let t = 0; for (let i = 1; i < f.half.length; i++) t += Math.hypot(f.half[i][0] - f.half[i - 1][0], f.half[i][1] - f.half[i - 1][1]); return t; };

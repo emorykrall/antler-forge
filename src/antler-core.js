@@ -122,7 +122,8 @@
       { k: 'capWidth', label: 'Width beyond the antlers', min: -6, max: 30, step: 1, u: 'mm', hint: 'How far the plate reaches out past the antlers to each side' },
       { k: 'capSpacing', label: 'Antler spacing', min: 60, max: 110, step: 1, u: 'mm', hint: 'Between the centres of the two antlers (a deer’s is about 3 in)' },
       { k: 'capPedicle', label: 'Pedicle height', min: 4, max: 24, step: 0.5, u: 'mm', hint: 'The stumps of bone the antlers stand on' },
-      { k: 'capTie', label: 'Ribbon slots', type: 'bool', hint: 'Two slots at the edge of the plate on each side, beside the antlers, for ½ in ribbon: up through a slot and back down over the edge. Tie them under your chin or behind your head: they hold the plate down so the antlers can’t rock it. Bobby pins slid onto the four grooves at the plate’s edge hold it too.' },
+      { k: 'capTie', label: 'Ribbon slot behind the antlers', type: 'bool', hint: 'A slot each side, behind the band, for ½ in ribbon: up through it and back down over the plate’s edge. Tie the ribbons under your chin or behind your head to hold the plate down so the antlers can’t rock it.' },
+      { k: 'capTieFront', label: 'Ribbon slot in front of the antlers', type: 'bool', hint: 'A slot each side, in front of the band. With both, a ribbon each way holds the plate from rocking forward or back. Bobby pins slid onto the four grooves at the plate’s edge hold it too.' },
     ] },
     { group: 'Surface', tier: 'details', items: [
       { k: 'burr', label: 'Burr (coronet)', type: 'bool', hint: 'The knobbly ring at the antler\'s base' },
@@ -228,7 +229,7 @@
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
     tweaks: {},   // Fine-tune: { branch id: { rot: rotation vector (rad, head frame), len: ×, thick: ×, s: where it leaves its parent, a0/a1: tangent arms } }
-    capTie: true, capLength: 66, capBack: 60, capWidth: 16, capSpacing: 80, capPedicle: 5,   // the skull cap
+    capTie: true, capTieFront: false, capLength: 66, capBack: 60, capWidth: 16, capSpacing: 80, capPedicle: 5,   // the skull cap
     capSnoutWidth: 1, capTaper: 0.5, capJag: 0.6,                                            // its front and edge
   };
 
@@ -313,7 +314,7 @@
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
     if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
-      'capTie', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capJag', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
+      'capTie', 'capTieFront', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capJag', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
 
@@ -1677,7 +1678,7 @@
     // the smooth outline, or where the broken edge comes further in
     const edgeIn = (side, s) => { let m = Infinity; for (let i = 1; i < side.length; i++) { const a = side[i - 1], b = side[i]; if ((a[1] <= s) !== (b[1] <= s)) m = Math.min(m, Math.abs(a[0] + (b[0] - a[0]) * (s - a[1]) / (b[1] - a[1]))); } return m; };
     const wIn = (s) => Math.min(wAt(s) * (1 - Math.abs(aw)) - Math.abs(skew(s)), edgeIn(right, s), edgeIn(left, s));
-    const out = { X, Wm, F, B, wAt, wIn, skew, half, poly, sdf, sF: F + amp, sB: -B - amp };
+    const out = { X, Wm, F, B, aw, wAt, wIn, skew, half, poly, sdf, sF: F + amp, sB: -B - amp };
     PLATES.set(key, out); if (PLATES.size > 24) PLATES.delete(PLATES.keys().next().value);
     return out;
   }
@@ -1726,22 +1727,42 @@
       if (!best || height < best.height) best = { k: kk, lo, height };
     }
     const n = norm([0, -best.k, 1]), h0 = best.lo / Math.hypot(1, best.k) + 0.8;   // a little into the rim, so it stands on a flat
-    // the ribbon slots (right side; the left mirrors them): at the plate's side edge, so a ribbon goes up through one and
-    // back down over the edge, and outboard of the antler, clear of its collar, so nothing comes near the antler. As
-    // close to the band as that allows, one in front and one behind; where the plate is too narrow in front, both behind.
-    const slots = [];
-    if (P.capTie) {
-      const clear = rp * 1.65 + 2.5, ok = (s) => {
-        let w = Infinity; for (let d = -SLOT.len / 2 - 2; d <= SLOT.len / 2 + 2; d += 1) w = Math.min(w, form.wIn(s + d));   // along its length
-        const x = w - 6.5, near = Math.max(0, Math.abs(s) - SLOT.len / 2);
-        const outboard = x >= form.X + 4 || near >= clear + 8;   // beside the antler it must be outboard; well behind, anywhere
-        return outboard && x > 12 && Math.hypot(x - form.X, near) >= clear && Math.abs(s) >= groW + 2 + SLOT.len / 2 ? x : null;
-      };
-      const find = (sg, from) => { for (let a = from; a < 90; a += 1) { const s = sg * a, x = ok(s); if (x !== null) return { x, s }; } return null; };
-      const back = find(-1, groW + 2 + SLOT.len / 2), front = find(1, groW + 2 + SLOT.len / 2);
-      const two = front && front.s < 0.5 * form.F ? [front, back] : [back, back && find(-1, -back.s + SLOT.len + 4)];
-      for (const q of two) if (q) slots.push({ x: q.x, s: q.s, p: fromSkull(q.x, q.s, 0) });
-    }
+    // the ribbon slots (right side; the left mirrors them), one behind the band (capTie) and one in front (capTieFront),
+    // each where it's best: at the plate's side edge if it can be (a ribbon goes up through it and back down over the
+    // edge), outboard of the antler, near the band; never on the antler's collar or off the plate. Where the edge is
+    // taken (the plate narrows in front, or is short behind), it moves in rather than going missing.
+    // Each slot lies along the edge where it sits (front, the edge runs in toward the nose), with a strip of plate at least
+    // 3.5 mm wide between it and the broken edge. Worked out only for the cap itself (antlerBase given), not for every
+    // antler build.
+    const slots = [], clear = rp * 1.65 + 2.5;
+    const ws = (s) => form.wAt(s) * (1 - Math.abs(form.aw)) - Math.abs(form.skew(s));   // the smooth outline, narrower side
+    const place = (sg) => {
+      let best = null;
+      for (let a = groW + 3; a < 160; a += 1) {
+        const s = sg * a, w = ws(s); if (!(w > 14)) continue;
+        const dw = (ws(s + 1) - ws(s - 1)) / 2, tl = Math.hypot(dw, 1), T = [dw / tl, 1 / tl], N = [-1 / tl, dw / tl];   // along the edge; inward
+        for (let d = 6.5; d < 40; d += 0.5) {
+          const c = [w + N[0] * d, s + N[1] * d];
+          if (c[0] < 8) break;
+          let fits = true;
+          for (let u = -SLOT.len / 2 - 1; u <= SLOT.len / 2 + 1 && fits; u += 1) {
+            const e = [c[0] + T[0] * u, c[1] + T[1] * u];
+            if (form.sdf(e[0] - N[0] * (SLOT.w / 2 + 3.5), e[1] - N[1] * (SLOT.w / 2 + 3.5)) > -0.3) fits = false;   // the strip outside it
+            if (sg * e[1] < groW + 2) fits = false;                                                                  // its own side of the band's channel
+            if (Math.hypot(e[0] - form.X, e[1]) < clear) fits = false;                                              // off the antler's collar
+          }
+          if (!fits) continue;
+          // best at the edge and near the band; beside the antler, outboard; never toward the middle (a ribbon there is no use)
+          const outboard = c[0] >= form.X + 4 || Math.abs(c[1]) - SLOT.len / 2 >= clear + 8;
+          const score = 2 * (d - 6.5) + 0.6 * (a - groW - 3) + (outboard ? 0 : 6) + Math.max(0, 0.65 * form.X - c[0]) * 3;
+          if (!best || score < best.score) best = { x: c[0], s: c[1], t: T, score };
+          break;   // the outermost spot that fits at this s is the best there
+        }
+      }
+      return best && { x: best.x, s: best.s, t: best.t, p: fromSkull(best.x, best.s, 0) };
+    };
+    const slotsMissing = [];   // asked for, but the plate's too short there (past the band's channel, clear of the collar)
+    if (antlerBase != null) for (const [on, sg] of [[P.capTieFront, 1], [P.capTie, -1]]) if (on) { const q = place(sg); if (q) slots.push(q); else slotsMissing.push(sg > 0 ? 'front' : 'back'); }
     // the bobby-pin grooves: on top, in from the edge, one in front of the antlers and one behind (right side)
     // (the back one where it's furthest from the ribbon slots)
     let sBack = -0.55 * form.B, far = -1;
@@ -1749,8 +1770,13 @@
       const d = slots.length ? Math.min(...slots.map((sl) => Math.abs(sq - sl.s) - SLOT.len / 2)) : 99;
       if (d > far + 0.5) { far = d; sBack = sq; }
     }
-    const pins = [0.55 * form.F, sBack].map((s) => ({ s, x0: form.wIn(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) }));
-    return { P, band, head, rin, ry, ryF, ryAt, form, fromSkull, toSkull, topAt, a, rp, B0, Q, F, n, h0, rim, slots, pins, peg: PEG };
+    let sFront = 0.55 * form.F, farF = -1;   // and the front one likewise
+    for (let sq = 0.35 * form.F; sq <= 0.75 * form.F; sq += 1) {
+      const d = slots.length ? Math.min(...slots.map((sl) => Math.abs(sq - sl.s) - SLOT.len / 2)) : 99;
+      if (d > farF + 0.5) { farF = d; sFront = sq; }
+    }
+    const pins = [sFront, sBack].map((s) => ({ s, x0: form.wIn(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) }));
+    return { P, band, head, rin, ry, ryF, ryAt, form, fromSkull, toSkull, topAt, a, rp, B0, Q, F, n, h0, rim, slots, slotsMissing, pins, peg: PEG };
   }
   function buildSkullCap(params) {
     const ant = buildSkeleton(params);   // the antlers as they'll be printed (after shrink-to-fit), for the pedicle size
@@ -1804,7 +1830,7 @@
       // rounded), the ribbon slots straight through, and the bobby-pin grooves in its top
       d = Math.max(d, PLATE.gap - h);
       d = smax(d, -Math.max(Math.abs(p[1]) - groW, h - bandH), 1);
-      for (const sl of g.slots) d = Math.max(d, -Math.max(Math.abs(s - sl.s) - SLOT.len / 2, Math.abs(ax - sl.x) - SLOT.w / 2));
+      for (const sl of g.slots) { const qx = ax - sl.x, qs = s - sl.s, u = qx * sl.t[0] + qs * sl.t[1], v = qx * sl.t[1] - qs * sl.t[0]; d = Math.max(d, -Math.max(Math.abs(u) - SLOT.len / 2, Math.abs(v) - SLOT.w / 2)); }
       for (const pn of g.pins) if (Math.abs(s - pn.s) < PIN.w / 2 + 0.01 && ax > pn.x0) d = Math.max(d, -Math.max(Math.abs(s - pn.s) - PIN.w / 2, pn.x0 - ax, g.topAt(x, s, dIn) - PIN.depth - h));
       return d;
     };

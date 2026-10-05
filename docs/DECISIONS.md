@@ -89,6 +89,12 @@ Newest first within each section. Change one only when the owner asks.
   back down over the edge), outboard of and behind each antler, clear of its collar: usually both just behind the
   antler, where the plate is wide; one in front only when the plate reaches far enough forward. The plate's default
   width beyond the antlers is 16 mm, so two slots fit.
+  Ribbon slots (owner, 2026-10-05: they "don't always appear when selected"; separate options for front and back): two
+  switches, Ribbon slot behind the antlers (on by default) and Ribbon slot in front of the antlers (off), one slot each
+  side for each. A slot lies along the plate's edge where it sits, with a whole strip of plate between it and the broken
+  edge, off the antler's collar and the band's channel, at the edge if it can be and never toward the middle; where the
+  edge is taken it moves in rather than going missing. Only when the plate is too short past the band (Front reach under
+  about 1½ in, Back reach under about 1¼ in) does a slot not fit, and the page says which reach to lengthen.
   More verisimilitude (owner: the edge "still seems cartoonish"): the edge is broken, not toothed: fragments of mixed
   kinds and sizes (uneven, leaning spikes, blunt lobes, bites out of it, the odd double point), slow bulges, fine chipping
   all along, stretches broken along a suture (finely zigzagged), and its top flaked away unevenly near the edge; each

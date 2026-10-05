@@ -50,7 +50,8 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   edge like real bone (`capJag`, varied by `seed`, so Surprise me gives a new edge), as a 2D distance grid. On top: a flattened
   ridge down the middle, meandering sutures, grain and pores; thicker over the band. Each antler stands on a collar that
   flares unevenly into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
-  where the cap sits); (`capTie`) up to two ribbon slots each side at the plate's edge, clear of the antler's collar;
+  where the cap sits); ribbon slots each side, behind the band (`capTie`) and in front (`capTieFront`), along the
+  plate's edge, clear of the antler's collar (`slotsMissing` names any that don't fit, for the page);
   four bobby-pin grooves in the top at the edge. Not mirror-symmetric (each side its own teeth and width, the point a
   little off the middle); plate coordinates are mapped onto a torus round the ear-to-ear axis (`fromSkull`/`toSkull`),
   so it follows the head's own curve front to back. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
