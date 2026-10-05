@@ -89,6 +89,12 @@ Newest first within each section. Change one only when the owner asks.
   back down over the edge), outboard of and behind each antler, clear of its collar: usually both just behind the
   antler, where the plate is wide; one in front only when the plate reaches far enough forward. The plate's default
   width beyond the antlers is 16 mm, so two slots fit.
+  More verisimilitude (owner: the edge "still seems cartoonish"): the edge is broken, not toothed: fragments of mixed
+  kinds and sizes (uneven, leaning spikes, blunt lobes, bites out of it, the odd double point), slow bulges, fine chipping
+  all along, stretches broken along a suture (finely zigzagged), and its top flaked away unevenly near the edge; each
+  side broken its own way. On top, sutures meander and interlock unevenly, pores are sparse and drawn out along a faint
+  grain (no even stippling), and the antler collars flare unevenly into the plate (no turned disc or separate ring,
+  which only repeated the antler's burr).
 - **A comfortable underside** (owner, 2026-10-04: check for anything sharp underneath). Only the cap's smooth outer edge
   rests on the head, and every edge on the head is rounded (about 1.5 mm). Inside that edge nothing comes within
   2.5 mm of the head: the scan's ragged eye-socket rims, which dipped toward it, are lifted clear or removed where too

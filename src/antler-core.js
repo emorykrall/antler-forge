@@ -1551,7 +1551,7 @@
   const PLATE = { t: 3.2, edge: 2.4, gap: 0.6, lift: 1, band: 2.2 };   // thickness; at the edge; off the head (hair); the edge's
                                                                       // curl off the head; over the band's channel
   const SLOT = { len: 14, w: 3.2 };            // a ribbon slot: ½ in ribbon, threaded down through the plate
-  const PIN = { len: 14, w: 2.2, depth: 1 };   // a bobby-pin groove: on top, running in from the edge
+  const PIN = { len: 11, w: 2.2, depth: 1 };   // a bobby-pin groove: on top, running in from the edge (a pin's top prong)
   const rotOf = (P, a) => {   // the antler's print frame in the band frame at band angle a (degrees): the same turn as buildAt
     const sp = (P.splay - a) * DEG, rk = P.rake * DEG, cs = Math.cos(sp), ss = Math.sin(sp), ck = Math.cos(rk), sk = Math.sin(rk);
     const inv = ([X, Y, Z]) => { const x = X * cs - Z * ss, z1 = X * ss + Z * cs; return [x, Y * ck + z1 * sk, -Y * sk + z1 * ck]; };
@@ -1571,7 +1571,7 @@
     return { r, top, R, ry, ryF, zc: top - R, ryAt: (s) => (s > 0 ? ryF : ry) };
   }
   // The plate's shape, seen from above (plate coordinates): its outline (a smooth base, wide at the antlers, rounded
-  // at the back, narrowing to a point at the front, with teeth along it), and how thick it is where. Cached: the
+  // at the back, narrowing to a point at the front, broken along its edge), and how thick it is where. Cached: the
   // antlers' placement asks for it on every build.
   const PLATES = new Map();
   function plateForm(P) {
@@ -1581,7 +1581,7 @@
     const pe = 0.6 + 1.6 * P.capTaper, fw = P.capSnoutWidth;
     // in front: a shoulder past the antlers, then in to a narrow neck at Fb, and the nose: a point over the last of it
     const Fb = 0.74 * F, wn = 7 * Math.sqrt(fw), q = wn / Wm;
-    const wAt = (s) => {   // the base outline's half-width (before the teeth)
+    const wAt = (s) => {   // the base outline's half-width (before it's broken)
       if (s <= -B || s >= F) return 0;
       if (s <= 0) return Wm * Math.pow(1 - Math.pow(-s / B, 2.4), 1 / 2.4);   // rounded at the back
       if (s >= Fb) return wn * Math.pow(1 - (s - Fb) / (F - Fb), 0.75);
@@ -1589,34 +1589,52 @@
       return Wm * ((1 - sh) + sh * Math.min(1, fw * body, Math.max(q, body)));
     };
     // Not quite symmetric, as no skull is: each side a little wider or narrower, the point a little to one side, and each
-    // side's own teeth (triangular, slightly hollow-sided, tips rounded over about a millimetre; smaller round the back)
+    // side broken its own way
     const rnd = rng(P.seed * 7417 + 3), amp = 16 * P.capJag, aw = 0.035 * (rnd() * 2 - 1), ox = 4 * (rnd() * 2 - 1);
     const skew = (s) => ox * sstep(s / F);   // the midline drifts toward the point
-    const sideFor = (sg, wf) => {   // one side's outline, back to front, every 0.5 mm along it, with its teeth
+    const sideFor = (sg, wf) => {   // one side's outline, back to front, every 0.5 mm along it, broken
       const base = [];
       { let prev = null;
         for (let s = -B; s <= F + 1e-9; s += 0.02) { const p = [sg * wAt(s) * wf + skew(s), s]; if (!prev || Math.hypot(p[0] - prev[0], p[1] - prev[1]) >= 0.5) { base.push(p); prev = p; } }
         base.push([skew(F), F]); }
       const len = [0]; for (let i = 1; i < base.length; i++) len.push(len[i - 1] + Math.hypot(base[i][0] - base[i - 1][0], base[i][1] - base[i - 1][1]));
       const L = len[len.length - 1], noseL = (() => { let i = len.length - 1; while (i > 0 && base[i][1] > Fb) i--; return L - len[i]; })();
-      const teeth = [];
+      // A broken edge: fragments of mixed kinds and sizes (many small, a few large): spikes with uneven sides, leaning one
+      // way or the other, blunt lobes, bites out of the edge, now and then a double point; slow bulges along it; fine
+      // chipping all along; and here and there a stretch broken along a suture, finely zigzagged. Fragments and bulges
+      // stay off the nose, which is only chipped.
+      const sd = rnd() * 100, nz = (l, lam, k) => vnoise(l / lam + sd, k + sd * 0.37, 0.5) * 2 - 1, g = amp / 16;
+      const frags = [], sut = [], tip = L - noseL;
       if (amp > 0.2) {
-        let at = L - noseL - 2;   // none on the nose
-        while (at > 6) {
-          const wd = 12 + 10 * rnd(), side = sstep((at / L - 0.2) / 0.3);   // smaller round the back
-          teeth.push({ c: at - wd / 2, w: wd, a: amp * (0.45 + 0.55 * side) * (0.5 + 0.5 * rnd()) });
-          at -= wd * (0.85 + 0.3 * rnd());
+        let at = tip - 2;
+        while (at > 4) {
+          const wd = 5 + 24 * Math.pow(rnd(), 1.6), side = sstep((at / L - 0.2) / 0.3), r = rnd();
+          frags.push({ c0: at - wd, c1: at, a: amp * (0.25 + 0.75 * Math.pow(rnd(), 0.7)) * (0.5 + 0.5 * side),
+            kind: r < 0.5 ? 'spike' : r < 0.72 ? 'lobe' : r < 0.86 ? 'bite' : 'double', pk: 0.2 + 0.6 * rnd(), e1: 0.8 + 0.9 * rnd(), e2: 0.8 + 0.9 * rnd() });
+          at -= wd * (0.8 + 0.4 * rnd());
         }
+        for (let l = 10; l < tip - 10; l += 30 + 40 * rnd()) if (rnd() < 0.45) sut.push([l, l + 14 + 18 * rnd()]);
       }
-      const toothAt = (l) => {
-        let o = 0;
-        for (const t of teeth) { const u = Math.abs(l - t.c) / (t.w / 2); if (u < 1) { const e = 0.1, r = Math.sqrt(u * u + e * e) - e; o = Math.max(o, t.a * Math.pow(Math.max(0, 1 - r / (1 - e)), 1.35)); } }
-        return o;
+      const offAt = (l) => {
+        let o = 0, bite = 0;
+        for (const f of frags) {
+          if (l < f.c0 || l > f.c1) continue;
+          const u = (l - f.c0) / (f.c1 - f.c0), tri = u < f.pk ? Math.pow(u / f.pk, f.e1) : Math.pow((1 - u) / (1 - f.pk), f.e2);
+          if (f.kind === 'spike') o = Math.max(o, f.a * tri);
+          else if (f.kind === 'lobe') o = Math.max(o, 0.6 * f.a * Math.pow(Math.sin(Math.PI * u), 0.5));
+          else if (f.kind === 'bite') bite = Math.min(bite, -0.45 * f.a * Math.pow(Math.sin(Math.PI * u), 0.8));
+          else { const v = (u * 2) % 1; o = Math.max(o, f.a * (u < 0.5 ? 1 : 0.7) * Math.pow(1 - Math.abs(2 * v - 1), 1.2)); }
+        }
+        const body = sstep((tip - l) / 4);   // fragments and bulges fade out before the nose
+        let out = body * (o + bite + 0.3 * amp * nz(l, 38, 1.3)) + g * (1.1 * nz(l, 3.4, 5.1) + 0.5 * nz(l, 1.3, 9.7));
+        for (const [l0, l1] of sut) if (l > l0 && l < l1) out += g * 1.2 * (Math.abs(((l / 2.6) % 2) - 1) * 2 - 1) * Math.sin(Math.PI * (l - l0) / (l1 - l0));
+        return out;
       };
       return base.map((p, i) => {
         const a = base[Math.max(0, i - 1)], b = base[Math.min(base.length - 1, i + 1)], tx = b[0] - a[0], ts = b[1] - a[1], tl = Math.hypot(tx, ts) || 1;
-        const n = [sg * ts / tl, -sg * tx / tl], o = toothAt(len[i]);   // outward
-        return [p[0] + n[0] * o, p[1] + n[1] * o];
+        const o = offAt(len[i]), hk = 0.22 * nz(len[i], 24, 3.3) * Math.min(1, Math.max(0, o) / 4);   // outward, the points leaning
+        const nx = sg * ts / tl, ns = -sg * tx / tl, c = Math.cos(hk), sn = Math.sin(hk);
+        return [p[0] + (nx * c - ns * sn) * o, p[1] + (nx * sn + ns * c) * o];
       });
     };
     const right = sideFor(1, 1 + aw), left = sideFor(-1, 1 - aw), half = right;
@@ -1655,8 +1673,10 @@
       const i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * gnx + i;
       return (SDF[o] + (SDF[o + 1] - SDF[o]) * u) * (1 - v) + (SDF[o + gnx] + (SDF[o + gnx + 1] - SDF[o + gnx]) * u) * v;
     };
-    // the narrower side's half-width at s, measured from the middle (for what has to sit inside the plate on both sides)
-    const wIn = (s) => wAt(s) * (1 - Math.abs(aw)) - Math.abs(skew(s));
+    // the narrower side's half-width at s, measured from the middle (for what has to sit inside the plate on both sides):
+    // the smooth outline, or where the broken edge comes further in
+    const edgeIn = (side, s) => { let m = Infinity; for (let i = 1; i < side.length; i++) { const a = side[i - 1], b = side[i]; if ((a[1] <= s) !== (b[1] <= s)) m = Math.min(m, Math.abs(a[0] + (b[0] - a[0]) * (s - a[1]) / (b[1] - a[1]))); } return m; };
+    const wIn = (s) => Math.min(wAt(s) * (1 - Math.abs(aw)) - Math.abs(skew(s)), edgeIn(right, s), edgeIn(left, s));
     const out = { X, Wm, F, B, wAt, wIn, skew, half, poly, sdf, sF: F + amp, sB: -B - amp };
     PLATES.set(key, out); if (PLATES.size > 24) PLATES.delete(PLATES.keys().next().value);
     return out;
@@ -1712,7 +1732,8 @@
     const slots = [];
     if (P.capTie) {
       const clear = rp * 1.65 + 2.5, ok = (s) => {
-        const x = form.wIn(s) - 6.5, near = Math.max(0, Math.abs(s) - SLOT.len / 2);
+        let w = Infinity; for (let d = -SLOT.len / 2 - 2; d <= SLOT.len / 2 + 2; d += 1) w = Math.min(w, form.wIn(s + d));   // along its length
+        const x = w - 6.5, near = Math.max(0, Math.abs(s) - SLOT.len / 2);
         const outboard = x >= form.X + 4 || near >= clear + 8;   // beside the antler it must be outboard; well behind, anywhere
         return outboard && x > 12 && Math.hypot(x - form.X, near) >= clear && Math.abs(s) >= groW + 2 + SLOT.len / 2 ? x : null;
       };
@@ -1741,8 +1762,14 @@
       const Q = fl(g.Q), Z = fl(g.F.Z), X = fl(g.F.X), A = add(fl(g.B0), mul(Z, -2));
       return { Q, Z, X, A, L: vlen(sub(Q, A)), s };
     });
-    // sutures: thin wandering grooves, the line down the middle and one across behind the antlers
-    const zig = (u, f, a) => a * (Math.abs(((u * f) % 2 + 2) % 2 - 1) * 2 - 1) + 0.6 * a * (vnoise(u * 0.21 + so, 4.1, 0.7) - 0.5);
+    // sutures: thin grooves that meander, interlocking unevenly (the fingers vary in size and spacing), down the middle
+    // and across behind the antlers
+    const fb = (u, k) => (vnoise(u + so, k, 0.7) - 0.5) * 2;
+    const zig = (u, f, a) => {
+      const meander = a * (1.6 * fb(u / 14, 4.1) + 0.7 * fb(u / 5, 7.3)), amp = a * (0.55 + 0.6 * Math.abs(fb(u / 9, 2.9)));
+      const ph = u * f + 1.4 * fb(u / 6, 5.5), tri = Math.abs(((ph % 2) + 2) % 2 - 1) * 2 - 1;
+      return meander + amp * tri * Math.abs(tri) ** -0.3;
+    };
     const f = (p) => {   // band frame
       const [x, s, h] = toSkull(p), ax = Math.abs(x);
       const dIn = -k.sdf(x, s);
@@ -1751,19 +1778,24 @@
         const bot = PLATE.gap + PLATE.lift * (1 - sstep(dIn / 5));
         let top = g.topAt(x, s, dIn);
         top += 0.35 * (vnoise(x * 0.22 + so, s * 0.22, 1.3) - 0.5) + 0.25 * (vnoise(x * 0.6, s * 0.6 + so, 7.7) - 0.5);   // weathered bone
-        const pit = vnoise(x * 1.1 + so, s * 1.1, 3.3); if (pit > 0.72) top -= 0.6 * (pit - 0.72) / 0.28;                     // and its pits
+        // its grain, faint and running along the skull, and pores: sparse, uneven, drawn out along the grain
+        top -= 0.12 * Math.abs(vnoise(x * 1.6 + so, s * 0.25, 8.8) * 2 - 1) ** 0.5;
+        const pore = vnoise(x * 0.9 + so, s * 0.38, 3.3) * 0.75 + vnoise(x * 2.1, s * 0.8 + so, 4.4) * 0.25, deep = vnoise(x * 0.15, s * 0.15 + so, 9.1);
+        if (pore > 0.74) top -= (0.25 + 0.7 * deep) * Math.min(1, (pore - 0.74) / 0.1);
+        // the broken edge chipped: its top flaked away unevenly near the edge, so the fracture faces vary
+        if (dIn < 4) top -= (1 - sstep(dIn / 4)) * Math.min(1, 1.6 * P.capJag) * 1.5 * Math.max(0, vnoise(x * 0.32 + so, s * 0.32, 2.2) * 0.7 + vnoise(x * 0.9, s * 0.9 + so, 6.1) * 0.5 - 0.45);
         const mid = Math.abs(x - k.skew(s) - zig(s, 0.45, 0.7)), cor = Math.abs(s + 14 + zig(x + 40, 0.38, 1.1));   // the sutures
-        if (s > -k.B + 6 && s < k.F - 6) top -= 0.55 * Math.max(0, 1 - mid / 0.6);
-        if (ax < k.wAt(-14) - 10) top -= 0.5 * Math.max(0, 1 - cor / 0.6);
+        if (s > -k.B + 6 && s < k.F - 6) top -= 0.5 * Math.max(0, 1 - mid / 0.5);
+        if (ax < k.wAt(-14) - 10) top -= 0.45 * Math.max(0, 1 - cor / 0.5);
+        top = Math.max(top, bot + 1.2);   // chips, pits and sutures never wear through
         d = smax(smax(-dIn, bot - h, 1), h - top, 1);   // the plate, its edges rounded
       }
-      // the pedicles: flared collars from the plate up to the antler's base, blended in, with a ring where they meet it, and
-      // the D-shaped pegs on top
+      // the pedicles: collars from the plate up to the antler's base, flaring unevenly into the plate (never a turned disc),
+      // and the D-shaped pegs on top
       for (const q of peds) {
         const w = sub(p, q.A), hh = dot(w, q.Z), rad = vlen(sub(w, mul(q.Z, hh))), u = clamp(hh / q.L, 0, 1);
-        const rr = g.rp * (1.55 - 0.55 * sstep(u));
-        d = smin(d, Math.max(rad - rr * (1 + 0.05 * (vnoise(p[0] * 0.4, p[1] * 0.4, p[2] * 0.4) - 0.5)), -hh, hh - q.L), 5);
-        d = smin(d, Math.hypot(rad - g.rp * 1.5, hh - 2.2) - 1.3, 1.5);   // the ring
+        const lump = vnoise(p[0] * 0.18 + so, p[1] * 0.18, p[2] * 0.18) - 0.5, rr = g.rp * (1 + (0.6 + 0.5 * lump) * (1 - sstep(u)));
+        d = smin(d, Math.max(rad - rr * (1 + 0.06 * (vnoise(p[0] * 0.5, p[1] * 0.5, p[2] * 0.5) - 0.5)), -hh, hh - q.L), 6 + 3 * lump);
         const wq = sub(p, q.Q), hq = dot(wq, q.Z), xq = dot(wq, q.X) * q.s;
         const rq = vlen(sub(wq, mul(q.Z, hq)));
         d = Math.min(d, Math.max(rq - PEG.r + Math.max(0, hq - PEG.h + 0.8), -PEG.flat - xq, hq - PEG.h, -hq - 1));   // chamfered at the top

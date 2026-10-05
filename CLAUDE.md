@@ -46,10 +46,10 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   of bone (`PLATE`: about 3 mm, a hair's gap off the head) shaped to the head everywhere (`capHead`: the head
   circumference's typical head, its top under the band's inner surface; plate coordinates x across, s along the head, h
   off it, carried into the band frame by `fromSkull`; band frame: origin at the band arc's centre). `plateForm` gives
-  its outline seen from above (wide at the antlers, rounded at the back, narrowing to a nose point) with broken teeth
-  along it (`capJag`, varied by `seed`, so Surprise me gives a new edge), as a 2D distance grid. On top: a flattened
-  ridge down the middle, sutures, pitted bone; thicker over the band. Each antler stands on a flared collar with a ring,
-  blended into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
+  its outline seen from above (wide at the antlers, rounded at the back, narrowing to a nose point), broken along its
+  edge like real bone (`capJag`, varied by `seed`, so Surprise me gives a new edge), as a 2D distance grid. On top: a flattened
+  ridge down the middle, meandering sutures, grain and pores; thicker over the band. Each antler stands on a collar that
+  flares unevenly into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
   where the cap sits); (`capTie`) up to two ribbon slots each side at the plate's edge, clear of the antler's collar;
   four bobby-pin grooves in the top at the edge. Not mirror-symmetric (each side its own teeth and width, the point a
   little off the middle); plate coordinates are mapped onto a torus round the ear-to-ear axis (`fromSkull`/`toSkull`),

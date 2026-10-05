@@ -59,6 +59,7 @@ test('the plate is thin and lies on the head, all over', () => {
     let n = 0;
     for (let s = -g.form.B + 12; s < g.form.F * 0.7; s += 6) for (let x = 0; x < g.form.wAt(s) - 10; x += 7) {
       if (Math.abs(s) < 26 || Math.hypot(x - g.form.X, s) < 30) continue;   // the band's channel and the collars
+      if (g.slots.some((sl) => Math.abs(x - sl.x) < 4 && Math.abs(s - sl.s) < 10)) continue;   // and the ribbon slots
       let lo = null, hi = null;
       for (let up = 0; up < 14; up += 0.2) if (solid(onHead(x, s, up))) { if (lo === null) lo = up; hi = up; }
       assert.ok(lo !== null && lo > 0.3 && lo < 1.2, `${headCirc}: at x ${x}, s ${s} the plate starts ${lo} mm off the head`);
@@ -83,7 +84,8 @@ test('the band channel underneath, and the ribbon slots through the plate', () =
   for (const sl of g.slots) {
     for (const up of [1, 2.5, 4]) assert.ok(!solid(onHead(sl.x, sl.s, up)), `the slot at s ${sl.s.toFixed(0)} goes through`);
     assert.ok(solid(onHead(sl.x - 5, sl.s, 2)) && solid(onHead(sl.x + 3.5, sl.s, 2)), 'with plate round it, and a strip between it and the edge');
-    assert.ok(g.form.wIn(sl.s) - sl.x < 9, `at the edge (${(g.form.wIn(sl.s) - sl.x).toFixed(1)} mm in)`);
+    let w = Infinity; for (let d = -9; d <= 9; d++) w = Math.min(w, g.form.wIn(sl.s + d));   // the edge's nearest point along it
+    assert.ok(w - sl.x < 9, `at the edge (${(w - sl.x).toFixed(1)} mm in)`);
     const near = Math.max(0, Math.abs(sl.s) - 7);   // the slot's end nearest the antler, clear of its collar
     assert.ok(Math.hypot(sl.x - g.form.X, near) > g.rp * 1.6, 'clear of the antler’s collar');
     for (const pn of g.pins) assert.ok(Math.abs(pn.s - sl.s) > 8, 'clear of the bobby-pin grooves');
