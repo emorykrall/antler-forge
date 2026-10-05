@@ -1666,7 +1666,7 @@
     // slope there, so it stays a true distance in mm (the mesh came out pitted where the squeeze bent it out of true)
     const yRate = (s) => { const e = 0.25; return (yAt(s + e) - yAt(s - e)) / (2 * e); };   // dy/ds
     const bRate = (y) => (base(y + 0.25) - base(y - 0.25)) / 0.5;                          // the cut's slope, dz/dy
-    const bone = (x, s, h) => {
+    let bone = (x, s, h) => {
       const q = toScan(x, s, h), v = at(q[0], q[1], q[2]);
       let d = k * v;
       if (Math.abs(v) < S.band - 0.5) {
@@ -1680,6 +1680,30 @@
       }
       return d;
     };
+    // The back: not sawn straight across (that left an open arch over the hollow, with a sharp corner at each side that
+    // pressed into the head), but rounded in plan, an arc from the middle of the back that meets the side walls at a
+    // gentle angle, and rolled down onto the head along it (a quarter ellipse, upright at the edge), so the shell closes
+    // over the hollow and its edge rests on the head.
+    const boneScan = bone;
+    let BACK = null;
+    const backOf = () => {
+      if (BACK) return BACK;
+      const sw = sB + 10; let W = 0, A = 0;
+      for (let x = k * 75 * wf * wMax; x > 0 && !W; x -= 0.5) if (boneScan(x, sw, 0.5) <= 0) W = x;
+      for (let h = k * 70; h > 0 && !A; h -= 0.5) if (boneScan(0, sB + 4, h) <= 0) A = h;
+      const R = 1.25 * Math.max(W, 10);
+      return (BACK = { R, c: sB + R, A: A + 4, L: Math.min(16, 0.9 * A + 2) });
+    };
+    const bone2 = (x, s, h) => {
+      let d = boneScan(x, s, h);
+      if (s > sB + 60 || d > 6) return d;
+      const B = backOf(), dl = B.R - (s < B.c ? Math.hypot(x, s - B.c) : Math.abs(x));   // inward from the back's outline (mm), as backIn
+      if (dl > B.L) return d;
+      // inside the quarter ellipse (radii L inward, A up, centred L in from the outline, on the head): its distance, near enough
+      const u = (dl - B.L) / B.L, v = h / B.A, k0 = Math.hypot(u, v), k1 = Math.hypot(u / B.L, v / B.A);
+      return smax(d, k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -B.L, 1.5);
+    };
+    bone = bone2;
     const edge = (s, h) => { for (let x = k * 75 * wf * wMax; x > 0; x -= 0.5) if (bone(x, s, h) <= 0) return x; return 0; };   // the side wall's outside
     const top = (x, s) => { for (let h = k * 70; h > 0; h -= 0.5) if (bone(x, s, h) <= 0) return h; return 0; };
     // The shell's inside: CAP_T under the cap's own top (with the nasal point's taper), measured across the shell, so it's a
@@ -1716,7 +1740,9 @@
       const fx = clamp((Math.abs(x) - tx0) / TS, 0, tnx - 1.001), fs = clamp((s - ts0) / TS, 0, tns - 1.001), i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * tnx + i;
       return (CEIL[o] + (CEIL[o + 1] - CEIL[o]) * u) * (1 - v) + (CEIL[o + tnx] + (CEIL[o + tnx + 1] - CEIL[o + tnx]) * u) * v;
     };
-    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
+    // inward from the back's rounded outline (mm): within back().L of it the shell rolls down onto the head
+    const backIn = (x, s) => { const B = backOf(); return B.R - (s < B.c ? Math.hypot(x, s - B.c) : Math.abs(x)); };
+    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, back: backOf, backIn, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
   }
   function skullSpec(params, antlerBase) {
     const P = resolveParams(params);
@@ -1789,7 +1815,7 @@
     const pins = g.pins.flatMap((pn) => [pn, { p: mir(pn.p), t: mir(pn.t), s: mir(pn.s), dir: mir(pn.dir) }]);
     const f = (p) => {   // band frame
       const [x, s, h] = toSkull(p);
-      const bone = k.bone(x, s, h), saw = Math.max(k.sB - s, s - k.sF), outer = Math.max(bone, saw);
+      const bone = k.bone(x, s, h), saw = Math.max(k.sB - 2 - s, s - k.sF), outer = Math.max(bone, saw);   // the back's own rolled edge ends it at sB
       const hHead = ellD([p[0], p[1], p[2] - H.zc], [H.R, g.ryAt(p[1]), H.R]);
       // the bone shell, open underneath along the cut and clear of the head; sawn across behind the antlers (and, for a
       // plate, the forehead) through the shell, so the cut shows the hollow bone

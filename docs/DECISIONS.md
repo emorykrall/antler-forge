@@ -64,6 +64,10 @@ Newest first within each section. Change one only when the owner asks.
   particularly at the back and round the antlers' bases). It rests on the head the Head circumference gives (the crowns'
   typical head), its underside down to the scalp, with the band in a groove bent to the head; across and behind the
   antlers its rim lies on the head. The wear view's bust takes that head's size, as it does for a crown.
+- **A closed, rounded back** (owner, 2026-10-04: the straight saw cut at the back left it too open, showing the
+  insides, and its two corners would poke into the head). The back is no longer sawn across: it is rounded in plan
+  (an arc from the middle of the back that meets the side walls at a gentle angle) and the shell rolls down onto the
+  head along it, so it closes over the hollow and its edge rests on the head. Back reach still sets where it ends.
 - **Front shape controls** (owner asked for width, length, taper "and whatever else makes sense"): beside Front reach,
   Snout width, Snout taper (blunt ↔ long point) and Nose tip (the upper skull only), and Snout curve, from running
   straight forward as a deer's does (as before, the default is halfway) to lying on the forehead.

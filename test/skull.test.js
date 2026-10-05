@@ -53,6 +53,7 @@ test('the skull cap is one even shell over a clean hollow, the same left and rig
   let n = 0;
   for (let s = g.form.sB + 8; s < g.form.sF - 10; s += 6) for (let x = 0; x < 50; x += 6) {
     if (Math.abs(x - g.form.X) < 22 && Math.abs(s) < 22) continue;   // the pedicles and pegs
+    if (g.form.backIn(x, s) < g.form.back().L + 2) continue;          // the back, rolled down onto the head (solid at its edge)
     const runs = [-1, 1].map((side) => {
       let r = '', prev = false;
       for (let h = 30; h >= 0.4; h -= 0.2) { const inside = f(...toPrint(g.fromSkull(side * x, s, h))) < 0; if (inside !== prev) r += inside ? '[' + h.toFixed(1) : ']' + h.toFixed(1); prev = inside; }
@@ -77,7 +78,8 @@ test('the skull cap sits on the head: the rim on it, nothing inside it, the band
     const gap = (x, y) => {   // straight up from the head to the cap's first solid
       const p = onHead(x, y); for (let d = 0; d < 30; d += 0.25) if (f(...toPrint([p[0], p[1], p[2] + d])) < 0) return d; return Infinity;
     };
-    for (const y of [g.form.sB + 6, g.form.sB / 2]) for (const x of [0, 15]) assert.ok(gap(x, y) > 15, `${headCirc}: hollow over the head at x ${x}, y ${y.toFixed(0)}`);
+    const yB = g.form.sB + g.form.back().L + 4;   // just in from the back's rolled edge
+    for (const y of [yB, g.form.sB / 2]) for (const x of [0, 15]) assert.ok(gap(x, y) > 12, `${headCirc}: hollow over the head at x ${x}, y ${y.toFixed(0)}`);
     let rim = 0;
     for (const p of g.rim) {
       if (p[1] > 0 || p[1] < g.form.sB + 4) continue;   // behind the antlers, where it should lie on the head
@@ -90,6 +92,23 @@ test('the skull cap sits on the head: the rim on it, nothing inside it, the band
       assert.ok(f(...toPrint([p[0], p[1], p[2] + g.band.t / 2])) > 0 && f(...toPrint([p[0], 0, p[2] + g.band.t + 1.5])) < 0, `${headCirc}: the band's groove at x ${x}`);
     }
   }
+});
+
+// The back isn't sawn open: it rolls down onto the head along a rounded outline, closing the shell over the hollow,
+// with no corners where it meets the side walls (they once pressed into the head).
+test('the skull cap’s back is closed and rounded, resting on the head', () => {
+  const sk = cap('trial', { capShape: 'nasal' }), g = sk.spec, f = sk.fields[0].f, M = sk.toBand, H = g.head;
+  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
+  const onHead = (x, y) => [x, y, H.zc + H.R * Math.sqrt(Math.max(0, 1 - (x / H.R) ** 2 - (y / H.ryAt(y)) ** 2))];
+  const solidAbove = (x, y, lo, hi) => { const p = onHead(x, y); for (let d = lo; d <= hi; d += 0.25) if (f(...toPrint([p[0], p[1], p[2] + d])) < 0) return true; return false; };
+  // straight in from behind, low over the head, along the back: the cap's edge is there (no open arch to see into)
+  for (const x of [0, 10, 20]) {
+    let y = g.form.sB - 3; while (y < g.form.sB + 30 && !solidAbove(x, y, 0.3, 4)) y += 0.5;
+    assert.ok(y < g.form.sB + 12, `x ${x}: the back reaches down to the head (first solid at y ${y.toFixed(1)})`);
+  }
+  // round the back corner: the cap's outline on the head behind the antlers moves in steadily (no corner sticking out)
+  const outline = []; for (let y = g.form.sB; y < g.form.sB + 24; y += 2) { let x = 60; while (x > 0 && !solidAbove(x, y, 0.3, 3)) x -= 0.5; outline.push(x); }
+  for (let i = 1; i < outline.length; i++) assert.ok(outline[i] >= outline[i - 1] - 0.6, `the outline turns in smoothly at the back: ${outline.join(' ')}`);
 });
 
 test('designs saved with the retired cap shapes open as a skull plate', () => {

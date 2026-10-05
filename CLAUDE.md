@@ -50,7 +50,7 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   tapers the shortened snout to a rounded nasal point and hollows it to a `CAP_T` shell, resting on the head (`capHead`: the head
   circumference's typical head, its top under the band's inner surface; the band runs under the cap in a groove bent to it; band frame:
   origin at the band arc's centre), with a pedicle (on the scan's own cut pedicle) and D-shaped peg per antler,
-  a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
+  a back rounded in plan and rolled down onto the head (closed, not sawn open), a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
   slots; its curve comes from `headCirc`, its scale (`capSpacing`), cuts, snout length, width, taper, tip and curve from the `cap*`
   settings (the 'Skull cap' group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down (the rim is a plane).
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
