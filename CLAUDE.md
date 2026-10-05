@@ -42,21 +42,20 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   code branches on `YJ`. Each edition shows its own species (`PRESETS[*].set`: none = storybook, `'campfire'` =
   Yellowjackets) and keeps its own autosave and library (`antler-forge-yj-design-v1`, `antler-forge-yj-library-v1`).
   The Yellowjackets edition makes headband antlers only (no crown style) and offers the skull cap base.
-- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` carves a real deer
-  skull: `src/deer-skull.js` is the Smithsonian's CC0 white-tailed deer scan as a signed distance grid (half the
-  skull, mirrored; made by `tools/convert-skull.js` from the scan's OBJ, which isn't bundled; credited in NOTICE;
-  inlined as `/*__SKULL__*/` into the Yellowjackets page only, `require`d in Node). `skullForm` keeps only a thin
-  plate of its top (`CUT_DEPTH` below the upper surface, as the trial crown in the show), bends it over the head (`BEND`),
-  tapers the shortened snout to a rounded nasal point and hollows it to a `CAP_T` shell, resting on the head (`capHead`: the head
-  circumference's typical head, its top under the band's inner surface; the band runs under the cap in a groove bent to it; band frame:
-  origin at the band arc's centre), with a pedicle (on the scan's own cut pedicle) and D-shaped peg per antler,
-  a back rounded in plan and rolled down onto the head (closed, not sawn open), side walls closed down to the head behind
-  the eye sockets (a skirt round its outline), a groove underneath that the headband glues into, four bobby-pin grooves at the rim (outside) and (`capTie`) two strap
-  slots; its curve comes from `headCirc`, its scale (`capSpacing`), cuts, snout length, width, taper, tip and curve from the `cap*`
-  settings (the 'Skull cap' group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down (the rim is a plane).
+- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` builds a thin plate
+  of bone (`PLATE`: about 3 mm, a hair's gap off the head) shaped to the head everywhere (`capHead`: the head
+  circumference's typical head, its top under the band's inner surface; plate coordinates x across, s along the head, h
+  off it, carried into the band frame by `fromSkull`; band frame: origin at the band arc's centre). `plateForm` gives
+  its outline seen from above (wide at the antlers, rounded at the back, narrowing to a nose point) with broken teeth
+  along it (`capJag`, varied by `seed`, so Surprise me gives a new edge), as a 2D distance grid. On top: a flattened
+  ridge down the middle, sutures, pitted bone; thicker over the band. Each antler stands on a flared collar with a ring,
+  blended into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
+  where the cap sits); (`capTie`) two ribbon slots each side, either side of the band; four bobby-pin grooves in the top
+  at the edge. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
+  group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down, lowered onto its lowest point.
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
-  the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group. Under the cap the wear view's bust takes that head
-  (`bustFit`), as it takes a crown's.
+  the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group. Under the
+  cap the wear view's bust takes that head (`bustFit`), as it takes a crown's.
 - `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map), and
   `fromHeadTurn` (the built-in camera scan: a smooth head fitted to segmentation outlines from many
   head angles, meshed and measured like an import). Inlined after the engine in the same script

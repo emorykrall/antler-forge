@@ -24,7 +24,6 @@ test('tools/build-page.js builds all the outputs, in both editions', () => {
     // the Yellowjackets edition: its own page from the same source, with its blocks swapped in
     const yj = fs.readFileSync(path.join(site, 'yellowjackets.html'), 'utf8');
     assert.ok(yj.startsWith('<!doctype html>') && yj.includes('AntlerCore'), 'a full document with the engine');
-    assert.ok(yj.includes('DEER_SKULL.data =') && !standalone.includes('DEER_SKULL.data ='), 'the skull cap\'s scan is inlined where the cap is offered');
     assert.ok(yj.includes('<title>Antler Forge: Yellowjackets</title>') && yj.includes("'yellowjackets'/*@/edition*/") && yj.includes('function buildShade'), 'its blocks are swapped in');
     assert.ok(!page.includes('function buildShade') && page.includes("'storybook'/*@/edition*/"), 'the storybook page keeps its own');
     assert.ok(fs.existsSync(path.join(out, 'yellowjackets.html')) && fs.existsSync(path.join(out, 'yellowjackets-standalone.html')));

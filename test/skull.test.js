@@ -1,13 +1,22 @@
 'use strict';
-// The skull cap (base style 'skull'): three parts, glued. The cap is one watertight solid, flat on the bed, that
-// fits the P2S; its pegs and the antlers' sockets never scale and always fit each other; and each antler stands
-// on its pedicle exactly as it was built (same axes), so the D-shaped joint only goes together one way.
+// The skull cap (base style 'skull'): three parts, glued. The cap is a thin plate of bone shaped to the head: one
+// watertight solid, flat on the bed, that fits the P2S; its pegs and the antlers' sockets never scale and always fit
+// each other; and each antler stands on its pedicle exactly as it was built (same axes), so the D-shaped joint only
+// goes together one way.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { Core, design, plateSize } = require('./helpers.js');
 
-const SPECIES = ['trial', 'lyre', 'spikes', 'feral', 'whitetail', 'moose'];
+const SPECIES = ['trial', 'lyre', 'spikes', 'feral', 'whitetail', 'eightpoint'];
 const cap = (preset, extra) => Core.buildSkullCap(design(preset, 'skull', extra));
+// the cap's field, in the band frame; and a point on the head the cap rests on, up mm off it
+const probe = (sk) => {
+  const M = sk.toBand, f = sk.fields[0].f, H = sk.spec.head;
+  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
+  const solid = (b) => f(...toPrint(b)) < 0;
+  const onHead = (x, s, up) => sk.spec.fromSkull(x, s, up);   // plate coordinates: x across, s along the head, up off it
+  return { solid, onHead, H };
+};
 
 for (const preset of SPECIES) {
   test(`${preset} skull cap: one watertight solid, flat on the bed, that fits the P2S`, () => {
@@ -20,120 +29,78 @@ for (const preset of SPECIES) {
     const { bbox, size } = plateSize(mesh, sk.fit.angle);
     for (let i = 0; i < 3; i++) assert.ok(size[i] <= 256 - 12, `axis ${'XYZ'[i]} ${size[i].toFixed(0)} mm`);
     assert.ok(bbox[2] >= 0 && bbox[2] < 0.05, `sits on the bed (min Z ${bbox[2]})`);
-    assert.ok(r.volume < 80000, `a light cap (${(r.volume / 1000).toFixed(0)} cm³)`);
+    assert.ok(r.volume < 70000, `a light cap (${(r.volume / 1000).toFixed(0)} cm³)`);
   });
 }
 
-test('the skull cap holds up across its shapes and the ends of its settings', () => {
-  const cases = [{ capShape: 'plate' }, { capShape: 'plate', capLength: 85, capWidth: 24 }, { capShape: 'nasal', capLength: 85 },
-    { capLength: 30, capBack: 20, capWidth: -6, capSpacing: 60, capPedicle: 4 },
-    { capLength: 85, capBack: 60, capWidth: 24, capSpacing: 110, capPedicle: 24, capTie: false },
-    { capShape: 'nasal', capSnoutWidth: 1.6, capTaper: 0, capTip: 30, capDroop: 1 }, { capShape: 'nasal', capLength: 85, capSnoutWidth: 0.6, capTaper: 1, capTip: 6, capDroop: 0 },
-    { capShape: 'plate', capSnoutWidth: 1.6, capWidth: 24, capDroop: 1 }, { capShape: 'nasal', capLength: 30, capSnoutWidth: 0.6, capTip: 30, headCirc: 660 }];
+test('the skull cap holds up across the ends of its settings, and Surprise me’s edges', () => {
+  const cases = [{ capLength: 30, capBack: 20, capWidth: -6, capSpacing: 60, capPedicle: 4, capJag: 0 },
+    { capLength: 110, capBack: 100, capWidth: 30, capSpacing: 110, capPedicle: 24, capJag: 1, capTie: false },
+    { capSnoutWidth: 1.6, capTaper: 0, capJag: 1, hbWidth: 25.4 }, { capSnoutWidth: 0.6, capTaper: 1, capJag: 0.3, headCirc: 640 },
+    { seed: 3 }, { seed: 4071, capJag: 0.9 }, { headCirc: 520, hbWidth: 12 }];
   for (const q of cases) {
     const sk = cap('buck', q), r = Core.validateMesh(Core.meshAntler(sk, 1.2));
     assert.ok(r.watertight && r.shells === 1 && r.volume > 0 && sk.fit.fits, JSON.stringify(q));
   }
 });
 
-test('the upper skull, to the nose (the Yellowjackets default), is a light cap too, its pedicles capSpacing apart', () => {
-  const sk = cap('trial', { capShape: 'nasal' }), r = Core.validateMesh(Core.meshAntler(sk, 1.0));
-  assert.ok(r.watertight && r.shells === 1 && sk.fit.fits);
-  assert.ok(r.volume < 95000, `a light cap (${(r.volume / 1000).toFixed(0)} cm³)`);
-  const g = sk.spec, span = 2 * Math.hypot(g.B0[0], g.B0[2]) * Math.sin(Math.atan2(g.B0[0], g.B0[2]));
-  assert.ok(Math.abs(span - g.P.capSpacing) < 6, `pedicles ${span.toFixed(0)} mm apart`);
+test('the antlers stand capSpacing apart, on collars that rise from the plate', () => {
+  const sk = cap('trial'), g = sk.spec;
+  assert.ok(Math.abs(2 * g.fromSkull(g.form.X, 0, 0)[0] / g.P.capSpacing - 1) < 0.08, 'pedicles at the antler spacing');
+  const up = (q) => g.Q[2] - g.B0[2];
+  assert.ok(Math.abs(Core.PEG.h) > 0 && Math.hypot(...g.Q.map((v, i) => v - g.B0[i])) > g.P.capPedicle - 0.01, 'the pedicle stands capPedicle off the plate');
 });
 
-// Straight down through the cap, wherever it stands tall enough to be hollow: one bone shell about CAP_T (2.6 mm) thick
-// and nothing under it. (The shell's inside once followed the scan's own nose and palate under the cut, and that ragged
-// inner face showed through the open front, pitted, and differently on the left and right.)
-test('the skull cap is one even shell over a clean hollow, the same left and right', () => {
-  const sk = cap('trial', { capShape: 'nasal' }), g = sk.spec, f = sk.fields[0].f, M = sk.toBand;
-  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
-  let n = 0;
-  for (let s = g.form.sB + 8; s < g.form.sF - 10; s += 6) for (let x = 0; x < 50; x += 6) {
-    if (Math.abs(x - g.form.X) < 22 && Math.abs(s) < 22) continue;   // the pedicles and pegs
-    if (g.form.backIn(x, s) < g.form.back().L + 2) continue;          // the back, rolled down onto the head (solid at its edge)
-    const runs = [-1, 1].map((side) => {
-      let r = '', prev = false;
-      for (let h = 30; h >= 0.4; h -= 0.2) { const inside = f(...toPrint(g.fromSkull(side * x, s, h))) < 0; if (inside !== prev) r += inside ? '[' + h.toFixed(1) : ']' + h.toFixed(1); prev = inside; }
-      return r;
-    });
-    assert.equal(runs[0], runs[1], `x ${x}, s ${s}: left and right differ`);
-    const m = runs[1].match(/^\[([\d.]+)\]([\d.]+)$/);
-    if (!m || +m[1] < 6) continue;   // a thin or solid edge, or outside the cap
-    const t = +m[1] - +m[2]; n++;
-    assert.ok(t > 2.2 && t < 7, `x ${x}, s ${s}: shell ${t.toFixed(1)} mm (${runs[1]})`);
-  }
-  assert.ok(n > 30, `checked ${n} columns`);
-});
-
-// The cap rests on the head (the head circumference's typical head, under the band's inner surface): its rim lies on
-// it across and behind the antlers, and nothing reaches inside it; the band runs under the cap in a groove that follows it.
-test('the skull cap sits on the head: the rim on it, nothing inside it, the band in a groove along it', () => {
+// The plate is thin and lies on the head: from the head up, a gap for hair, then about PLATE thickness of solid, then
+// nothing; across its middle, front to back, the same. Thicker only over the band's channel and along the ridge.
+test('the plate is thin and lies on the head, all over', () => {
   for (const headCirc of [520, 571.5, 640]) {
-    const sk = cap('trial', { capShape: 'nasal', headCirc }), g = sk.spec, H = g.head, f = sk.fields[0].f, M = sk.toBand;
-    const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
-    const onHead = (x, y) => { const r = H.ryAt(y); return [x, y, H.zc + H.R * Math.sqrt(Math.max(0, 1 - (x / H.R) ** 2 - (y / r) ** 2))]; };
-    const gap = (x, y) => {   // straight up from the head to the cap's first solid
-      const p = onHead(x, y); for (let d = 0; d < 30; d += 0.25) if (f(...toPrint([p[0], p[1], p[2] + d])) < 0) return d; return Infinity;
-    };
-    const yB = g.form.sB + g.form.back().L + 4;   // just in from the back's rolled edge
-    for (const y of [yB, g.form.sB / 2]) for (const x of [0, 15]) assert.ok(gap(x, y) > 12, `${headCirc}: hollow over the head at x ${x}, y ${y.toFixed(0)}`);
-    let rim = 0;
-    for (const p of g.rim) {
-      if (p[1] > 0 || p[1] < g.form.sB + 4) continue;   // behind the antlers, where it should lie on the head
-      const q = onHead(p[0], p[1]); assert.ok(p[2] - q[2] < 1.5, `${headCirc}: the rim at x ${p[0].toFixed(0)}, y ${p[1].toFixed(0)} is ${(p[2] - q[2]).toFixed(1)} mm off the head`); rim++;
+    const sk = cap('eightpoint', { headCirc }), g = sk.spec, { solid, onHead } = probe(sk);
+    let n = 0;
+    for (let s = -g.form.B + 12; s < g.form.F * 0.7; s += 6) for (let x = 0; x < g.form.wAt(s) - 10; x += 7) {
+      if (Math.abs(s) < 26 || Math.hypot(x - g.form.X, s) < 30) continue;   // the band's channel and the collars
+      let lo = null, hi = null;
+      for (let up = 0; up < 14; up += 0.2) if (solid(onHead(x, s, up))) { if (lo === null) lo = up; hi = up; }
+      assert.ok(lo !== null && lo > 0.3 && lo < 1.2, `${headCirc}: at x ${x}, s ${s} the plate starts ${lo} mm off the head`);
+      assert.ok(hi - lo > 2.2 && hi - lo < 6.5, `${headCirc}: at x ${x}, s ${s} it is ${(hi - lo).toFixed(1)} mm thick`);
+      n++;
     }
-    assert.ok(rim > 4, 'checked the rim behind the antlers');
-    for (const x of [-20, 0, 20]) {   // inside the head: empty; the band's groove: empty, and cap above it
-      const p = onHead(x, 0);
-      assert.ok(f(...toPrint([p[0], p[1], p[2] - 2])) > 0, `${headCirc}: nothing inside the head at x ${x}`);
-      assert.ok(f(...toPrint([p[0], p[1], p[2] + g.band.t / 2])) > 0 && f(...toPrint([p[0], 0, p[2] + g.band.t + 1.5])) < 0, `${headCirc}: the band's groove at x ${x}`);
-    }
+    assert.ok(n > 25, `checked ${n} places`);
   }
 });
 
-// The back isn't sawn open: it rolls down onto the head along a rounded outline, closing the shell over the hollow,
-// with no corners where it meets the side walls (they once pressed into the head).
-test('the skull cap’s back is closed and rounded, resting on the head', () => {
-  const sk = cap('trial', { capShape: 'nasal' }), g = sk.spec, f = sk.fields[0].f, M = sk.toBand, H = g.head;
-  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
-  const onHead = (x, y) => [x, y, H.zc + H.R * Math.sqrt(Math.max(0, 1 - (x / H.R) ** 2 - (y / H.ryAt(y)) ** 2))];
-  const solidAbove = (x, y, lo, hi) => { const p = onHead(x, y); for (let d = lo; d <= hi; d += 0.25) if (f(...toPrint([p[0], p[1], p[2] + d])) < 0) return true; return false; };
-  // straight in from behind, low over the head, along the back: the cap's edge is there (no open arch to see into)
-  for (const x of [0, 10, 20]) {
-    let y = g.form.sB - 3; while (y < g.form.sB + 30 && !solidAbove(x, y, 0.3, 4)) y += 0.5;
-    assert.ok(y < g.form.sB + 12, `x ${x}: the back reaches down to the head (first solid at y ${y.toFixed(1)})`);
+// Underneath: the headband's channel, as wide as the band (across the top, where the cap sits), open toward the head,
+// with the plate over it; and the ribbon slots straight through, either side of it.
+test('the band channel underneath, and the ribbon slots through the plate', () => {
+  const sk = cap('trial', { hbWidth: 24 }), g = sk.spec, { solid, onHead } = probe(sk);
+  const half = (g.band.w + g.band.gap) / 2;
+  for (const x of [-25, 0, 25]) {
+    assert.ok(!solid(onHead(x, 0, g.band.t / 2)) && !solid(onHead(x, half - 1, g.band.t / 2)), `the channel is open at x ${x}`);
+    assert.ok(solid(onHead(x, half + 3, 1.5)), `the plate comes down beside it at x ${x}`);
+    assert.ok(solid(onHead(x, 0, g.band.t + 1.5)), `the plate covers it at x ${x}`);
   }
-  // round the back corner: the cap's outline on the head behind the antlers moves in steadily (no corner sticking out)
-  const outline = []; for (let y = g.form.sB; y < g.form.sB + 24; y += 2) { let x = 60; while (x > 0 && !solidAbove(x, y, 0.3, 3)) x -= 0.5; outline.push(x); }
-  for (let i = 1; i < outline.length; i++) assert.ok(outline[i] >= outline[i - 1] - 0.6, `the outline turns in smoothly at the back: ${outline.join(' ')}`);
+  assert.equal(g.slots.length, 2, 'a slot in front of the band and one behind it, each side');
+  for (const sl of g.slots) {
+    for (const up of [1, 2.5, 4]) assert.ok(!solid(onHead(sl.x, sl.s, up)), `the slot at s ${sl.s.toFixed(0)} goes through`);
+    assert.ok(solid(onHead(sl.x, sl.s + Math.sign(sl.s) * 10, 2)) && solid(onHead(sl.x - 5, sl.s, 2)), 'with plate round it');
+  }
+  assert.equal(cap('trial', { capTie: false }).spec.slots.length, 0, 'no slots when they’re off');
 });
 
-// Comfort: only the cap's smooth, rounded outer edge rests on the head. Inside it, nothing comes near the head (the scan's
-// ragged eye-socket rims once dipped to it), and the band channel's sides stand off it, so the wide band takes that line.
-test('the skull cap’s underside: only its rounded rim rests on the head', () => {
-  const sk = cap('eightpoint', { capShape: 'nasal' }), g = sk.spec, f = sk.fields[0].f, M = sk.toBand, H = g.head, F = g.form;
-  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
-  const onHead = (x, y, up) => [x, y, H.zc + H.R * Math.sqrt(Math.max(0, 1 - (x / H.R) ** 2 - (y / H.ryAt(y)) ** 2)) + up];
-  let n = 0;
-  for (let s = F.sB + F.back().L + 4; s < F.sO; s += 3) for (let x = 0; x < F.outline(s) - 7; x += 3) {
-    const p = g.fromSkull(x, s, 0);
-    if (Math.abs(p[1]) < (g.band.w + g.band.gap) / 2 + 5) continue;   // the band's channel (its sides are checked below)
-    for (const up of [0.3, 1, 2]) { assert.ok(f(...toPrint(onHead(p[0], p[1], up))) > 0, `inside the rim, ${up} mm off the head at x ${x}, s ${s}`); n++; }
-  }
-  assert.ok(n > 100, `checked ${n} points`);
-  const rib = (g.band.w + g.band.gap) / 2 + 1.2;   // the middle of the channel's side
-  for (const x of [-25, 0, 25]) for (const y of [-rib, rib]) assert.ok(f(...toPrint(onHead(x, y, 0.4))) > 0, `the band channel's side stands off the head at x ${x}`);
-  // the rim's edge is rounded: just off the head, the wall is narrower than higher up
-  const wall = (s, up) => { let w = 0; for (let x = 20; x < 70; x += 0.1) { const p = g.fromSkull(x, s, 0); if (f(...toPrint(onHead(p[0], p[1], up))) < 0) w += 0.1; } return w; };
-  for (const s of [-25, -10]) assert.ok(wall(s, 0.5) < wall(s, 3) - 0.3, `the rim is rounded at s ${s}: ${wall(s, 0.5).toFixed(1)} mm against ${wall(s, 3).toFixed(1)} mm`);
+// The edge: broken teeth all round (more with Jagged edge), coming to a point at the nose, curled just off the head.
+test('the plate’s jagged edge and its point', () => {
+  const plain = cap('trial', { capJag: 0 }).spec.form, rough = cap('trial', { capJag: 1 }).spec.form;
+  const wiggle = (f) => { let t = 0; for (let i = 1; i < f.half.length; i++) t += Math.hypot(f.half[i][0] - f.half[i - 1][0], f.half[i][1] - f.half[i - 1][1]); return t; };
+  assert.ok(wiggle(rough) > wiggle(plain) * 1.3, `a longer, broken edge (${wiggle(plain).toFixed(0)} → ${wiggle(rough).toFixed(0)} mm)`);
+  const f = cap('trial').spec.form;
+  assert.ok(f.wAt(f.F - 2) < 3 && f.wAt(f.F * 0.5) > 15, 'it narrows to a point at the front');
+  const a = cap('trial', { seed: 5 }).spec.form.half, b = cap('trial', { seed: 6 }).spec.form.half;
+  assert.ok(a.length !== b.length || a.some((p, i) => Math.abs(p[0] - b[i][0]) > 0.5), 'a new seed, a new edge');
 });
 
-test('designs saved with the retired cap shapes open as a skull plate', () => {
-  assert.equal(Core.resolveParams({ capShape: 'shield' }).capShape, 'plate');
-  assert.equal(Core.resolveParams({ capShape: 'round' }).capShape, 'plate');
+test('designs saved with the old cap’s settings still open', () => {
+  const sk = cap('trial', { capShape: 'nasal', capTip: 14, capDroop: 0.5 }), r = Core.validateMesh(Core.meshAntler(sk, 1.4));
+  assert.ok(r.watertight && r.shells === 1);
 });
 
 test('pegs and sockets never scale, and the socket clears the peg by half the Fit clearance', () => {

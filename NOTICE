@@ -37,14 +37,6 @@ vendor/flame/flame_head.bin.wasm
   scan. The FLAME licence doesn't permit pornographic use or creating fake, defamatory or
   misleading content with the model.
 
-src/deer-skull.js
-  Derived from "White-tailed Deer: Skull and Mandible" (Odocoileus virginianus), a 3D scan by the
-  Smithsonian Institution, National Museum of Natural History, Department of Paleobiology (USNM PAL),
-  released under Creative Commons Zero (CC0 1.0; https://creativecommons.org/publicdomain/zero/1.0/).
-  Source: https://3d-api.si.edu/content/document/3d_package:fcc69841-d8be-4103-be0f-143e374c9ce6/resources/USNM_PAL_Deer_skull-100k-2048-obj_std.zip
-  (ark:/65665/3c5df1823-689c-44bd-8ca5-4c748c234ea2). Changes made: the skull only (no mandible),
-  made symmetric about its midline, and stored as a signed distance grid of its upper half (1.5 mm
-  cells, 8 bits). Made with tools/convert-skull.js. Used to carve the skull cap.
 
 Loaded at runtime from public CDNs (not included in this repository):
   three.js r128 and OrbitControls (MIT License)

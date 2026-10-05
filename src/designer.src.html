@@ -472,7 +472,6 @@ details[open] summary::after{transform:rotate(-135deg)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script id="antler-core">
-/*__SKULL__*/
 /*__CORE__*/
 /*__HEADSCAN__*/
 </script>
@@ -487,7 +486,7 @@ const EDITION = /*@edition*/'storybook'/*@/edition*/, YJ = EDITION === 'yellowja
 const STORE = YJ ? 'antler-forge-yj-design-v1' : 'antler-forge-design-v3';
 
 /* ------------------------------------------------------------ state */
-let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull', capShape: 'nasal' }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on a skull with its nasal bones
+let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull', hbWidth: 24 }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on the skull cap over a band almost an inch wide
 try { const s = localStorage.getItem(STORE); if (s) P = C.resolveParams(JSON.parse(s)); } catch (e) {}
 if ((C.PRESETS[P.preset] || {}).set !== (YJ ? 'campfire' : undefined) && C.PRESETS[P.preset]) P = C.presetParams(YJ ? 'trial' : 'whitetail', P);   // the other edition's species
 if (YJ) P.style = 'headband';   // the Yellowjackets edition makes headband antlers only
@@ -608,7 +607,6 @@ function applyStyle() {
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
     wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
       || (k === 'capTie' && !cap)   // the skull cap's own settings: head size (its curve) and the cloth tie
-      || ((k === 'capTaper' || k === 'capTip') && P.capShape !== 'nasal')   // the snout's point: the upper skull only
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
   }
@@ -663,7 +661,7 @@ try {
   mats.antler = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0.0 });
   mats.head = new THREE.MeshStandardMaterial({ color: 0x1c2a21, roughness: 0.9, transparent: true, opacity: 0.4, depthWrite: false });
   mats.ghost = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, transparent: true, opacity: 0.32, depthWrite: false });   // Fine-tune: the mesh behind the skeleton
-  mats.tie = new THREE.MeshStandardMaterial({ color: new THREE.Color('#7B3326').convertSRGBToLinear(), roughness: 1, side: THREE.DoubleSide });   // the skull cap's strap: faded red cloth
+  mats.tie = new THREE.MeshStandardMaterial({ color: new THREE.Color('#7B3326').convertSRGBToLinear(), roughness: 1, side: THREE.DoubleSide });   // the skull cap's ribbons: faded red cloth
   mats.band = new THREE.MeshToonMaterial({ color: new THREE.Color(YJ ? '#3B2B20' : '#6A4A2E').convertSRGBToLinear(), side: THREE.DoubleSide });   // on the shade, the band is in shadow too
 } catch (e) { glOK = false; $('gl-err').hidden = false; }
 
@@ -800,30 +798,29 @@ function bandObject() {
   }
   return new THREE.Mesh(bandCache.geo, mats.band);
 }
-// The strap (skull cap, Strap slots on): one loop of elastic or cloth from the slot on each side of the cap, down
-// over the back of the head and round under the bump of the skull, where it can't ride up. Drawn over the hair.
+// The ribbons (skull cap, Ribbon slots on): one down through each slot, either side of the band, then over the plate's
+// edge and down the side of the head to below the ear, where they tie (under the chin or behind the head). Drawn over the hair.
 let strapCache = null;
 function strapObject(pl, cz) {
   const key = JSON.stringify(pl.slots) + '|' + cz + '|' + EDITION;
   if (!strapCache || strapCache.key !== key) {
-    const C0 = new THREE.Vector3(0, -6, -10), under = new THREE.Vector3(0, -0.8, -0.6).normalize();
+    const C0 = new THREE.Vector3(0, 0, -10), geos = [];
     const slerp3 = (a, b, u) => a.clone().lerp(b, u).normalize();
-    const half = (s) => {   // slot → down the side of the back of the head → under the skull's bump, in the middle
-      const slot = new THREE.Vector3(s * pl.slots[0].p[0], pl.slots[0].p[1], pl.slots[0].p[2] + cz);
-      const d0 = slot.clone().sub(C0).normalize(), side = new THREE.Vector3(s * 0.62, -0.68, -0.38).normalize();
-      const pts = [slot.clone()], nrm = [d0.clone()];
-      for (let i = 1; i <= 36; i++) {
-        const u = i / 36, dir = u < 0.6 ? slerp3(d0, side, u / 0.6) : slerp3(side, under, (u - 0.6) / 0.4);
-        const p = bustSurface(dir, C0, 1.8) || C0.clone().addScaledVector(dir, 110);
-        const lead = Math.max(0, 1 - u / 0.12);   // leaves the slot, then lies on the head
-        pts.push(lead > 0 ? p.lerp(slot.clone().addScaledVector(d0, 3), lead * lead) : p); nrm.push(dir);
+    for (const side of [1, -1]) for (const sl of pl.slots) {
+      const slot = new THREE.Vector3(side * sl.p[0], sl.p[1], sl.p[2] + cz);
+      const d0 = slot.clone().sub(C0).normalize(), down = new THREE.Vector3(side * 0.78, sl.p[1] / 140, -0.62).normalize();
+      const pts = [slot.clone().addScaledVector(d0, 6)], nrm = [d0.clone()];   // from the plate's top, through the slot
+      for (let i = 1; i <= 30; i++) {
+        const u = i / 30, dir = slerp3(d0, down, u), p = bustSurface(dir, C0, 1.8 + 5 * Math.max(0, 1 - u / 0.25)) || C0.clone().addScaledVector(dir, 110);
+        pts.push(p); nrm.push(dir);
       }
-      return { pts, nrm };
-    };
-    const r = half(1), l = half(-1);
-    const pts = r.pts.concat(l.pts.slice(0, -1).reverse()), nrm = r.nrm.concat(l.nrm.slice(0, -1).reverse());
+      geos.push(ribbonGeometry(pts, nrm, 12.7));
+    }
+    const pos = [], idx = []; let base = 0;   // one geometry for all four
+    for (const gq of geos) { const a = gq.attributes.position.array; for (const v of a) pos.push(v); for (const i of gq.index.array) idx.push(i + base); base += a.length / 3; gq.dispose(); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
     if (strapCache) strapCache.geo.dispose();
-    strapCache = { key, geo: ribbonGeometry(pts, nrm, 12.7) };
+    strapCache = { key, geo };
   }
   return new THREE.Mesh(strapCache.geo, mats.tie);
 }

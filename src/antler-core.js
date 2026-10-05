@@ -114,17 +114,15 @@
     ] },
     // the skull cap (base style 'skull'): shown only when it's chosen
     { group: 'Skull cap', tier: 'details', only: 'skull', items: [
-      { k: 'capShape', label: 'Shape', type: 'select', options: [['plate', 'Skull plate'], ['nasal', 'Upper skull, to the nose']], hint: 'Cut as a taxidermist cuts a deer’s skull: a skull plate (the forehead and both antlers, cut through the eye sockets), or the upper skull with its nasal bones, down the forehead' },
-      { k: 'capLength', label: 'Front reach', min: 30, max: 85, step: 1, u: 'mm', hint: 'How far the cap runs forward: where a skull plate is sawn across the forehead, or how long the snout is (a younger deer’s is shorter)' },
-      { k: 'capSnoutWidth', label: 'Snout width', min: 0.6, max: 1.6, step: 0.05, u: '×', hint: 'The skull in front of the eye sockets, narrower or wider (×1 = a white-tailed deer’s)' },
-      { k: 'capTaper', label: 'Snout taper', min: 0, max: 1, step: 0.05, u: '', hint: 'Stays wide to a blunt end ← → narrows early to a long point' },
-      { k: 'capTip', label: 'Nose tip', min: 6, max: 30, step: 0.5, u: 'mm', hint: 'How wide the rounded end of the nasal bones is' },
-      { k: 'capDroop', label: 'Snout curve', min: 0, max: 1, step: 0.05, u: '', hint: 'Runs straight forward, as on a deer ← → curves down to lie on the forehead' },
-      { k: 'capBack', label: 'Back reach', min: 20, max: 60, step: 1, u: 'mm', hint: 'Where the braincase is sawn across, behind the antlers' },
-      { k: 'capWidth', label: 'Width beyond the antlers', min: -6, max: 24, step: 1, u: 'mm', hint: 'Widens or narrows the skull outside the antlers (0 = a white-tailed deer’s own)' },
+      { k: 'capLength', label: 'Front reach', min: 30, max: 110, step: 1, u: 'mm', hint: 'How far the plate runs forward from the antlers, to its point' },
+      { k: 'capSnoutWidth', label: 'Front width', min: 0.6, max: 1.6, step: 0.05, u: '×', hint: 'How wide the plate stays on its way to the point' },
+      { k: 'capTaper', label: 'Point', min: 0, max: 1, step: 0.05, u: '', hint: 'A broad, blunt point ← → a long, thin one' },
+      { k: 'capJag', label: 'Jagged edge', min: 0, max: 1, step: 0.05, u: '', hint: 'How big the broken points round the edge are (Surprise me gives a new edge)' },
+      { k: 'capBack', label: 'Back reach', min: 20, max: 100, step: 1, u: 'mm', hint: 'How far the plate reaches back behind the antlers' },
+      { k: 'capWidth', label: 'Width beyond the antlers', min: -6, max: 30, step: 1, u: 'mm', hint: 'How far the plate reaches out past the antlers to each side' },
       { k: 'capSpacing', label: 'Antler spacing', min: 60, max: 110, step: 1, u: 'mm', hint: 'Between the centres of the two antlers (a deer’s is about 3 in)' },
       { k: 'capPedicle', label: 'Pedicle height', min: 4, max: 24, step: 0.5, u: 'mm', hint: 'The stumps of bone the antlers stand on' },
-      { k: 'capTie', label: 'Strap slots', type: 'bool', hint: 'Two slots at the back of the skull cap for a loop of ½ in elastic (or a strip of cloth, tied). It runs down and round the back of your head, under the bump at the back of your skull, and holds the cap down so the antlers can’t rock it forward or lift it off. Bobby pins slid onto the four grooves at the cap’s edge hold it too.' },
+      { k: 'capTie', label: 'Ribbon slots', type: 'bool', hint: 'Two slots each side of the plate, one in front of the band and one behind it, for ½ in ribbon. Thread a ribbon down through each and tie them under your chin or behind your head: they hold the plate down so the antlers can’t rock it. Bobby pins slid onto the four grooves at the plate’s edge hold it too.' },
     ] },
     { group: 'Surface', tier: 'details', items: [
       { k: 'burr', label: 'Burr (coronet)', type: 'bool', hint: 'The knobbly ring at the antler\'s base' },
@@ -230,8 +228,8 @@
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
     tweaks: {},   // Fine-tune: { branch id: { rot: rotation vector (rad, head frame), len: ×, thick: ×, s: where it leaves its parent, a0/a1: tangent arms } }
-    capTie: true, capShape: 'plate', capLength: 54, capBack: 40, capWidth: 0, capSpacing: 80, capPedicle: 5,   // the skull cap
-    capSnoutWidth: 1, capTaper: 0.5, capTip: 14, capDroop: 0.5,                                                 // and its front
+    capTie: true, capLength: 66, capBack: 60, capWidth: 10, capSpacing: 80, capPedicle: 5,   // the skull cap
+    capSnoutWidth: 1, capTaper: 0.5, capJag: 0.6,                                            // its front and edge
   };
 
   // Tuned for silhouette first: a smooth curl, tine tips on one arch, calm surfaces.
@@ -295,7 +293,6 @@
     if (p && p.character == null && typeof p.ringCharacter === 'number') p = Object.assign({}, p, { character: p.ringCharacter });   // its crown-only name
     const P = Object.assign({}, DEFAULTS, p || {});
     if (RETIRED[P.ringPattern]) P.ringPattern = RETIRED[P.ringPattern];
-    if (P.capShape === 'shield' || P.capShape === 'round') P.capShape = 'plate';   // the invented cap shapes, retired for the skull's own cuts
     for (const g of PARAM_SPEC) for (const it of g.items) {
       if (it.type === 'text') P[it.k] = String(P[it.k] == null ? DEFAULTS[it.k] : P[it.k]).slice(0, 80);
       else if (it.type === 'tweaks') P[it.k] = cleanTweaks(P[it.k]);
@@ -316,7 +313,7 @@
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
     if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
-      'capTie', 'capShape', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capTip', 'capDroop', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
+      'capTie', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capJag', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
 
@@ -1538,43 +1535,28 @@
   }
 
   /* --------------------------------------------------------------- skull cap */
-  // The top of a deer's skull, worn over the headband: a weathered bone shell shaped to the top of the head, a
-  // pedicle for each antler with a D-shaped peg on it, a groove underneath that the headband glues into, and two
-  // cord holes at the back for tying it on with cloth. Worn: the band goes on as usual and runs under the cap,
-  // right below the pedicles, so the antlers' weight goes straight down into it; the cap's front and back rest
-  // on the head. Printed rim-down, flat on the bed; the inside (which faces the hair) prints on tree supports.
+  // A thin plate of bone over the top of the head, worn over the headband: low in the middle and shaped to the head
+  // all over, reaching well back, with a jagged, broken edge that comes to a point at the front, a flattened ridge
+  // down the middle with sutures and pitted bone, and a collar at each antler's base that blends into the plate, each
+  // with a D-shaped peg the antler glues onto. Underneath, a channel the headband glues into, running ear to ear
+  // under the antlers so their weight goes straight down into it; ribbon slots either side of the band and four
+  // bobby-pin grooves at the edge hold it on. Printed rim-down, flat on the bed; the underside (which faces the hair)
+  // prints on tree supports.
   //
   // Band frame: origin at the centre of the band's arc, +X the wearer's right, +Y forward, +Z up; the band's
   // middle surface is the circle of radius hbRadius in the XZ plane. The page places this frame on the head.
-  const CAP_T = 2.6;   // shell thickness: four 0.4 mm walls and a little infill
-  const SLOT = { len: 15, w: 3.2 };           // a strap slot: ½ in elastic, lying flat
-  const PIN = { len: 14, w: 2.2, depth: 1 };   // a bobby-pin groove: on the outside, running in from the rim
-  const EDGE_R = 1.6, RIB_LIFT = 1, CLEAR = 2.5;   // comfort: edges on the head rounded; the band channel's sides held off
-                                                // it; inside the cap's outer edge, nothing nearer the head than CLEAR
+  //
+  // Plate coordinates (mm): x across, s along the head from the antlers' line (+ toward the face), h up off the head;
+  // fromSkull carries them into the band frame, keeping lengths along the head's surface.
+  const PLATE = { t: 3.2, edge: 2.4, gap: 0.6, lift: 1, band: 2.2 };   // thickness; at the edge; off the head (hair); the edge's
+                                                                      // curl off the head; over the band's channel
+  const SLOT = { len: 14, w: 3.2 };            // a ribbon slot: ½ in ribbon, threaded down through the plate
+  const PIN = { len: 14, w: 2.2, depth: 1 };   // a bobby-pin groove: on top, running in from the edge
   const rotOf = (P, a) => {   // the antler's print frame in the band frame at band angle a (degrees): the same turn as buildAt
     const sp = (P.splay - a) * DEG, rk = P.rake * DEG, cs = Math.cos(sp), ss = Math.sin(sp), ck = Math.cos(rk), sk = Math.sin(rk);
     const inv = ([X, Y, Z]) => { const x = X * cs - Z * ss, z1 = X * ss + Z * cs; return [x, Y * ck + z1 * sk, -Y * sk + z1 * ck]; };
     return { X: inv([1, 0, 0]), Y: inv([0, 1, 0]), Z: inv([0, 0, 1]) };
   };
-  // Where the parts go, in the band frame: the shell, and for the right antler its print frame (origin Q, axes
-  // X, Y, Z) standing on its pedicle. The left is the mirror image (x → −x).
-  //
-  // The skull is a real one, worn as the trial crown in Yellowjackets is: the Smithsonian's CC0 scan of a white-tailed
-  // deer's skull (src/deer-skull.js, a signed distance grid of its upper half; skull frame x across, y toward the nose,
-  // z up, in mm), but only a thin plate of its top: cut CUT_DEPTH below the skull's upper surface, so it keeps the bone's
-  // real surface and the notches of the eye sockets without the deep sides, and laid on the head (the cut becomes the
-  // rim that rests on it), bending with it, keeping its lengths at every height. plate: sawn across the forehead in
-  // front of the eye sockets; nasal: the snout, shortened, narrowing to a rounded nasal point at the hairline. Hollowed
-  // to a bone shell CAP_T thick.
-  //
-  // Skull coordinates (mm): x across, s along the head from the antlers' line (+ toward the face), h out from the head.
-  // Read off the scan (skull frame, mm): the eye sockets' centre and the nasal tip (y), and how deep the cap is cut
-  // below the skull's top along its length (y, depth): a thin plate of the skull's upper surface, as worn in the show.
-  const SKULL_AT = { orbit: -14.5, nose: 80, back: -133 };   // nose: where the nasal point ends, before the nose opening flares
-  const CUT_DEPTH = [[-133, 20], [-62, 20], [-14.5, 16], [40, 15], [92, 11]];
-  // the curve the plate bends round, against the head's: on it across and behind the antlers, so it lies on the head
-  // there; a little flatter in front, so the snout runs forward over the forehead as a skull would (Snout curve sets it)
-  const BEND = { x: 1, back: 1, front: 1.15 };
   // The head the cap rests on (band frame): the crowns' typical head at the wearer's head circumference, its top on the
   // band line under the band's inner surface (the scalp, with hair, where the band rests). Modelled near the top as an
   // ellipsoid R across and up and ry front to back (ryF in front, where a forehead drops away more steeply than the
@@ -1588,212 +1570,120 @@
     const ry = Math.sqrt((r[1] * r[1]) / r[2] * R), ryF = 0.88 * ry;
     return { r, top, R, ry, ryF, zc: top - R, ryAt: (s) => (s > 0 ? ryF : ry) };
   }
-  let DEER = null;
-  function deerSkull() {   // the scan, decoded once
-    if (DEER) return DEER;
-    const S = (typeof self !== 'undefined' && self.DEER_SKULL) || (typeof require === 'function' ? require('./deer-skull.js') : null);
-    if (!S) throw new Error('The deer skull (src/deer-skull.js) is not loaded.');
-    const bin = typeof atob === 'function' ? atob(S.data) : Buffer.from(S.data, 'base64').toString('latin1');
-    const n = S.n, n0 = n[0], n01 = n[0] * n[1], g = new Float32Array(n0 * n[1] * n[2]);
-    for (let i = 0, o = 0; i < bin.length;) {
-      const c = bin.charCodeAt(i);
-      if (c === 0x80) { g.fill(((bin.charCodeAt(i + 2) << 24) >> 24) * S.q, o, o + bin.charCodeAt(i + 1)); o += bin.charCodeAt(i + 1); i += 3; }
-      else { g[o++] = ((c << 24) >> 24) * S.q; i++; }
-    }
-    // signed distance to the bone (mm, clamped to ±band), the skull mirrored across x = 0: a cubic B-spline through the
-    // grid, so the surface is smooth across the cells (straight-line sampling left faint creases at every cell edge)
-    const B = (t, w, dw) => {   // weights and their derivatives
-      const t2 = t * t, t3 = t2 * t;
-      w[0] = (1 - 3 * t + 3 * t2 - t3) / 6; w[1] = (4 - 6 * t2 + 3 * t3) / 6; w[2] = (1 + 3 * t + 3 * t2 - 3 * t3) / 6; w[3] = t3 / 6;
-      dw[0] = (-3 + 6 * t - 3 * t2) / 6; dw[1] = (-12 * t + 9 * t2) / 6; dw[2] = (3 + 6 * t - 9 * t2) / 6; dw[3] = 3 * t2 / 6;
+  // The plate's shape, seen from above (plate coordinates): its outline (a smooth base, wide at the antlers, rounded
+  // at the back, narrowing to a point at the front, with teeth along it), and how thick it is where. Cached: the
+  // antlers' placement asks for it on every build.
+  const PLATES = new Map();
+  function plateForm(P) {
+    const key = ['capSpacing', 'capWidth', 'capLength', 'capBack', 'capSnoutWidth', 'capTaper', 'capJag', 'seed'].map((k) => P[k]).join('|');
+    if (PLATES.has(key)) return PLATES.get(key);
+    const X = P.capSpacing / 2, Wm = X + 14 + P.capWidth, F = P.capLength, B = P.capBack;
+    const pe = 0.6 + 1.6 * P.capTaper, fw = P.capSnoutWidth;
+    // in front: a shoulder past the antlers, then in to a narrow neck at Fb, and the nose: a point over the last of it
+    const Fb = 0.74 * F, wn = 7 * Math.sqrt(fw), q = wn / Wm;
+    const wAt = (s) => {   // the base outline's half-width (before the teeth)
+      if (s <= -B || s >= F) return 0;
+      if (s <= 0) return Wm * Math.pow(1 - Math.pow(-s / B, 2.4), 1 / 2.4);   // rounded at the back
+      if (s >= Fb) return wn * Math.pow(1 - (s - Fb) / (F - Fb), 0.75);
+      const t = s / Fb, sh = sstep(s / (0.45 * Fb)), body = (Math.pow(1 - t, pe) * (1 - q) + q) / (Math.pow(0.75, pe) * (1 - q) + q);
+      return Wm * ((1 - sh) + sh * Math.min(1, fw * body, Math.max(q, body)));
     };
-    const wx = [0, 0, 0, 0], wy = [0, 0, 0, 0], wz = [0, 0, 0, 0], dx = [0, 0, 0, 0], dy = [0, 0, 0, 0], dz = [0, 0, 0, 0];
-    const grad = [0, 0, 0];   // the gradient at the last point sampled (per mm, x as given, not mirrored)
-    const at = (x, y, z) => {
-      const fx = (Math.abs(x) - S.org[0]) / S.step, fy = (y - S.org[1]) / S.step, fz = (z - S.org[2]) / S.step;
-      if (!(fx >= 1 && fy >= 1 && fz >= 1 && fx < n[0] - 2 && fy < n[1] - 2 && fz < n[2] - 2)) { grad[0] = 0; grad[1] = 0; grad[2] = 1; return S.band; }
-      const i = fx | 0, j = fy | 0, k = fz | 0;
-      B(fx - i, wx, dx); B(fy - j, wy, dy); B(fz - k, wz, dz);
-      let v = 0, gx = 0, gy = 0, gz = 0;
-      for (let c = 0; c < 4; c++) {
-        let sv = 0, sx = 0, sy = 0;
-        for (let b = 0; b < 4; b++) {
-          const o = (k - 1 + c) * n01 + (j - 1 + b) * n0 + i - 1, g0 = g[o], g1 = g[o + 1], g2 = g[o + 2], g3 = g[o + 3];
-          const r = wx[0] * g0 + wx[1] * g1 + wx[2] * g2 + wx[3] * g3, rx = dx[0] * g0 + dx[1] * g1 + dx[2] * g2 + dx[3] * g3;
-          sv += wy[b] * r; sy += dy[b] * r; sx += wy[b] * rx;
+    // the half outline (x ≥ 0), back to front, every 0.5 mm along it
+    const base = [];
+    { let prev = null;
+      for (let s = -B; s <= F + 1e-9; s += 0.02) { const p = [wAt(s), s]; if (!prev || Math.hypot(p[0] - prev[0], p[1] - prev[1]) >= 0.5) { base.push(p); prev = p; } }
+      base.push([0, F]); }
+    const len = [0]; for (let i = 1; i < base.length; i++) len.push(len[i - 1] + Math.hypot(base[i][0] - base[i - 1][0], base[i][1] - base[i - 1][1]));
+    const L = len[len.length - 1], noseL = (() => { let i = len.length - 1; while (i > 0 && base[i][1] > Fb) i--; return L - len[i]; })();
+    // teeth: outward points of varied width and size along the edge, the last one the point of the nose
+    // (triangular, slightly hollow-sided, their tips rounded over about a millimetre; bigger along the sides than at the back)
+    const rnd = rng(P.seed * 7417 + 3), amp = 16 * P.capJag, teeth = [];
+    if (amp > 0.2) {
+      let at = L - noseL - 2;   // none on the nose
+      while (at > 6) {
+        const wd = 12 + 10 * rnd(), side = sstep((at / L - 0.2) / 0.3);   // smaller round the back
+        teeth.push({ c: at - wd / 2, w: wd, a: amp * (0.45 + 0.55 * side) * (0.5 + 0.5 * rnd()) });
+        at -= wd * (0.85 + 0.3 * rnd());
+      }
+    }
+    const toothAt = (l) => {
+      let o = 0;
+      for (const t of teeth) { const u = Math.abs(l - t.c) / (t.w / 2); if (u < 1) { const e = 0.1, r = Math.sqrt(u * u + e * e) - e; o = Math.max(o, t.a * Math.pow(Math.max(0, 1 - r / (1 - e)), 1.35)); } }
+      return o;
+    };
+    const half = base.map((p, i) => {
+      const a = base[Math.max(0, i - 1)], b = base[Math.min(base.length - 1, i + 1)], tx = b[0] - a[0], ts = b[1] - a[1], tl = Math.hypot(tx, ts) || 1;
+      const n = [ts / tl, -tx / tl], o = toothAt(len[i]);   // outward normal (the outline runs back to front on the right)
+      return [Math.max(0, p[0] + n[0] * o), p[1] + n[1] * o];
+    });
+    const poly = half.concat(half.slice(1, -1).reverse().map((p) => [-p[0], p[1]]));   // the whole outline, closed
+    // signed distance to the outline (mm, negative inside), on a 0.5 mm grid over x ≥ 0, made on first use
+    const GS = 0.5, gx0 = 0, gs0 = -B - 16, gnx = Math.ceil((Wm + amp + 16) / GS) + 1, gns = Math.ceil((F + B + amp + 32) / GS) + 1;
+    let SDF = null;
+    const sdfTable = () => {
+      const D = new Float32Array(gnx * gns).fill(8), CAP = 8;
+      const segs = []; for (let i = 0; i < poly.length; i++) segs.push([poly[i], poly[(i + 1) % poly.length]]);
+      const B8 = new Map(), cell = (x, s) => Math.floor(x / CAP) + ',' + Math.floor(s / CAP);
+      for (const sg of segs) {   // bucket the edges, so each grid point only looks at those within 8 mm
+        const x0 = Math.min(sg[0][0], sg[1][0]) - CAP, x1 = Math.max(sg[0][0], sg[1][0]) + CAP, s0 = Math.min(sg[0][1], sg[1][1]) - CAP, s1 = Math.max(sg[0][1], sg[1][1]) + CAP;
+        for (let cx = Math.floor(x0 / CAP); cx <= Math.floor(x1 / CAP); cx++) for (let cs = Math.floor(s0 / CAP); cs <= Math.floor(s1 / CAP); cs++) { const k = cx + ',' + cs; (B8.get(k) || B8.set(k, []).get(k)).push(sg); }
+      }
+      for (let j = 0; j < gns; j++) {
+        const s = gs0 + j * GS, xs = [];   // where this row crosses the outline, for inside or out
+        for (const [a, b] of segs) if ((a[1] <= s) !== (b[1] <= s)) xs.push(a[0] + (b[0] - a[0]) * (s - a[1]) / (b[1] - a[1]));
+        xs.sort((u, v) => u - v);
+        for (let i = 0; i < gnx; i++) {
+          const x = gx0 + i * GS;
+          let m = CAP; for (const [a, b] of B8.get(cell(x, s)) || []) {
+            const ex = b[0] - a[0], es = b[1] - a[1], l2 = ex * ex + es * es || 1, t = clamp(((x - a[0]) * ex + (s - a[1]) * es) / l2, 0, 1);
+            m = Math.min(m, Math.hypot(a[0] + t * ex - x, a[1] + t * es - s));
+          }
+          let inside = false; for (const c of xs) if (c < x) inside = !inside;
+          D[j * gnx + i] = inside ? -m : m;
         }
-        v += wz[c] * sv; gx += wz[c] * sx; gy += wz[c] * sy; gz += dz[c] * sv;
       }
-      grad[0] = (x < 0 ? -gx : gx) / S.step; grad[1] = gy / S.step; grad[2] = gz / S.step;
-      return v;
+      return D;
     };
-    return (DEER = { S, at, grad });
+    const sdf = (x, s) => {   // the outline, from above
+      if (!SDF) SDF = sdfTable();
+      const fx = (Math.abs(x) - gx0) / GS, fs = (s - gs0) / GS;
+      if (fx > gnx - 1.001 || fs < 0 || fs > gns - 1.001) return 8;
+      const i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * gnx + i;
+      return (SDF[o] + (SDF[o + 1] - SDF[o]) * u) * (1 - v) + (SDF[o + gnx] + (SDF[o + gnx + 1] - SDF[o + gnx]) * u) * v;
+    };
+    const out = { X, Wm, F, B, wAt, half, sdf, sF: F + amp, sB: -B - amp };
+    PLATES.set(key, out); if (PLATES.size > 24) PLATES.delete(PLATES.keys().next().value);
+    return out;
   }
-  // The skull as it's worn: sized so its pedicles stand capSpacing apart; widened (or narrowed) outside them by
-  // capWidth; cut behind the antlers capBack back; in front, the plate sawn through the forehead, or the snout's
-  // length set by capLength (a younger deer's snout is shorter).
-  function skullForm(P) {
-    const { S, at, grad } = deerSkull(), D = S.disc.c;
-    const k = P.capSpacing / 2 / D[0], X = k * D[0], sO = k * (SKULL_AT.orbit - D[1]);   // scale; the pedicles' x; the eye sockets' s
-    const halfW = 67.5 - D[0], wf = Math.max(0.3, 1 + P.capWidth / (k * halfW));
-    const plate = P.capShape !== 'nasal';
-    // the front: the snout's width (eased in across the eye sockets), how it tapers, and its rounded nasal tip
-    const ws = (s) => 1 + (P.capSnoutWidth - 1) * sstep((s - sO + 10) / 25), wMax = Math.max(1, P.capSnoutWidth);
-    const taper = 0.5 * Math.pow(9, P.capTaper), tipW = P.capTip / 2;   // the outline's exponent: 0.5 (blunt) … 4.5 (a long point)
-    const fs = plate ? 1 : 0.35 + 0.55 * (P.capLength - 30) / 55;   // the snout's length, against a grown buck's: short, to the hairline
-    // along the skull: true to the scan behind the eye sockets, the snout shortened (by fs) easing in across them, so no crease
-    const s1 = sO - 15, ST = 0.5, Ys = [];
-    for (let s = s1, y = D[1] + s1 / k; y <= SKULL_AT.nose + 1 && Ys.length < 2000; s += ST) { Ys.push(y); y += ST / (k * (1 + (fs - 1) * sstep((s - s1) / 35))); }
-    const yAt = (s) => { if (s <= s1) return D[1] + s / k; const i = (s - s1) / ST, j = Math.min(Math.floor(i), Ys.length - 2); return Ys[j] + (Ys[j + 1] - Ys[j]) * (i - j); };
-    const sF = plate ? sO + 12 + 0.4 * (P.capLength - 30) : s1 + (Ys.length - 1) * ST;
-    const sB = -Math.min(P.capBack, k * (D[1] - SKULL_AT.back) - 1);
-    // the skull's top along its middle (the highest bone within 15 mm of it, smoothed), and the cut CUT_DEPTH below it
-    const y0 = Math.floor(SKULL_AT.back), raw = [];
-    for (let y = y0; y <= SKULL_AT.nose + 2; y++) {
-      let t = -40; for (let x = 0; x <= 15 && t < 0; x += 3) for (let z = 75; z > t; z -= 0.5) if (at(x, y, z) <= 0) { t = z; break; }
-      raw.push(t);
-    }
-    const topY = raw.map((_, i) => { let sum = 0, n = 0; for (let j = Math.max(0, i - 12); j <= Math.min(raw.length - 1, i + 12); j++) { sum += raw[j]; n++; } return sum / n; });
-    const lerpT = (tab, y) => { if (y <= tab[0][0]) return tab[0][1]; for (let i = 1; i < tab.length; i++) if (y <= tab[i][0]) { const [a0, b0] = tab[i - 1], [a1, b1] = tab[i]; return b0 + (b1 - b0) * (y - a0) / (a1 - a0); } return tab[tab.length - 1][1]; };
-    const base = (y) => { const i = clamp(y - y0, 0, raw.length - 1), j = Math.floor(i), f = i - j, t = topY[j] + (topY[Math.min(j + 1, raw.length - 1)] - topY[j]) * f; return t - lerpT(CUT_DEPTH, y); };
-    // skull coordinates → the scan (mm)
-    const toScan = (x, s, h) => {
-      const ax = Math.abs(x) / ws(s), xs = ax <= X ? ax / k : D[0] + (ax - X) / (k * wf);
-      const y = yAt(s);
-      return [xs, y, base(y) + h / k];
-    };
-    // the nasal point: the snout narrows steadily to a rounded tip (the scan's own snout ends in a nose opening)
-    const pointW = (s) => tipW + Math.max(0, k * 62 * ws(s) - tipW) * Math.pow(Math.max(0, (sF - s) / Math.max(1, sF - sO)), taper);
-    // the scan's distance carried through toScan (which squeezes the snout and follows the cut's curve), divided by its
-    // slope there, so it stays a true distance in mm (the mesh came out pitted where the squeeze bent it out of true)
-    const yRate = (s) => { const e = 0.25; return (yAt(s + e) - yAt(s - e)) / (2 * e); };   // dy/ds
-    const bRate = (y) => (base(y + 0.25) - base(y - 0.25)) / 0.5;                          // the cut's slope, dz/dy
-    let bone = (x, s, h) => {
-      const q = toScan(x, s, h), v = at(q[0], q[1], q[2]);
-      let d = k * v;
-      if (Math.abs(v) < S.band - 0.5) {
-        const ys = yRate(s), xr = (Math.abs(x) <= X * ws(s) ? 1 / k : 1 / (k * wf)) / ws(s);
-        const gx = grad[0] * xr, gs = (grad[1] + grad[2] * bRate(q[1])) * ys, gh = grad[2] / k, gl = Math.hypot(gx, gs, gh);
-        d = v / Math.max(gl, 0.25 / k);
-      }
-      if (!plate && s > sO) {   // blended into the bone, and thinning toward the tip so it ends in a rounded point that lies on the head
-        d = smax(d, Math.hypot(Math.max(0, Math.abs(x) - pointW(s) + tipW), Math.max(0, s - (sF - tipW))) - tipW, 3);
-        d = smax(d, h - (k * 16 + 6) + (k * 16 * 0.6 + 6) * sstep((s - sF + 32) / 32), 3);   // well clear of the bone until near the tip
-      }
-      return d;
-    };
-    // The back: not sawn straight across (that left an open arch over the hollow, with a sharp corner at each side that
-    // pressed into the head), but rounded in plan, an arc from the middle of the back that meets the side walls at a
-    // gentle angle, and rolled down onto the head along it (a quarter ellipse, upright at the edge), so the shell closes
-    // over the hollow and its edge rests on the head.
-    const boneScan = bone;
-    let BACK = null;
-    const backOf = () => {
-      if (BACK) return BACK;
-      const sw = sB + 10; let W = 0, A = 0;
-      for (let x = k * 75 * wf * wMax; x > 0 && !W; x -= 0.5) if (boneScan(x, sw, 0.5) <= 0) W = x;
-      for (let h = k * 70; h > 0 && !A; h -= 0.5) if (boneScan(0, sB + 4, h) <= 0) A = h;
-      const R = 1.25 * Math.max(W, 10);
-      return (BACK = { R, c: sB + R, A: A + 4, L: Math.min(16, 0.9 * A + 2) });
-    };
-    const bone2 = (x, s, h) => {
-      let d = boneScan(x, s, h);
-      if (s > sB + 60 || d > 6) return d;
-      const B = backOf(), dl = B.R - (s < B.c ? Math.hypot(x, s - B.c) : Math.abs(x));   // inward from the back's outline (mm), as backIn
-      if (dl > B.L) return d;
-      // inside the quarter ellipse (radii L inward, A up, centred L in from the outline, on the head): its distance, near enough
-      const u = (dl - B.L) / B.L, v = h / B.A, k0 = Math.hypot(u, v), k1 = Math.hypot(u / B.L, v / B.A);
-      return smax(d, k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -B.L, 1.5);
-    };
-    bone = bone2;
-    const edge = (s, h) => { for (let x = k * 75 * wf * wMax; x > 0; x -= 0.5) if (bone(x, s, h) <= 0) return x; return 0; };   // the side wall's outside
-    const top = (x, s) => { for (let h = k * 70; h > 0; h -= 0.5) if (bone(x, s, h) <= 0) return h; return 0; };
-    // The shell's inside: CAP_T under the cap's own top (with the nasal point's taper), measured across the shell, so it's a
-    // smooth copy of the outside. (Offsetting the scan's distance instead picked up the nose's insides under the cut, and
-    // its ragged inner face showed through the open front.) The top is found on a 1.5 mm grid over (x, s) and blurred;
-    // bilinear between; made on first use.
-    const TS = 1.5, tx0 = 0, ts0 = sB - 3, tnx = Math.ceil(k * 80 * wf * wMax / TS) + 2, tns = Math.ceil((sF + 3 - ts0) / TS) + 1;
-    let CEIL = null, TOP = null, OUT = null;   // the inside; the top (smoothed); the outline across, per row (smoothed)
-    const ceilTable = () => {
-      const T = new Float32Array(tnx * tns), hMax = k * 45;
-      for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) {
-        const x = tx0 + i * TS, s = ts0 + j * TS;
-        let hi = hMax, lo = -1;
-        for (let h = hMax; h > 0; h -= 3) if (bone(x, s, h) <= 0) { lo = h; break; } else hi = h;
-        if (lo < 0) { T[j * tnx + i] = 0; continue; }
-        for (let it = 0; it < 6; it++) { const m = (lo + hi) / 2; if (bone(x, s, m) <= 0) lo = m; else hi = m; }
-        T[j * tnx + i] = lo;
-      }
-      const blur = (A) => {   // a 1-2-1 pass each way (mirrored at x = 0)
-        const B = new Float32Array(A.length);
-        for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) { const l = A[j * tnx + Math.abs(i - 1)], r = A[j * tnx + Math.min(tnx - 1, i + 1)]; B[j * tnx + i] = (l + 2 * A[j * tnx + i] + r) / 4; }
-        for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) { const d = B[Math.max(0, j - 1) * tnx + i], u = B[Math.min(tns - 1, j + 1) * tnx + i]; A[j * tnx + i] = (d + 2 * B[j * tnx + i] + u) / 4; }
-      };
-      const O = new Float32Array(tns);
-      for (let j = 0; j < tns; j++) for (let i = tnx - 1; i >= 0; i--) if (T[j * tnx + i] > 0.3) { O[j] = tx0 + i * TS; break; }
-      // smoothed over ±12 mm, but never outside the bone's own edge nearby (±3 mm), or the wall stands off it as a thin ledge
-      OUT = O.map((_, j) => {
-        let sum = 0, n = 0, near = 0;
-        for (let q = Math.max(0, j - 8); q <= Math.min(tns - 1, j + 8); q++) { sum += O[q]; n++; if (Math.abs(q - j) <= 2) near = Math.max(near, O[q]); }
-        return Math.min(sum / n, near);
-      });
-      blur(T); blur(T); TOP = T.slice();
-      const Cl = new Float32Array(T.length);
-      for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) {
-        const gx = (T[j * tnx + Math.min(tnx - 1, i + 1)] - T[j * tnx + Math.abs(i - 1)]) / (2 * TS), gs = (T[Math.min(tns - 1, j + 1) * tnx + i] - T[Math.max(0, j - 1) * tnx + i]) / (2 * TS);
-        Cl[j * tnx + i] = T[j * tnx + i] - CAP_T * Math.min(2.5, Math.sqrt(1 + gx * gx + gs * gs));
-      }
-      return Cl;
-    };
-    const ceil = (x, s) => {
-      if (!CEIL) CEIL = ceilTable();
-      const fx = clamp((Math.abs(x) - tx0) / TS, 0, tnx - 1.001), fs = clamp((s - ts0) / TS, 0, tns - 1.001), i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * tnx + i;
-      return (CEIL[o] + (CEIL[o + 1] - CEIL[o]) * u) * (1 - v) + (CEIL[o + tnx] + (CEIL[o + tnx + 1] - CEIL[o + tnx]) * u) * v;
-    };
-    // the cap seen from above: how far out it reaches across at s (its outline), and the top as found at (x, s)
-    const outline = (s) => { if (!CEIL) CEIL = ceilTable(); const f = clamp((s - ts0) / TS, 0, tns - 1.001), j = f | 0; return OUT[j] + (OUT[j + 1] - OUT[j]) * (f - j); };
-    const topAt = (x, s) => {
-      if (!CEIL) CEIL = ceilTable();
-      const fx = clamp((Math.abs(x) - tx0) / TS, 0, tnx - 1.001), fs = clamp((s - ts0) / TS, 0, tns - 1.001), i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * tnx + i;
-      return (TOP[o] + (TOP[o + 1] - TOP[o]) * u) * (1 - v) + (TOP[o + tnx] + (TOP[o + tnx + 1] - TOP[o + tnx]) * u) * v;
-    };
-    // inward from the back's rounded outline (mm): within back().L of it the shell rolls down onto the head
-    const backIn = (x, s) => { const B = backOf(); return B.R - (s < B.c ? Math.hypot(x, s - B.c) : Math.abs(x)); };
-    // the hollow under the back's roll: inside the same quarter ellipse made CAP_T smaller all round (negative inside),
-    // so the rolled edge is a shell CAP_T thick, not the thin wall left where the inside followed the steep outside down
-    const backHollow = (x, s, h) => {
-      if (s > sB + 60) return -1e3;
-      const B = backOf(), dl = backIn(x, s);
-      if (dl > B.L) return -1e3;
-      const a = B.L - CAP_T, c = B.A - CAP_T, u = (dl - B.L) / a, v = h / c, k0 = Math.hypot(u, v), k1 = Math.hypot(u / a, v / c);
-      return k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -a;
-    };
-    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, outline, topAt, back: backOf, backIn, backHollow, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
-  }
+  // Where the parts go, in the band frame: the plate, and for the right antler its print frame (origin Q, axes
+  // X, Y, Z) standing on its pedicle. The left is the mirror image (x → −x).
   function skullSpec(params, antlerBase) {
     const P = resolveParams(params);
     const band = { r: P.hbRadius, w: P.hbWidth, t: P.hbThick, gap: P.clearance };
-    const head = capHead(P), rin = head.top, { ry, ryF, ryAt } = head;   // the skull rests on the head, the band in a groove
-    const sk = skullForm(P);
-    // between skull coordinates and the band frame: the plate bends over the head, across (x) and front to back (s),
-    // keeping its lengths at every height h, round the head's curve (BEND) that touches it on top
-    const front = BEND.front + 0.3 * (0.5 - P.capDroop);   // Snout curve: 1.3 (runs straight out) … 1 (on the forehead)
-    const bx = BEND.x * head.R, bz = rin - bx, byAt = (s) => (s > 0 ? front : BEND.back) * ryAt(s);
+    const head = capHead(P), rin = head.top, { ry, ryF, ryAt } = head;
+    const form = plateForm(P);
+    // between plate coordinates and the band frame: round the head, keeping lengths along it at every height h
+    const bx = head.R, bz = rin - bx, byAt = ryAt;
     const fromSkull = (x, s, h) => {
       const r = byAt(s), ps = x / (bx + h), ph = s / (r + h), q = [Math.sin(ps), Math.cos(ps) * Math.sin(ph), Math.cos(ps) * Math.cos(ph)], p0 = [bx * q[0], r * q[1], bx * q[2]];
       const p = add(p0, mul(norm([p0[0] / (bx * bx), p0[1] / (r * r), p0[2] / (bx * bx)]), h));
       return [p[0], p[1], p[2] + bz];
     };
+    // the plate's underside and top (smooth: no texture), h off the head, from how far in from its edge it is
+    const bandH = band.t + band.gap / 2, groW = (band.w + band.gap) / 2;
+    const swellAt = (s) => (bandH + PLATE.band - PLATE.t) * (1 - sstep((Math.abs(s) - groW - 1) / 26));   // thicker over the channel, eased in
+    const ridgeAt = (x, s) => (1 + 0.8 * sstep((s + form.B) / (form.B + form.F))) * (1 - sstep((Math.abs(x) - 3.5) / 6));   // flat-topped, higher in front
+    const bottomAt = (dIn) => PLATE.gap + PLATE.lift * (1 - sstep(dIn / 5));                  // the edge curls just off the head
+    const thickAt = (dIn) => PLATE.edge + (PLATE.t - PLATE.edge) * sstep(dIn / 7);
+    const topAt = (x, s, dIn) => bottomAt(dIn) + thickAt(dIn) + Math.max(swellAt(s), 0) + ridgeAt(x, s);
     const rp = Math.max(antlerBase || 14, PEG.r + 6);   // the pedicle's top matches the antler's base
-    const B0 = fromSkull(sk.X, 0, sk.hD - 1), a = Math.atan2(B0[0], B0[2]) / DEG;   // on the scan's own pedicle, cut flat
+    const inAt = (x, s) => form.wAt(s) - Math.abs(x);   // near enough, inside the plate
+    const B0 = fromSkull(form.X, 0, topAt(form.X, 0, inAt(form.X, 0)) - 0.5), a = Math.atan2(B0[0], B0[2]) / DEG;
     const F = rotOf(P, a), Q = add(B0, mul(F.Z, P.capPedicle));
-    // the rim, where the skull meets the head, and its top, every few mm along it
+    // the rim (the outline on the head) and the top, every few mm, for the print plane and the plate's extent
     const rim = [], tops = [];
-    for (let s = sk.sB; s <= sk.sF; s += 3) {
-      const w = sk.edge(s, 0.5); if (w <= 0) continue;
-      rim.push(fromSkull(w, s, 0));
-      for (const x of [0, 0.5 * w, 0.85 * w]) tops.push(fromSkull(x, s, sk.top(x, s)));
-    }
+    for (const [x, s] of form.half) rim.push(fromSkull(x, s, PLATE.gap + PLATE.lift));   // the edge's underside, curled off the head
+    for (let s = -form.B; s <= form.F; s += 4) for (const f of [0, 0.5, 0.85]) { const x = f * form.wAt(s); tops.push(fromSkull(x, s, topAt(x, s, inAt(x, s)) + 1.5)); }
     tops.push(Q);
     // the plane it stands on to print: under the rim, tilted to keep the part as low as it goes
     let best = null;
@@ -1805,22 +1695,19 @@
       if (!best || height < best.height) best = { k: kk, lo, height };
     }
     const n = norm([0, -best.k, 1]), h0 = best.lo / Math.hypot(1, best.k) + 0.8;   // a little into the rim, so it stands on a flat
-    // the strap slots: through the sides of the braincase, behind the antlers (right side)
-    let slots = [];
-    if (P.capTie) {
-      const s = 0.55 * sk.sB, hS = 9, w = sk.edge(s, hS), p = fromSkull(w - 1, s, hS);
-      slots = [{ p, dir: norm(sub(p, fromSkull(w - 8, s, hS))), u: norm(sub(fromSkull(w - 1, s + 1, hS), fromSkull(w - 1, s - 1, hS))) }];
+    // the ribbon slots: through the plate, just in front of and behind the band's channel, in from the edge (right side)
+    const slots = [];
+    if (P.capTie) for (const sg of [1, -1]) {
+      const s = sg * (groW + 2 + SLOT.len / 2), x = form.wAt(s) - 11;   // clear of the teeth's valleys
+      slots.push({ x, s, p: fromSkull(x, s, 0), down: norm(sub(fromSkull(x + 1, s, 0), fromSkull(x, s, 6))) });
     }
-    // the bobby-pin grooves: up the outside of the side walls from where they meet the head, front and back (right side)
-    const pins = [sk.plate ? 0.5 * (sk.sO + Math.min(sk.sF, sk.sO + 15)) : sk.sO + 0.45 * (sk.sF - sk.sO), 0.45 * sk.sB].map((s) => {
-      const w = sk.edge(s, 1), p = fromSkull(w, s, 0), t = norm(sub(fromSkull(w, s, 6), p)), along = norm(sub(fromSkull(w, s + 1, 0), fromSkull(w, s - 1, 0)));
-      return { p, t, s: along, dir: norm(cross(along, t)), back: s < 0 };
-    });
-    return { P, band, head, rin, ry, ryF, ryAt, bx, bz, byAt, form: sk, fromSkull, a, rp, B0, Q, F, n, h0, rim, slots, pins, peg: PEG };
+    // the bobby-pin grooves: on top, in from the edge, one in front of the antlers and one behind (right side)
+    const pins = [0.55 * form.F, -0.55 * form.B].map((s) => ({ s, x0: form.wAt(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) }));
+    return { P, band, head, rin, ry, ryF, ryAt, bx, bz, byAt, form, fromSkull, topAt, a, rp, B0, Q, F, n, h0, rim, slots, pins, peg: PEG };
   }
   function buildSkullCap(params) {
     const ant = buildSkeleton(params);   // the antlers as they'll be printed (after shrink-to-fit), for the pedicle size
-    const g = skullSpec(params, ant.mount.rf), P = g.P, k = g.form;
+    const g = skullSpec(params, ant.mount.rf), P = g.P, k = g.form, H = g.head;
     const ellD = (p, r) => {   // approximate signed distance to an ellipsoid at the origin (iq)
       const qx = p[0] / r[0], qy = p[1] / r[1], qz = p[2] / r[2], k0 = Math.hypot(qx, qy, qz), k1 = Math.hypot(qx / r[0], qy / r[1], qz / r[2]);
       return k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -r[0];
@@ -1829,81 +1716,69 @@
       const r = g.byAt(p[1]), z = p[2] - g.bz, qx = p[0] / g.bx, qy = p[1] / r, qz = z / g.bx, h = ellD([p[0], p[1], z], [g.bx, r, g.bx]);
       return [Math.atan2(qx, Math.hypot(qy, qz)) * (g.bx + h), Math.atan2(qy, qz) * (r + h), h];
     };
-    // the band runs under the cap on the head, bent to it: it fills hHead 0…bandH
-    const ribW = (g.band.w + g.band.gap) / 2 + 2.4, groW = (g.band.w + g.band.gap) / 2, bandH = g.band.t + g.band.gap / 2, H = g.head;
+    const groW = (g.band.w + g.band.gap) / 2, bandH = g.band.t + g.band.gap / 2, so = P.seed * 1.37;
     const peds = [1, -1].map((s) => {
       const fl = (v) => [s * v[0], v[1], v[2]];
-      const Q = fl(g.Q), Z = fl(g.F.Z), X = fl(g.F.X), A = add(fl(g.B0), mul(Z, -CAP_T));
+      const Q = fl(g.Q), Z = fl(g.F.Z), X = fl(g.F.X), A = add(fl(g.B0), mul(Z, -2));
       return { Q, Z, X, A, L: vlen(sub(Q, A)), s };
     });
-    const mir = (v) => [-v[0], v[1], v[2]];
-    const slots = g.slots.flatMap((sl) => [sl, { p: mir(sl.p), dir: mir(sl.dir), u: mir(sl.u) }]).map((sl) => Object.assign({}, sl, { w: cross(sl.dir, sl.u) }));
-    const pins = g.pins.flatMap((pn) => [pn, { p: mir(pn.p), t: mir(pn.t), s: mir(pn.s), dir: mir(pn.dir), back: pn.back }]);
+    // sutures: thin wandering grooves, the line down the middle and one across behind the antlers
+    const zig = (u, f, a) => a * (Math.abs(((u * f) % 2 + 2) % 2 - 1) * 2 - 1) + 0.6 * a * (vnoise(u * 0.21 + so, 4.1, 0.7) - 0.5);
     const f = (p) => {   // band frame
-      const [x, s, h] = toSkull(p);
-      const bone = k.bone(x, s, h), saw = Math.max(k.sB - 2 - s, s - k.sF), outer = Math.max(bone, saw);   // the back's own rolled edge ends it at sB
-      const hHead = ellD([p[0], p[1], p[2] - H.zc], [H.R, g.ryAt(p[1]), H.R]);
-      // the bone shell, open underneath along the cut and clear of the head; sawn across behind the antlers (and, for a
-      // plate, the forehead) through the shell, so the cut shows the hollow bone
-      let d = Math.max(bone, Math.min(k.ceil(x, s) - h, -k.backHollow(x, s, h)), saw);
-      // the side walls closed down to the head behind the eye sockets: a skirt CAP_T thick round the cap's outline (seen
-      // from above), from its top down to the head, where the scan's own wall stops short (the eye-socket notch and the
-      // hollow under each pedicle left the side open there). In front of the eye sockets it lifts off, so the snout stands
-      // clear of the forehead as before.
-      // inside that wall (and the back's roll), nothing comes within CLEAR of the head: the scan's eye-socket rims and
-      // other ragged bits of bone that dipped toward it are lifted clear, so only the smooth outer edge rests on the head
-      if (s < k.sO + 20) {
-        const W0 = k.outline(s), inner = W0 - Math.abs(x) - CAP_T - 0.4, rollIn = k.backIn(x, s) - k.back().L;
-        if (inner > 0 && rollIn > 0) {
-          d = Math.max(d, smin(CLEAR - hHead, CLEAR + 1 - Math.min(inner, rollIn) * 2, 1));
-          d = Math.max(d, Math.min(Math.min(inner, rollIn) * 2, CLEAR + 2.5 - k.topAt(x, s)));   // bone too low to stay whole above that: gone
-        }
+      const [x, s, h] = toSkull(p), ax = Math.abs(x);
+      const dIn = -k.sdf(x, s);
+      let d;
+      {
+        const bot = PLATE.gap + PLATE.lift * (1 - sstep(dIn / 5));
+        let top = g.topAt(x, s, dIn);
+        top += 0.35 * (vnoise(x * 0.22 + so, s * 0.22, 1.3) - 0.5) + 0.25 * (vnoise(x * 0.6, s * 0.6 + so, 7.7) - 0.5);   // weathered bone
+        const pit = vnoise(x * 1.1 + so, s * 1.1, 3.3); if (pit > 0.72) top -= 0.6 * (pit - 0.72) / 0.28;                     // and its pits
+        const mid = Math.abs(x - zig(s, 0.45, 0.7)), cor = Math.abs(s + 14 + zig(ax, 0.38, 1.1));   // the sutures
+        if (s > -k.B + 6 && s < k.F - 6) top -= 0.55 * Math.max(0, 1 - mid / 0.6);
+        if (ax < k.wAt(-14) - 10) top -= 0.5 * Math.max(0, 1 - cor / 0.6);
+        d = smax(smax(-dIn, bot - h, 1), h - top, 1);   // the plate, its edges rounded
       }
-      if (s < k.sO + 20 && s > k.sB - 2) {
-        const W = k.outline(s);
-        if (W > 4) {
-          const dW = (k.outline(s + 1) - k.outline(s - 1)) / 2, e = (Math.abs(x) - W) / Math.sqrt(1 + dW * dW);   // across the wall, not just across x
-          const tp = Math.max(4, k.topAt(W - 1, s), k.topAt(W - 2.5, s), k.topAt(W - 4, s)), lift = tp * sstep((s - k.sO) / 20);   // up to the skull's surface over it (4 mm at least)
-          d = smin(d, Math.max(e, -e - CAP_T, lift - h, h - tp - 0.5, saw), 2.2);
-          // and nothing past it low down, where the skull's side met the head at a shallow angle in a thin toe
-          if (lift < 0.5) d = Math.max(d, Math.min(e - 0.3, tp - 1 - h));
-        }
-      }
-      // clear of the head, and every edge that rests on it rounded (EDGE_R), so nothing square or thin presses into the scalp
-      d = smax(smax(d, -h, EDGE_R), -hHead, EDGE_R);
-      // under the band line: a channel round the band that holds the groove, and a thin web from it up to the bone. The
-      // channel's two sides stop RIB_LIFT short of the head, rounded, so the band itself (wide and smooth) bears on the
-      // head along that line, not two narrow ribs beside it.
-      d = Math.min(d, Math.max(smax(Math.abs(p[1]) - ribW, RIB_LIFT - hHead, EDGE_R), hHead - bandH - 2.4, outer), Math.max(Math.abs(p[1]) - 1.2, -hHead, outer));
-      // the pedicles: short flared stumps of bone on the skull's own cut ones, and the D-shaped pegs on top
+      // the pedicles: flared collars from the plate up to the antler's base, blended in, with a ring where they meet it, and
+      // the D-shaped pegs on top
       for (const q of peds) {
         const w = sub(p, q.A), hh = dot(w, q.Z), rad = vlen(sub(w, mul(q.Z, hh))), u = clamp(hh / q.L, 0, 1);
-        const rr = k.discR * 1.15 + (g.rp - k.discR * 1.15) * sstep(u);   // from the skull's own pedicle up to the antler's burr
-        d = smin(d, Math.max(rad - rr * (1 + 0.04 * (vnoise(p[0] * 0.4, p[1] * 0.4, p[2] * 0.4) - 0.5)), -hh, hh - q.L), 4);
+        const rr = g.rp * (1.55 - 0.55 * sstep(u));
+        d = smin(d, Math.max(rad - rr * (1 + 0.05 * (vnoise(p[0] * 0.4, p[1] * 0.4, p[2] * 0.4) - 0.5)), -hh, hh - q.L), 5);
+        d = smin(d, Math.hypot(rad - g.rp * 1.5, hh - 2.2) - 1.3, 1.5);   // the ring
         const wq = sub(p, q.Q), hq = dot(wq, q.Z), xq = dot(wq, q.X) * q.s;
         const rq = vlen(sub(wq, mul(q.Z, hq)));
         d = Math.min(d, Math.max(rq - PEG.r + Math.max(0, hq - PEG.h + 0.8), -PEG.flat - xq, hq - PEG.h, -hq - 1));   // chamfered at the top
       }
-      // behind each back bobby-pin groove, the wall thickened inward by the groove's depth, so the groove leaves it whole
-      // (only at the back, where the wall stands on the head: on the snout's sloping, raised side it stuck out as a bracket)
-      for (const pn of pins) if (pn.back) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s), w = dot(q, pn.dir); d = smin(d, smax(Math.max(Math.abs(b) - PIN.w / 2 - 2.5, -a - 0.3, a - PIN.len - 2, w, -w - CAP_T - PIN.depth - 0.6), 1 - hHead, EDGE_R), 1); }   // held just off the head, so the rim is what rests on it
-      // the groove the headband glues into, open toward the head; the strap slots; the bobby-pin grooves
-      d = smax(d, -Math.max(Math.abs(p[1]) - groW, hHead - bandH), 1);   // its edges rounded where it leaves the sides
-      for (const sl of slots) { const q = sub(p, sl.p); d = Math.max(d, -Math.max(Math.abs(dot(q, sl.u)) - SLOT.len / 2, Math.abs(dot(q, sl.w)) - SLOT.w / 2, dot(q, sl.dir) - 2, -dot(q, sl.dir) - CAP_T - 3)); }
-      for (const pn of pins) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s); d = Math.max(d, -Math.max(Math.abs(b) - PIN.w / 2, -a - 8, a - PIN.len, -dot(q, pn.dir) - 6, -outer - PIN.depth)); }   // on the side wall only
+      // nothing below the plate's underside (the collars stop at it), the headband's channel cut up into it (its edges
+      // rounded), the ribbon slots straight through, and the bobby-pin grooves in its top
+      d = Math.max(d, PLATE.gap - h);
+      d = smax(d, -Math.max(Math.abs(p[1]) - groW, h - bandH), 1);
+      for (const sl of g.slots) d = Math.max(d, -Math.max(Math.abs(s - sl.s) - SLOT.len / 2, Math.abs(ax - sl.x) - SLOT.w / 2));
+      for (const pn of g.pins) if (Math.abs(s - pn.s) < PIN.w / 2 + 0.01 && ax > pn.x0) d = Math.max(d, -Math.max(Math.abs(s - pn.s) - PIN.w / 2, pn.x0 - ax, g.topAt(x, s, dIn) - PIN.depth - h));
       return d;
     };
-    // print frame: the plane under the rim is the bed (Z = 0)
-    const Zp = g.n, Xp = [1, 0, 0], Yp = cross(Zp, Xp), O = mul(Zp, g.h0);
+    // print frame: the plane under the rim is the bed (Z = 0), lowered onto the plate's actual lowest point, 0.5 mm in so
+    // it stands on a flat
+    const Zp = g.n, Xp = [1, 0, 0], Yp = cross(Zp, Xp);
+    let O = mul(Zp, g.h0);
     const toBand = (x, y, z) => [O[0] + Xp[0] * x + Yp[0] * y + Zp[0] * z, O[1] + Xp[1] * x + Yp[1] * y + Zp[1] * z, O[2] + Xp[2] * x + Yp[2] * y + Zp[2] * z];
+    const mir = (v) => [-v[0], v[1], v[2]];
+    {
+      let zmin = Infinity;
+      for (const b of g.rim) for (const m of [b, mir(b)]) {   // straight up through the plane from under each rim point
+        const v = sub(m, O), x = dot(v, Xp), y = dot(v, Yp);
+        for (let z = -4; z < 12 && z < zmin; z += 0.1) if (f(toBand(x, y, z)) < 0) { zmin = z; break; }
+      }
+      if (isFinite(zmin)) O = add(O, mul(Zp, zmin + 0.5));
+    }
     // its extent in the print frame: around the rim, the top and the pegs, then measured on a coarse grid
     const wide = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
     const grow = (b) => { const v = sub(b, O), pp = [dot(v, Xp), dot(v, Yp), dot(v, Zp)]; for (let j = 0; j < 3; j++) { wide[j] = Math.min(wide[j], pp[j] - 12); wide[j + 3] = Math.max(wide[j + 3], pp[j] + 12); } };
     for (const b of g.rim) { grow(b); grow(mir(b)); }
-    for (let s = k.sB; s <= k.sF; s += 4) grow(g.fromSkull(0, s, k.top(0, s) + 4));
+    for (let s = -k.B; s <= k.F; s += 4) grow(g.fromSkull(0, s, 12));
     for (const q of peds) grow(add(q.Q, mul(q.Z, PEG.h + 2)));
     wide[2] = 0;
-    const bb = [Infinity, Infinity, 0, -Infinity, -Infinity, -Infinity], st = 2.5;   // only points inside count (the cuts aren't true distances)
+    const bb = [Infinity, Infinity, 0, -Infinity, -Infinity, -Infinity], st = 2;   // only points inside count
     for (let x = wide[0]; x <= wide[3]; x += st) for (let y = wide[1]; y <= wide[4]; y += st) for (let z = st / 2; z <= wide[5]; z += st) {
       if (f(toBand(x, y, z)) > 0) continue;
       bb[0] = Math.min(bb[0], x); bb[1] = Math.min(bb[1], y); bb[3] = Math.max(bb[3], x); bb[4] = Math.max(bb[4], y); bb[5] = Math.max(bb[5], z);

@@ -72,6 +72,16 @@ Newest first within each section. Change one only when the owner asks.
   under each pedicle left the side wall short of the head, so you could see in. A wall (a skirt, the shell's thickness)
   now runs round the cap's outline, from its top down to the head, behind the eye sockets; in front of them it lifts
   off, so the snout still stands clear of the forehead. The only opening left in each side is where the band passes.
+- **The skull cap is a thin plate shaped to the head, not a carved skull** (owner, 2026-10-04, from user feedback with a
+  concept image; this replaces the scan-carved cap below, and the deer scan is removed). Low in the middle and following
+  the head all over, reaching further back and sitting flat to the head; a jagged, broken edge all round coming to a
+  point at the nose; a flattened ridge down the middle with sutures and pitted bone; a collar with a ring at each
+  antler's base that blends into the plate. Underneath, the whole plate rests on the head (pressure spread wide), with a
+  channel for the band: the owner's band is almost 1 in wide across the top and tapers, so the channel is the band's
+  width at the top (the Yellowjackets page defaults to 24 mm) and the glue fills it where the band narrows. Ribbon slots
+  (two each side, in front of and behind the band) replace the elastic strap; the bobby-pin grooves stay, on top at the
+  edge. Settings: Front reach, Front width, Point, Jagged edge, Back reach, Width beyond the antlers, Antler spacing,
+  Pedicle height, Ribbon slots. The entries below about the carved skull, its shapes, snout, back and sides are history.
 - **A comfortable underside** (owner, 2026-10-04: check for anything sharp underneath). Only the cap's smooth outer edge
   rests on the head, and every edge on the head is rounded (about 1.5 mm). Inside that edge nothing comes within
   2.5 mm of the head: the scan's ragged eye-socket rims, which dipped toward it, are lifted clear or removed where too
