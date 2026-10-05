@@ -68,6 +68,10 @@ Newest first within each section. Change one only when the owner asks.
   insides, and its two corners would poke into the head). The back is no longer sawn across: it is rounded in plan
   (an arc from the middle of the back that meets the side walls at a gentle angle) and the shell rolls down onto the
   head along it, so it closes over the hollow and its edge rests on the head. Back reach still sets where it ends.
+- **Closed sides under the antlers** (owner, 2026-10-04: still open there). The scan's eye-socket notch and the hollow
+  under each pedicle left the side wall short of the head, so you could see in. A wall (a skirt, the shell's thickness)
+  now runs round the cap's outline, from its top down to the head, behind the eye sockets; in front of them it lifts
+  off, so the snout still stands clear of the forehead. The only opening left in each side is where the band passes.
 - **Front shape controls** (owner asked for width, length, taper "and whatever else makes sense"): beside Front reach,
   Snout width, Snout taper (blunt ↔ long point) and Nose tip (the upper skull only), and Snout curve, from running
   straight forward as a deer's does (as before, the default is halfway) to lying on the forehead.

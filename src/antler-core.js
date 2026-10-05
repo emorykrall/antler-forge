@@ -1711,7 +1711,7 @@
     // its ragged inner face showed through the open front.) The top is found on a 1.5 mm grid over (x, s) and blurred;
     // bilinear between; made on first use.
     const TS = 1.5, tx0 = 0, ts0 = sB - 3, tnx = Math.ceil(k * 80 * wf * wMax / TS) + 2, tns = Math.ceil((sF + 3 - ts0) / TS) + 1;
-    let CEIL = null;
+    let CEIL = null, TOP = null, OUT = null;   // the inside; the top (smoothed); the outline across, per row (smoothed)
     const ceilTable = () => {
       const T = new Float32Array(tnx * tns), hMax = k * 45;
       for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) {
@@ -1727,7 +1727,10 @@
         for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) { const l = A[j * tnx + Math.abs(i - 1)], r = A[j * tnx + Math.min(tnx - 1, i + 1)]; B[j * tnx + i] = (l + 2 * A[j * tnx + i] + r) / 4; }
         for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) { const d = B[Math.max(0, j - 1) * tnx + i], u = B[Math.min(tns - 1, j + 1) * tnx + i]; A[j * tnx + i] = (d + 2 * B[j * tnx + i] + u) / 4; }
       };
-      blur(T); blur(T);
+      const O = new Float32Array(tns);
+      for (let j = 0; j < tns; j++) for (let i = tnx - 1; i >= 0; i--) if (T[j * tnx + i] > 0.3) { O[j] = tx0 + i * TS; break; }
+      OUT = O.map((_, j) => { let sum = 0, n = 0; for (let q = Math.max(0, j - 8); q <= Math.min(tns - 1, j + 8); q++) { sum += O[q]; n++; } return sum / n; });   // ±12 mm
+      blur(T); blur(T); TOP = T.slice();
       const Cl = new Float32Array(T.length);
       for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) {
         const gx = (T[j * tnx + Math.min(tnx - 1, i + 1)] - T[j * tnx + Math.abs(i - 1)]) / (2 * TS), gs = (T[Math.min(tns - 1, j + 1) * tnx + i] - T[Math.max(0, j - 1) * tnx + i]) / (2 * TS);
@@ -1740,9 +1743,16 @@
       const fx = clamp((Math.abs(x) - tx0) / TS, 0, tnx - 1.001), fs = clamp((s - ts0) / TS, 0, tns - 1.001), i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * tnx + i;
       return (CEIL[o] + (CEIL[o + 1] - CEIL[o]) * u) * (1 - v) + (CEIL[o + tnx] + (CEIL[o + tnx + 1] - CEIL[o + tnx]) * u) * v;
     };
+    // the cap seen from above: how far out it reaches across at s (its outline), and the top as found at (x, s)
+    const outline = (s) => { if (!CEIL) CEIL = ceilTable(); const f = clamp((s - ts0) / TS, 0, tns - 1.001), j = f | 0; return OUT[j] + (OUT[j + 1] - OUT[j]) * (f - j); };
+    const topAt = (x, s) => {
+      if (!CEIL) CEIL = ceilTable();
+      const fx = clamp((Math.abs(x) - tx0) / TS, 0, tnx - 1.001), fs = clamp((s - ts0) / TS, 0, tns - 1.001), i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * tnx + i;
+      return (TOP[o] + (TOP[o + 1] - TOP[o]) * u) * (1 - v) + (TOP[o + tnx] + (TOP[o + tnx + 1] - TOP[o + tnx]) * u) * v;
+    };
     // inward from the back's rounded outline (mm): within back().L of it the shell rolls down onto the head
     const backIn = (x, s) => { const B = backOf(); return B.R - (s < B.c ? Math.hypot(x, s - B.c) : Math.abs(x)); };
-    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, back: backOf, backIn, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
+    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, outline, topAt, back: backOf, backIn, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
   }
   function skullSpec(params, antlerBase) {
     const P = resolveParams(params);
@@ -1819,7 +1829,20 @@
       const hHead = ellD([p[0], p[1], p[2] - H.zc], [H.R, g.ryAt(p[1]), H.R]);
       // the bone shell, open underneath along the cut and clear of the head; sawn across behind the antlers (and, for a
       // plate, the forehead) through the shell, so the cut shows the hollow bone
-      let d = Math.max(bone, k.ceil(x, s) - h, saw, -h, -hHead);
+      let d = Math.max(bone, k.ceil(x, s) - h, saw);
+      // the side walls closed down to the head behind the eye sockets: a skirt CAP_T thick round the cap's outline (seen
+      // from above), from its top down to the head, where the scan's own wall stops short (the eye-socket notch and the
+      // hollow under each pedicle left the side open there). In front of the eye sockets it lifts off, so the snout stands
+      // clear of the forehead as before.
+      if (s < k.sO + 20 && s > k.sB - 2) {
+        const W = k.outline(s);
+        if (W > 4) {
+          const dW = (k.outline(s + 1) - k.outline(s - 1)) / 2, e = (Math.abs(x) - W) / Math.sqrt(1 + dW * dW);   // across the wall, not just across x
+          const tp = k.topAt(W - 4, s), lift = tp * sstep((s - k.sO) / 20);
+          d = smin(d, Math.max(e, -e - CAP_T, lift - h, h - tp - 1, saw), 1.2);
+        }
+      }
+      d = Math.max(d, -h, -hHead);
       // under the band line: a channel round the band that holds the groove, and a thin web from it up to the bone
       d = Math.min(d, Math.max(Math.abs(p[1]) - ribW, -hHead, hHead - bandH - 2.4, outer), Math.max(Math.abs(p[1]) - 1.2, -hHead, outer));
       // the pedicles: short flared stumps of bone on the skull's own cut ones, and the D-shaped pegs on top
