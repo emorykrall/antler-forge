@@ -122,7 +122,7 @@
       { k: 'capWidth', label: 'Width beyond the antlers', min: -6, max: 30, step: 1, u: 'mm', hint: 'How far the plate reaches out past the antlers to each side' },
       { k: 'capSpacing', label: 'Antler spacing', min: 60, max: 110, step: 1, u: 'mm', hint: 'Between the centres of the two antlers (a deer’s is about 3 in)' },
       { k: 'capPedicle', label: 'Pedicle height', min: 4, max: 24, step: 0.5, u: 'mm', hint: 'The stumps of bone the antlers stand on' },
-      { k: 'capTie', label: 'Ribbon slots', type: 'bool', hint: 'Two slots each side of the plate, one in front of the band and one behind it, for ½ in ribbon. Thread a ribbon down through each and tie them under your chin or behind your head: they hold the plate down so the antlers can’t rock it. Bobby pins slid onto the four grooves at the plate’s edge hold it too.' },
+      { k: 'capTie', label: 'Ribbon slots', type: 'bool', hint: 'Two slots at the edge of the plate on each side, beside the antlers, for ½ in ribbon: up through a slot and back down over the edge. Tie them under your chin or behind your head: they hold the plate down so the antlers can’t rock it. Bobby pins slid onto the four grooves at the plate’s edge hold it too.' },
     ] },
     { group: 'Surface', tier: 'details', items: [
       { k: 'burr', label: 'Burr (coronet)', type: 'bool', hint: 'The knobbly ring at the antler\'s base' },
@@ -228,7 +228,7 @@
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
     tweaks: {},   // Fine-tune: { branch id: { rot: rotation vector (rad, head frame), len: ×, thick: ×, s: where it leaves its parent, a0/a1: tangent arms } }
-    capTie: true, capLength: 66, capBack: 60, capWidth: 10, capSpacing: 80, capPedicle: 5,   // the skull cap
+    capTie: true, capLength: 66, capBack: 60, capWidth: 16, capSpacing: 80, capPedicle: 5,   // the skull cap
     capSnoutWidth: 1, capTaper: 0.5, capJag: 0.6,                                            // its front and edge
   };
 
@@ -1585,40 +1585,44 @@
       if (s <= -B || s >= F) return 0;
       if (s <= 0) return Wm * Math.pow(1 - Math.pow(-s / B, 2.4), 1 / 2.4);   // rounded at the back
       if (s >= Fb) return wn * Math.pow(1 - (s - Fb) / (F - Fb), 0.75);
-      const t = s / Fb, sh = sstep(s / (0.45 * Fb)), body = (Math.pow(1 - t, pe) * (1 - q) + q) / (Math.pow(0.75, pe) * (1 - q) + q);
+      const t = s / Fb, sh = sstep(s / Math.max(32, 0.5 * Fb)), body = (Math.pow(1 - t, pe) * (1 - q) + q) / (Math.pow(0.75, pe) * (1 - q) + q);
       return Wm * ((1 - sh) + sh * Math.min(1, fw * body, Math.max(q, body)));
     };
-    // the half outline (x ≥ 0), back to front, every 0.5 mm along it
-    const base = [];
-    { let prev = null;
-      for (let s = -B; s <= F + 1e-9; s += 0.02) { const p = [wAt(s), s]; if (!prev || Math.hypot(p[0] - prev[0], p[1] - prev[1]) >= 0.5) { base.push(p); prev = p; } }
-      base.push([0, F]); }
-    const len = [0]; for (let i = 1; i < base.length; i++) len.push(len[i - 1] + Math.hypot(base[i][0] - base[i - 1][0], base[i][1] - base[i - 1][1]));
-    const L = len[len.length - 1], noseL = (() => { let i = len.length - 1; while (i > 0 && base[i][1] > Fb) i--; return L - len[i]; })();
-    // teeth: outward points of varied width and size along the edge, the last one the point of the nose
-    // (triangular, slightly hollow-sided, their tips rounded over about a millimetre; bigger along the sides than at the back)
-    const rnd = rng(P.seed * 7417 + 3), amp = 16 * P.capJag, teeth = [];
-    if (amp > 0.2) {
-      let at = L - noseL - 2;   // none on the nose
-      while (at > 6) {
-        const wd = 12 + 10 * rnd(), side = sstep((at / L - 0.2) / 0.3);   // smaller round the back
-        teeth.push({ c: at - wd / 2, w: wd, a: amp * (0.45 + 0.55 * side) * (0.5 + 0.5 * rnd()) });
-        at -= wd * (0.85 + 0.3 * rnd());
+    // Not quite symmetric, as no skull is: each side a little wider or narrower, the point a little to one side, and each
+    // side's own teeth (triangular, slightly hollow-sided, tips rounded over about a millimetre; smaller round the back)
+    const rnd = rng(P.seed * 7417 + 3), amp = 16 * P.capJag, aw = 0.035 * (rnd() * 2 - 1), ox = 4 * (rnd() * 2 - 1);
+    const skew = (s) => ox * sstep(s / F);   // the midline drifts toward the point
+    const sideFor = (sg, wf) => {   // one side's outline, back to front, every 0.5 mm along it, with its teeth
+      const base = [];
+      { let prev = null;
+        for (let s = -B; s <= F + 1e-9; s += 0.02) { const p = [sg * wAt(s) * wf + skew(s), s]; if (!prev || Math.hypot(p[0] - prev[0], p[1] - prev[1]) >= 0.5) { base.push(p); prev = p; } }
+        base.push([skew(F), F]); }
+      const len = [0]; for (let i = 1; i < base.length; i++) len.push(len[i - 1] + Math.hypot(base[i][0] - base[i - 1][0], base[i][1] - base[i - 1][1]));
+      const L = len[len.length - 1], noseL = (() => { let i = len.length - 1; while (i > 0 && base[i][1] > Fb) i--; return L - len[i]; })();
+      const teeth = [];
+      if (amp > 0.2) {
+        let at = L - noseL - 2;   // none on the nose
+        while (at > 6) {
+          const wd = 12 + 10 * rnd(), side = sstep((at / L - 0.2) / 0.3);   // smaller round the back
+          teeth.push({ c: at - wd / 2, w: wd, a: amp * (0.45 + 0.55 * side) * (0.5 + 0.5 * rnd()) });
+          at -= wd * (0.85 + 0.3 * rnd());
+        }
       }
-    }
-    const toothAt = (l) => {
-      let o = 0;
-      for (const t of teeth) { const u = Math.abs(l - t.c) / (t.w / 2); if (u < 1) { const e = 0.1, r = Math.sqrt(u * u + e * e) - e; o = Math.max(o, t.a * Math.pow(Math.max(0, 1 - r / (1 - e)), 1.35)); } }
-      return o;
+      const toothAt = (l) => {
+        let o = 0;
+        for (const t of teeth) { const u = Math.abs(l - t.c) / (t.w / 2); if (u < 1) { const e = 0.1, r = Math.sqrt(u * u + e * e) - e; o = Math.max(o, t.a * Math.pow(Math.max(0, 1 - r / (1 - e)), 1.35)); } }
+        return o;
+      };
+      return base.map((p, i) => {
+        const a = base[Math.max(0, i - 1)], b = base[Math.min(base.length - 1, i + 1)], tx = b[0] - a[0], ts = b[1] - a[1], tl = Math.hypot(tx, ts) || 1;
+        const n = [sg * ts / tl, -sg * tx / tl], o = toothAt(len[i]);   // outward
+        return [p[0] + n[0] * o, p[1] + n[1] * o];
+      });
     };
-    const half = base.map((p, i) => {
-      const a = base[Math.max(0, i - 1)], b = base[Math.min(base.length - 1, i + 1)], tx = b[0] - a[0], ts = b[1] - a[1], tl = Math.hypot(tx, ts) || 1;
-      const n = [ts / tl, -tx / tl], o = toothAt(len[i]);   // outward normal (the outline runs back to front on the right)
-      return [Math.max(0, p[0] + n[0] * o), p[1] + n[1] * o];
-    });
-    const poly = half.concat(half.slice(1, -1).reverse().map((p) => [-p[0], p[1]]));   // the whole outline, closed
-    // signed distance to the outline (mm, negative inside), on a 0.5 mm grid over x ≥ 0, made on first use
-    const GS = 0.5, gx0 = 0, gs0 = -B - 16, gnx = Math.ceil((Wm + amp + 16) / GS) + 1, gns = Math.ceil((F + B + amp + 32) / GS) + 1;
+    const right = sideFor(1, 1 + aw), left = sideFor(-1, 1 - aw), half = right;
+    const poly = right.concat(left.slice(1, -1).reverse());   // the whole outline, closed
+    // signed distance to the outline (mm, negative inside), on a 0.5 mm grid, made on first use
+    const GS = 0.5, xm = Wm * 1.05 + amp + 20, gx0 = -xm, gs0 = -B - 16, gnx = Math.ceil(2 * xm / GS) + 1, gns = Math.ceil((F + B + amp + 32) / GS) + 1;
     let SDF = null;
     const sdfTable = () => {
       const D = new Float32Array(gnx * gns).fill(8), CAP = 8;
@@ -1646,12 +1650,14 @@
     };
     const sdf = (x, s) => {   // the outline, from above
       if (!SDF) SDF = sdfTable();
-      const fx = (Math.abs(x) - gx0) / GS, fs = (s - gs0) / GS;
-      if (fx > gnx - 1.001 || fs < 0 || fs > gns - 1.001) return 8;
+      const fx = (x - gx0) / GS, fs = (s - gs0) / GS;
+      if (fx < 0 || fx > gnx - 1.001 || fs < 0 || fs > gns - 1.001) return 8;
       const i = fx | 0, j = fs | 0, u = fx - i, v = fs - j, o = j * gnx + i;
       return (SDF[o] + (SDF[o + 1] - SDF[o]) * u) * (1 - v) + (SDF[o + gnx] + (SDF[o + gnx + 1] - SDF[o + gnx]) * u) * v;
     };
-    const out = { X, Wm, F, B, wAt, half, sdf, sF: F + amp, sB: -B - amp };
+    // the narrower side's half-width at s, measured from the middle (for what has to sit inside the plate on both sides)
+    const wIn = (s) => wAt(s) * (1 - Math.abs(aw)) - Math.abs(skew(s));
+    const out = { X, Wm, F, B, wAt, wIn, skew, half, poly, sdf, sF: F + amp, sB: -B - amp };
     PLATES.set(key, out); if (PLATES.size > 24) PLATES.delete(PLATES.keys().next().value);
     return out;
   }
@@ -1662,27 +1668,32 @@
     const band = { r: P.hbRadius, w: P.hbWidth, t: P.hbThick, gap: P.clearance };
     const head = capHead(P), rin = head.top, { ry, ryF, ryAt } = head;
     const form = plateForm(P);
-    // between plate coordinates and the band frame: round the head, keeping lengths along it at every height h
-    const bx = head.R, bz = rin - bx, byAt = ryAt;
+    // between plate coordinates and the band frame, round the head: front to back along its own curve (a circle of the
+    // head's length, Ry, so a long nose stays on the forehead instead of diving into it), across along a circle of radius
+    // R (the head's curve across at the pedicles); a torus round the ear-to-ear axis C. Lengths kept at every height h.
+    const R = head.R, Ry = Math.max(head.r[1], R + 1), Rm = Ry - R, cz = rin - Ry;
     const fromSkull = (x, s, h) => {
-      const r = byAt(s), ps = x / (bx + h), ph = s / (r + h), q = [Math.sin(ps), Math.cos(ps) * Math.sin(ph), Math.cos(ps) * Math.cos(ph)], p0 = [bx * q[0], r * q[1], bx * q[2]];
-      const p = add(p0, mul(norm([p0[0] / (bx * bx), p0[1] / (r * r), p0[2] / (bx * bx)]), h));
-      return [p[0], p[1], p[2] + bz];
+      const ph = s / (Ry + h), ps = x / (R + h), dy = Math.sin(ph), dz = Math.cos(ph), c = Rm + (R + h) * Math.cos(ps);
+      return [(R + h) * Math.sin(ps), c * dy, cz + c * dz];
+    };
+    const toSkull = (p) => {
+      const y = p[1], z = p[2] - cz, ph = Math.atan2(y, z), u = Math.hypot(y, z) - Rm, rho = Math.hypot(p[0], u), h = rho - R;
+      return [Math.atan2(p[0], u) * (R + h), ph * (Ry + h), h];
     };
     // the plate's underside and top (smooth: no texture), h off the head, from how far in from its edge it is
     const bandH = band.t + band.gap / 2, groW = (band.w + band.gap) / 2;
     const swellAt = (s) => (bandH + PLATE.band - PLATE.t) * (1 - sstep((Math.abs(s) - groW - 1) / 26));   // thicker over the channel, eased in
-    const ridgeAt = (x, s) => (1 + 0.8 * sstep((s + form.B) / (form.B + form.F))) * (1 - sstep((Math.abs(x) - 3.5) / 6));   // flat-topped, higher in front
+    const ridgeAt = (x, s) => (1 + 0.8 * sstep((s + form.B) / (form.B + form.F))) * (1 - sstep((Math.abs(x - form.skew(s)) - 3.5) / 6));   // flat-topped, higher in front
     const bottomAt = (dIn) => PLATE.gap + PLATE.lift * (1 - sstep(dIn / 5));                  // the edge curls just off the head
     const thickAt = (dIn) => PLATE.edge + (PLATE.t - PLATE.edge) * sstep(dIn / 7);
     const topAt = (x, s, dIn) => bottomAt(dIn) + thickAt(dIn) + Math.max(swellAt(s), 0) + ridgeAt(x, s);
     const rp = Math.max(antlerBase || 14, PEG.r + 6);   // the pedicle's top matches the antler's base
-    const inAt = (x, s) => form.wAt(s) - Math.abs(x);   // near enough, inside the plate
+    const inAt = (x, s) => form.wIn(s) - Math.abs(x);   // near enough, inside the plate
     const B0 = fromSkull(form.X, 0, topAt(form.X, 0, inAt(form.X, 0)) - 0.5), a = Math.atan2(B0[0], B0[2]) / DEG;
     const F = rotOf(P, a), Q = add(B0, mul(F.Z, P.capPedicle));
     // the rim (the outline on the head) and the top, every few mm, for the print plane and the plate's extent
     const rim = [], tops = [];
-    for (const [x, s] of form.half) rim.push(fromSkull(x, s, PLATE.gap + PLATE.lift));   // the edge's underside, curled off the head
+    for (const [x, s] of form.poly) rim.push(fromSkull(x, s, PLATE.gap + PLATE.lift));   // the edge's underside, curled off the head
     for (let s = -form.B; s <= form.F; s += 4) for (const f of [0, 0.5, 0.85]) { const x = f * form.wAt(s); tops.push(fromSkull(x, s, topAt(x, s, inAt(x, s)) + 1.5)); }
     tops.push(Q);
     // the plane it stands on to print: under the rim, tilted to keep the part as low as it goes
@@ -1695,27 +1706,35 @@
       if (!best || height < best.height) best = { k: kk, lo, height };
     }
     const n = norm([0, -best.k, 1]), h0 = best.lo / Math.hypot(1, best.k) + 0.8;   // a little into the rim, so it stands on a flat
-    // the ribbon slots: through the plate, just in front of and behind the band's channel, in from the edge (right side)
+    // the ribbon slots (right side; the left mirrors them): at the plate's side edge, so a ribbon goes up through one and
+    // back down over the edge, and outboard of the antler, clear of its collar, so nothing comes near the antler. As
+    // close to the band as that allows, one in front and one behind; where the plate is too narrow in front, both behind.
     const slots = [];
-    if (P.capTie) for (const sg of [1, -1]) {
-      const s = sg * (groW + 2 + SLOT.len / 2), x = form.wAt(s) - 11;   // clear of the teeth's valleys
-      slots.push({ x, s, p: fromSkull(x, s, 0), down: norm(sub(fromSkull(x + 1, s, 0), fromSkull(x, s, 6))) });
+    if (P.capTie) {
+      const clear = rp * 1.65 + 2.5, ok = (s) => {
+        const x = form.wIn(s) - 6.5, near = Math.max(0, Math.abs(s) - SLOT.len / 2);
+        const outboard = x >= form.X + 4 || near >= clear + 8;   // beside the antler it must be outboard; well behind, anywhere
+        return outboard && x > 12 && Math.hypot(x - form.X, near) >= clear && Math.abs(s) >= groW + 2 + SLOT.len / 2 ? x : null;
+      };
+      const find = (sg, from) => { for (let a = from; a < 90; a += 1) { const s = sg * a, x = ok(s); if (x !== null) return { x, s }; } return null; };
+      const back = find(-1, groW + 2 + SLOT.len / 2), front = find(1, groW + 2 + SLOT.len / 2);
+      const two = front && front.s < 0.5 * form.F ? [front, back] : [back, back && find(-1, -back.s + SLOT.len + 4)];
+      for (const q of two) if (q) slots.push({ x: q.x, s: q.s, p: fromSkull(q.x, q.s, 0) });
     }
     // the bobby-pin grooves: on top, in from the edge, one in front of the antlers and one behind (right side)
-    const pins = [0.55 * form.F, -0.55 * form.B].map((s) => ({ s, x0: form.wAt(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) }));
-    return { P, band, head, rin, ry, ryF, ryAt, bx, bz, byAt, form, fromSkull, topAt, a, rp, B0, Q, F, n, h0, rim, slots, pins, peg: PEG };
+    // (the back one where it's furthest from the ribbon slots)
+    let sBack = -0.55 * form.B, far = -1;
+    for (let sq = -0.3 * form.B; sq >= -0.85 * form.B; sq -= 1) {
+      const d = slots.length ? Math.min(...slots.map((sl) => Math.abs(sq - sl.s) - SLOT.len / 2)) : 99;
+      if (d > far + 0.5) { far = d; sBack = sq; }
+    }
+    const pins = [0.55 * form.F, sBack].map((s) => ({ s, x0: form.wIn(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) }));
+    return { P, band, head, rin, ry, ryF, ryAt, form, fromSkull, toSkull, topAt, a, rp, B0, Q, F, n, h0, rim, slots, pins, peg: PEG };
   }
   function buildSkullCap(params) {
     const ant = buildSkeleton(params);   // the antlers as they'll be printed (after shrink-to-fit), for the pedicle size
     const g = skullSpec(params, ant.mount.rf), P = g.P, k = g.form, H = g.head;
-    const ellD = (p, r) => {   // approximate signed distance to an ellipsoid at the origin (iq)
-      const qx = p[0] / r[0], qy = p[1] / r[1], qz = p[2] / r[2], k0 = Math.hypot(qx, qy, qz), k1 = Math.hypot(qx / r[0], qy / r[1], qz / r[2]);
-      return k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -r[0];
-    };
-    const toSkull = (p) => {
-      const r = g.byAt(p[1]), z = p[2] - g.bz, qx = p[0] / g.bx, qy = p[1] / r, qz = z / g.bx, h = ellD([p[0], p[1], z], [g.bx, r, g.bx]);
-      return [Math.atan2(qx, Math.hypot(qy, qz)) * (g.bx + h), Math.atan2(qy, qz) * (r + h), h];
-    };
+    const toSkull = g.toSkull;
     const groW = (g.band.w + g.band.gap) / 2, bandH = g.band.t + g.band.gap / 2, so = P.seed * 1.37;
     const peds = [1, -1].map((s) => {
       const fl = (v) => [s * v[0], v[1], v[2]];
@@ -1733,7 +1752,7 @@
         let top = g.topAt(x, s, dIn);
         top += 0.35 * (vnoise(x * 0.22 + so, s * 0.22, 1.3) - 0.5) + 0.25 * (vnoise(x * 0.6, s * 0.6 + so, 7.7) - 0.5);   // weathered bone
         const pit = vnoise(x * 1.1 + so, s * 1.1, 3.3); if (pit > 0.72) top -= 0.6 * (pit - 0.72) / 0.28;                     // and its pits
-        const mid = Math.abs(x - zig(s, 0.45, 0.7)), cor = Math.abs(s + 14 + zig(ax, 0.38, 1.1));   // the sutures
+        const mid = Math.abs(x - k.skew(s) - zig(s, 0.45, 0.7)), cor = Math.abs(s + 14 + zig(x + 40, 0.38, 1.1));   // the sutures
         if (s > -k.B + 6 && s < k.F - 6) top -= 0.55 * Math.max(0, 1 - mid / 0.6);
         if (ax < k.wAt(-14) - 10) top -= 0.5 * Math.max(0, 1 - cor / 0.6);
         d = smax(smax(-dIn, bot - h, 1), h - top, 1);   // the plate, its edges rounded

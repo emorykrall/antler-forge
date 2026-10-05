@@ -50,8 +50,10 @@ npm run samples                            # samples/*.stl, one per preset at 0.
   along it (`capJag`, varied by `seed`, so Surprise me gives a new edge), as a 2D distance grid. On top: a flattened
   ridge down the middle, sutures, pitted bone; thicker over the band. Each antler stands on a flared collar with a ring,
   blended into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
-  where the cap sits); (`capTie`) two ribbon slots each side, either side of the band; four bobby-pin grooves in the top
-  at the edge. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
+  where the cap sits); (`capTie`) up to two ribbon slots each side at the plate's edge, clear of the antler's collar;
+  four bobby-pin grooves in the top at the edge. Not mirror-symmetric (each side its own teeth and width, the point a
+  little off the middle); plate coordinates are mapped onto a torus round the ear-to-ear axis (`fromSkull`/`toSkull`),
+  so it follows the head's own curve front to back. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
   group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down, lowered onto its lowest point.
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
   the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group. Under the

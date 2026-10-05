@@ -82,6 +82,13 @@ Newest first within each section. Change one only when the owner asks.
   (two each side, in front of and behind the band) replace the elastic strap; the bobby-pin grooves stay, on top at the
   edge. Settings: Front reach, Front width, Point, Jagged edge, Back reach, Width beyond the antlers, Antler spacing,
   Pedicle height, Ribbon slots. The entries below about the carved skull, its shapes, snout, back and sides are history.
+  Revised the same day (owner: "a little too symmetric", "the nose gets weird if it's extended", the ribbon slots "hit
+  the antlers in a way that doesn't make much practical sense"): each side has its own teeth and width and the point
+  sits a little off the middle; the plate follows the head's own front-to-back curve, so a long nose lies on the
+  forehead (it used to dive into it); the ribbon slots sit at the plate's side edge (the ribbon goes up through one and
+  back down over the edge), outboard of and behind each antler, clear of its collar: usually both just behind the
+  antler, where the plate is wide; one in front only when the plate reaches far enough forward. The plate's default
+  width beyond the antlers is 16 mm, so two slots fit.
 - **A comfortable underside** (owner, 2026-10-04: check for anything sharp underneath). Only the cap's smooth outer edge
   rests on the head, and every edge on the head is rounded (about 1.5 mm). Inside that edge nothing comes within
   2.5 mm of the head: the scan's ragged eye-socket rims, which dipped toward it, are lifted clear or removed where too

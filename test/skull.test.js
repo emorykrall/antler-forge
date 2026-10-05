@@ -79,10 +79,14 @@ test('the band channel underneath, and the ribbon slots through the plate', () =
     assert.ok(solid(onHead(x, half + 3, 1.5)), `the plate comes down beside it at x ${x}`);
     assert.ok(solid(onHead(x, 0, g.band.t + 1.5)), `the plate covers it at x ${x}`);
   }
-  assert.equal(g.slots.length, 2, 'a slot in front of the band and one behind it, each side');
+  assert.equal(g.slots.length, 2, 'two slots each side');
   for (const sl of g.slots) {
     for (const up of [1, 2.5, 4]) assert.ok(!solid(onHead(sl.x, sl.s, up)), `the slot at s ${sl.s.toFixed(0)} goes through`);
-    assert.ok(solid(onHead(sl.x, sl.s + Math.sign(sl.s) * 10, 2)) && solid(onHead(sl.x - 5, sl.s, 2)), 'with plate round it');
+    assert.ok(solid(onHead(sl.x - 5, sl.s, 2)) && solid(onHead(sl.x + 3.5, sl.s, 2)), 'with plate round it, and a strip between it and the edge');
+    assert.ok(g.form.wIn(sl.s) - sl.x < 9, `at the edge (${(g.form.wIn(sl.s) - sl.x).toFixed(1)} mm in)`);
+    const near = Math.max(0, Math.abs(sl.s) - 7);   // the slot's end nearest the antler, clear of its collar
+    assert.ok(Math.hypot(sl.x - g.form.X, near) > g.rp * 1.6, 'clear of the antler’s collar');
+    for (const pn of g.pins) assert.ok(Math.abs(pn.s - sl.s) > 8, 'clear of the bobby-pin grooves');
   }
   assert.equal(cap('trial', { capTie: false }).spec.slots.length, 0, 'no slots when they’re off');
 });
@@ -96,6 +100,29 @@ test('the plate’s jagged edge and its point', () => {
   assert.ok(f.wAt(f.F - 2) < 3 && f.wAt(f.F * 0.5) > 15, 'it narrows to a point at the front');
   const a = cap('trial', { seed: 5 }).spec.form.half, b = cap('trial', { seed: 6 }).spec.form.half;
   assert.ok(a.length !== b.length || a.some((p, i) => Math.abs(p[0] - b[i][0]) > 0.5), 'a new seed, a new edge');
+});
+
+// Not quite symmetric, as no skull is: each side has its own teeth and width, and the point is off the middle a little.
+test('the plate isn’t a mirror image', () => {
+  const f = cap('trial').spec.form;
+  let most = 0;
+  for (let s = -f.B + 5; s < f.F - 10; s += 2) {
+    const edge = (sg) => { let x = 0; while (x < 120 && f.sdf(sg * (x + 0.5), s) < 0) x += 0.5; return x; };
+    most = Math.max(most, Math.abs(edge(1) - edge(-1)));
+  }
+  assert.ok(most > 3, `the two sides differ by up to ${most.toFixed(1)} mm`);
+});
+
+// A long nose follows the forehead (the head's own curve front to back), rather than diving into it.
+test('a long nose lies on the forehead', () => {
+  for (const capLength of [66, 110]) {
+    const g = cap('trial', { capLength }).spec, H = g.head, r = H.r, c = [0, 0, H.top - r[2]];
+    for (let s = 0.4 * capLength; s < 0.95 * capLength; s += 5) {
+      const p = g.fromSkull(g.form.skew(s), s, 1.5), q = [(p[0] - c[0]) / r[0], (p[1] - c[1]) / r[1], (p[2] - c[2]) / r[2]];
+      const off = (Math.hypot(...q) - 1) * Math.hypot(r[1], r[2]) / Math.SQRT2;   // near enough mm, off the head's own surface
+      assert.ok(off > -0.5 && off < 4, `front reach ${capLength}: ${off.toFixed(1)} mm off the forehead at s ${s.toFixed(0)}`);
+    }
+  }
 });
 
 test('designs saved with the old cap’s settings still open', () => {
