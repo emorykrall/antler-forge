@@ -1814,7 +1814,7 @@
     // the bobby-pin grooves: up the outside of the side walls from where they meet the head, front and back (right side)
     const pins = [sk.plate ? 0.5 * (sk.sO + Math.min(sk.sF, sk.sO + 15)) : sk.sO + 0.45 * (sk.sF - sk.sO), 0.45 * sk.sB].map((s) => {
       const w = sk.edge(s, 1), p = fromSkull(w, s, 0), t = norm(sub(fromSkull(w, s, 6), p)), along = norm(sub(fromSkull(w, s + 1, 0), fromSkull(w, s - 1, 0)));
-      return { p, t, s: along, dir: norm(cross(along, t)) };
+      return { p, t, s: along, dir: norm(cross(along, t)), back: s < 0 };
     });
     return { P, band, head, rin, ry, ryF, ryAt, bx, bz, byAt, form: sk, fromSkull, a, rp, B0, Q, F, n, h0, rim, slots, pins, peg: PEG };
   }
@@ -1838,7 +1838,7 @@
     });
     const mir = (v) => [-v[0], v[1], v[2]];
     const slots = g.slots.flatMap((sl) => [sl, { p: mir(sl.p), dir: mir(sl.dir), u: mir(sl.u) }]).map((sl) => Object.assign({}, sl, { w: cross(sl.dir, sl.u) }));
-    const pins = g.pins.flatMap((pn) => [pn, { p: mir(pn.p), t: mir(pn.t), s: mir(pn.s), dir: mir(pn.dir) }]);
+    const pins = g.pins.flatMap((pn) => [pn, { p: mir(pn.p), t: mir(pn.t), s: mir(pn.s), dir: mir(pn.dir), back: pn.back }]);
     const f = (p) => {   // band frame
       const [x, s, h] = toSkull(p);
       const bone = k.bone(x, s, h), saw = Math.max(k.sB - 2 - s, s - k.sF), outer = Math.max(bone, saw);   // the back's own rolled edge ends it at sB
@@ -1884,8 +1884,9 @@
         const rq = vlen(sub(wq, mul(q.Z, hq)));
         d = Math.min(d, Math.max(rq - PEG.r + Math.max(0, hq - PEG.h + 0.8), -PEG.flat - xq, hq - PEG.h, -hq - 1));   // chamfered at the top
       }
-      // behind each bobby-pin groove, the wall thickened inward by the groove's depth, so the groove leaves it whole
-      for (const pn of pins) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s), w = dot(q, pn.dir); d = smin(d, smax(Math.max(Math.abs(b) - PIN.w / 2 - 2.5, -a - 0.3, a - PIN.len - 2, w, -w - CAP_T - PIN.depth - 0.6), 1 - hHead, EDGE_R), 1); }   // held just off the head, so the rim is what rests on it
+      // behind each back bobby-pin groove, the wall thickened inward by the groove's depth, so the groove leaves it whole
+      // (only at the back, where the wall stands on the head: on the snout's sloping, raised side it stuck out as a bracket)
+      for (const pn of pins) if (pn.back) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s), w = dot(q, pn.dir); d = smin(d, smax(Math.max(Math.abs(b) - PIN.w / 2 - 2.5, -a - 0.3, a - PIN.len - 2, w, -w - CAP_T - PIN.depth - 0.6), 1 - hHead, EDGE_R), 1); }   // held just off the head, so the rim is what rests on it
       // the groove the headband glues into, open toward the head; the strap slots; the bobby-pin grooves
       d = smax(d, -Math.max(Math.abs(p[1]) - groW, hHead - bandH), 1);   // its edges rounded where it leaves the sides
       for (const sl of slots) { const q = sub(p, sl.p); d = Math.max(d, -Math.max(Math.abs(dot(q, sl.u)) - SLOT.len / 2, Math.abs(dot(q, sl.w)) - SLOT.w / 2, dot(q, sl.dir) - 2, -dot(q, sl.dir) - CAP_T - 3)); }
