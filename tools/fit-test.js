@@ -38,7 +38,7 @@ const plug = part((x, y, z) => {
 fs.mkdirSync(out, { recursive: true });
 const tag = `fit-${clearance.toFixed(2).replace('.', '_')}`;
 for (const [name, sk] of [['peg', peg], ['socket', plug]]) {
-  const mesh = Core.meshAntler(sk, 0.25), r = Core.validateMesh(mesh);
+  const mesh = Core.meshAntler(sk, 0.4), r = Core.validateMesh(mesh);
   if (!(r.watertight && r.shells === 1 && r.volume > 0)) throw new Error(`${name}: not one watertight solid`);
   const f = path.join(out, `${tag}-${name}.stl`);
   fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: `${tag} ${name}` })));
