@@ -150,6 +150,7 @@
       { k: 'hbThick', label: 'Headband thickness', min: 1, max: 10, step: 0.1, u: 'mm' },
       { k: 'hbRadius', label: 'Headband curve radius', min: 50, max: 140, step: 1, u: 'mm' },
       { k: 'clearance', label: 'Fit clearance', min: 0, max: 1.5, step: 0.05, u: 'mm' },
+      { k: 'pegFit', label: 'Peg fit', min: 0, max: 0.8, step: 0.05, u: 'mm', hint: 'How much bigger each antler’s socket is than the skull cap’s peg, across. 0.2 mm slides on with a little friction, leaving room for glue (tested on a Bambu P2S in PLA). If yours is tight or loose, change it in steps of 0.05 mm.' },
       { k: 'wall', label: 'Wall around band', min: 1.2, max: 5, step: 0.1, u: 'mm' },
       { k: 'bandAngle', label: 'Position on band', min: 10, max: 70, step: 1, u: '° from top' },
       { k: 'splay', label: 'Extra splay', min: -30, max: 45, step: 1, u: '°' },
@@ -220,7 +221,7 @@
     crownCount: 0, crownShape: 'cup', crownLength: 50, palmation: 0, forkDepth: 0, forkAngle: 32, forkTines: false,
     jitter: 0.08, seed: 7,
     ovality: 0.12, grooveDepth: 0.45, grooveCount: 9, pearling: 0.45, burr: true, burrSize: 3.5, fillet: 5, smoothing: 3,
-    mount: 'tunnel', baseFlare: 1.65, baseHeight: 15, padLength: 44, hbWidth: 12, hbThick: 3, hbRadius: 85, clearance: 0.4, wall: 2.2,
+    mount: 'tunnel', baseFlare: 1.65, baseHeight: 15, padLength: 44, hbWidth: 12, hbThick: 3, hbRadius: 85, clearance: 0.4, pegFit: 0.2, wall: 2.2,
     bandAngle: 34, splay: 0, rake: 0,
     filament: 'bone', autoFit: true, scale: 0.62, resolution: '0.5', bedX: 256, bedY: 256, bedZ: 256,
     style: 'headband', headSource: 'tape', headScan: '', headCirc: 571.5, headMeasured: false, headArcFB: 285.75, headArcEE: 254, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
@@ -313,7 +314,7 @@
   function presetParams(name, base) {
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
-    if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
+    if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'pegFit', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
       'capTie', 'capTieFront', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capJag', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
@@ -1489,7 +1490,7 @@
   /* Skull cap (mount 'skull'): three parts, glued. Each antler has a round flared base with a D-shaped socket
      up into it; the cap carries a pedicle for each antler, topped with a D-shaped peg (the flat faces the
      midline, so an antler only goes on facing the right way). The headband glues into a groove under the cap.
-     Pegs and sockets never scale; the socket's gap is half the Fit clearance all round. */
+     Pegs and sockets never scale; the socket's gap is half the Peg fit all round. */
   const PEG = { r: 5, flat: 3.4, h: 12 }, SOCKET_WALL = 2.6;
 
   /* Flared pedicle base. Profile R(z) = rp + (Rf - rp)(1 - z/h)^k, stretched along the band. */
@@ -1505,7 +1506,7 @@
     }
     let zt = 0, need = 0;
     if (P.mount === 'skull') {   // a D-shaped socket up into the base, glued over the skull cap's peg; the base stays round
-      const gap = P.clearance / 2;
+      const gap = P.pegFit / 2;   // its own fit, tested on the P2S (owner, 2026-10-05): 0.2 mm across slides on with a little friction
       m.socket = { r: PEG.r + gap, flat: PEG.flat + gap, depth: PEG.h + 0.8 };
       zt = m.socket.depth + 1.2; need = m.socket.r + SOCKET_WALL;
       m.tunnelCZ = 0;
@@ -2517,7 +2518,7 @@
       : crown ? `Sized for a head ${len(P.headCirc)} around${P.headMeasured ? `, ${len(P.headArcFB)} front to back and ${len(P.headArcEE)} ear to ear over the top` : ''}, plus ${len(P.ringFit)} comfort allowance.`
       : P.mount === 'tunnel' || P.mount === 'clip'
         ? `Headband channel: ${len(P.hbWidth + P.clearance)} wide × ${len(P.hbThick + P.clearance)} tall, plus curve allowance for a ${inches ? len(P.hbRadius) : P.hbRadius + ' mm'} band radius.`
-        : P.mount === 'skull' ? `Each antler's base has a D-shaped socket that fits over a peg on the skull cap (${len(2 * PEG.r)} across, ${len(PEG.h)} tall; ${len(P.clearance / 2)} gap all round for glue). The flat of the D faces the middle of the head, so each antler only goes on facing the right way.`
+        : P.mount === 'skull' ? `Each antler's base has a D-shaped socket that fits over a peg on the skull cap (${len(2 * PEG.r)} across, ${len(PEG.h)} tall; ${len(P.pegFit / 2)} gap all round for glue). The flat of the D faces the middle of the head, so each antler only goes on facing the right way.`
         : 'The base is flat for gluing to a headband or hair clip (E6000 or CA glue).',
       ...(opts && opts.cap ? skullNotes(P, opts.cap, len) : []),
       '',

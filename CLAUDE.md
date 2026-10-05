@@ -13,7 +13,7 @@ npm run serve                              # build, then serve dist/site on http
 npm run build:stl -- --preset elk --scale 0.7 --mount clip   # right + left STL + print notes
 npm run build:stl -- design.json --res 0.35                  # the design file from the page's STL zip
 npm run samples                            # samples/*.stl, one per preset at 0.6 mm
-node tools/fit-test.js 0.2,0.3,0.4         # skull cap peg + antler sockets at those Fit clearances (dist/fit-test/)
+node tools/fit-test.js 0.15,0.2,0.25       # skull cap peg + antler sockets at those Peg fits, one labelled STL (dist/fit-test/)
 ```
 
 `/build-stl <preset>` (in `.claude/commands/`) builds a pair into `dist/stl/<preset>/`.
@@ -58,7 +58,7 @@ node tools/fit-test.js 0.2,0.3,0.4         # skull cap peg + antler sockets at t
   so it follows the head's own curve front to back. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
   group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down, lowered onto its lowest point.
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
-  the page uses to place the antlers. Pegs and sockets never scale (`PEG`). It is meshed as a `fields` group. Under the
+  the page uses to place the antlers. Pegs and sockets never scale (`PEG`); the socket's gap is half the Peg fit (`pegFit`, 0.2 mm, tested on the P2S). It is meshed as a `fields` group. Under the
   cap the wear view's bust takes that head (`bustFit`), as it takes a crown's.
 - `src/head-scan.js`: head-scan import (STL/OBJ/PLY → orientation → tape line → radius map), and
   `fromHeadTurn` (the built-in camera scan: a smooth head fitted to segmentation outlines from many

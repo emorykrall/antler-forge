@@ -148,10 +148,12 @@ test('designs saved with the old cap’s settings still open', () => {
   assert.ok(r.watertight && r.shells === 1);
 });
 
-test('pegs and sockets never scale, and the socket clears the peg by half the Fit clearance', () => {
+test('pegs and sockets never scale, and the socket clears the peg by half the Peg fit (0.2 mm, tested on the P2S)', () => {
   for (const scale of [0.3, 0.7, 1.4]) {
     const sk = Core.buildSkeleton(design('trial', 'skull', { scale, autoFit: false })), so = sk.mount.socket;
-    assert.equal(so.r, Core.PEG.r + 0.2); assert.equal(so.flat, Core.PEG.flat + 0.2);
+    assert.equal(so.r, Core.PEG.r + 0.1); assert.equal(so.flat, Core.PEG.flat + 0.1);
+    const loose = Core.buildSkeleton(design('trial', 'skull', { scale, autoFit: false, pegFit: 0.4, clearance: 0.9 })).mount.socket;
+    assert.equal(loose.r, Core.PEG.r + 0.2, 'Peg fit sets it; Fit clearance (the band) doesn’t');
     assert.ok(so.depth > Core.PEG.h, 'the socket is deeper than the peg');
     assert.ok(sk.mount.h > so.depth && sk.mount.rf >= so.r + 2.5, `the base walls the socket in (base ${sk.mount.rf.toFixed(1)} mm)`);
   }

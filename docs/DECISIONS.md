@@ -89,6 +89,10 @@ Newest first within each section. Change one only when the owner asks.
   back down over the edge), outboard of and behind each antler, clear of its collar: usually both just behind the
   antler, where the plate is wide; one in front only when the plate reaches far enough forward. The plate's default
   width beyond the antlers is 16 mm, so two slots fit.
+  Peg fit (owner, 2026-10-05, from printed test pieces on the P2S in PLA: 0.5 and 0.3 mm were loose, 0.2 mm "a tiny bit
+  of friction, but it still slides on very easily"): the antler's socket is 0.2 mm bigger across than the peg (0.1 mm all
+  round), its own setting under Advanced (shown with the skull cap), separate from Fit clearance, which the band's fits
+  keep at 0.4 mm (not tested).
   Ribbon slots (owner, 2026-10-05: they "don't always appear when selected"; separate options for front and back): two
   switches, Ribbon slot behind the antlers (on by default) and Ribbon slot in front of the antlers (off), one slot each
   side for each. A slot lies along the plate's edge where it sits, with a whole strip of plate between it and the broken

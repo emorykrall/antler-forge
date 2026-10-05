@@ -606,7 +606,7 @@ function applyStyle() {
     const { it, wrap } = inputs[k];
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
     wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
-      || ((k === 'capTie' || k === 'capTieFront') && !cap)   // the skull cap's own settings: head size (its curve) and the ribbons
+      || ((k === 'capTie' || k === 'capTieFront' || k === 'pegFit') && !cap)   // the skull cap's own settings: head size (its curve), the ribbons, the pegs' fit
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
   }

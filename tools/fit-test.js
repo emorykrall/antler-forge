@@ -1,15 +1,15 @@
 // A small print to test the skull cap's peg-and-socket fit before printing the whole set: the cap's D-shaped peg on a
 // little base (prints peg-up, as on the cap) and a plug with the antler's D-shaped socket (prints socket-down, as the
 // antler's base does, so the first layer squashes its mouth the same way). Same geometry as the real parts (PEG, the
-// socket's gap of half the Fit clearance all round, its depth and eased mouth). A flat on the plug's side marks the D's
-// flat, so you can see which way it goes on. Raised numbers say what each is: the Fit clearance on each plug's top, the
-// peg's width (mm) on its base. All in one STL, side by side (Bambu Studio: Split to objects, if you want them apart).
-// Usage: node tools/fit-test.js [clearance mm, or several: 0.2,0.3,0.4; default 0.5] [outDir, default dist/fit-test]
+// socket's gap of half the Peg fit all round, its depth and eased mouth). A flat on the plug's side marks the D's
+// flat, so you can see which way it goes on. Raised numbers say what each is: the Peg fit on each plug's top, the peg's
+// width (mm) on its base. All in one STL, side by side (Bambu Studio: Split to objects, if you want them apart).
+// Usage: node tools/fit-test.js [Peg fit mm, or several: 0.15,0.2,0.25; default 0.2] [outDir, default dist/fit-test]
 const fs = require('fs');
 const path = require('path');
 const Core = require('../src/antler-core.js');
 
-const clearances = String(process.argv[2] || '0.5').split(',').map(Number);
+const clearances = String(process.argv[2] || '0.2').split(',').map(Number);   // Peg fit values
 const out = path.resolve(process.argv[3] || path.join(__dirname, '..', 'dist', 'fit-test'));
 const PEG = Core.PEG;
 
@@ -55,7 +55,7 @@ const plugFor = (clearance) => {
     let d = Math.max(Math.hypot(x, y) - R, -z, z - H, -x - (R - 1.2));
     const hole = Math.max(Math.hypot(x, y) - so.r - Math.max(0, 0.8 - z), -so.flat - x, z - so.depth);
     d = Math.max(d, -hole);
-    return Math.min(d, label(x, y, z));   // the Fit clearance, raised on top
+    return Math.min(d, label(x, y, z));   // the Peg fit, raised on top
   }, [-R - 2, -R - 2, -1, R + 2, R + 2, H + 2]);
   return { sk, so, gap, R };
 };
@@ -75,7 +75,7 @@ let x = 12;
 for (const c of clearances) {
   const { sk, so, gap, R } = plugFor(c);
   x += R + 4; add(sk, x, `socket ${c}`); x += R;
-  console.log(`  ${c}: Fit clearance ${c} mm, socket ${(2 * so.r).toFixed(2)} mm across (peg ${2 * PEG.r} mm), ${gap.toFixed(2)} mm gap all round`);
+  console.log(`  ${c}: Peg fit ${c} mm, socket ${(2 * so.r).toFixed(2)} mm across (peg ${2 * PEG.r} mm), ${gap.toFixed(2)} mm gap all round`);
 }
 const f = path.join(out, `fit-test-${clearances.join('-')}.stl`);
 fs.writeFileSync(f, Buffer.from(Core.toSTL({ positions: new Float32Array(pos), indices: new Uint32Array(idx) }, { name: 'antler forge fit test' })));
