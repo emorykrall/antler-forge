@@ -13,7 +13,7 @@ npm run serve                              # build, then serve dist/site on http
 npm run build:stl -- --preset elk --scale 0.7 --mount clip   # right + left STL + print notes
 npm run build:stl -- design.json --res 0.35                  # the design file from the page's STL zip
 npm run samples                            # samples/*.stl, one per preset at 0.6 mm
-node tools/fit-test.js 0.5                 # a skull cap peg + antler socket test pair at that Fit clearance (dist/fit-test/)
+node tools/fit-test.js 0.2,0.3,0.4         # skull cap peg + antler sockets at those Fit clearances (dist/fit-test/)
 ```
 
 `/build-stl <preset>` (in `.claude/commands/`) builds a pair into `dist/stl/<preset>/`.

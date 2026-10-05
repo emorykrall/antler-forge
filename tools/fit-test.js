@@ -2,16 +2,15 @@
 // little base (prints peg-up, as on the cap) and a plug with the antler's D-shaped socket (prints socket-down, as the
 // antler's base does, so the first layer squashes its mouth the same way). Same geometry as the real parts (PEG, the
 // socket's gap of half the Fit clearance all round, its depth and eased mouth). A flat on the plug's side marks the D's
-// flat, so you can see which way it goes on.
-// Usage: node tools/fit-test.js [clearance mm, default 0.5] [outDir, default dist/fit-test]
+// flat, so you can see which way it goes on; dots on its top tell the plugs apart (one per 0.1 mm of Fit clearance).
+// Usage: node tools/fit-test.js [clearance mm, or several: 0.2,0.3,0.4; default 0.5] [outDir, default dist/fit-test]
 const fs = require('fs');
 const path = require('path');
 const Core = require('../src/antler-core.js');
 
-const clearance = Number(process.argv[2] || 0.5);
+const clearances = String(process.argv[2] || '0.5').split(',').map(Number);
 const out = path.resolve(process.argv[3] || path.join(__dirname, '..', 'dist', 'fit-test'));
-const PEG = Core.PEG, gap = clearance / 2;
-const so = { r: PEG.r + gap, flat: PEG.flat + gap, depth: PEG.h + 0.8 };   // as mountSpec makes the antler's socket
+const PEG = Core.PEG;
 
 const part = (f, bb) => ({   // a part the mesher takes as one field (as the skull cap is)
   params: Core.resolveParams({}), kind: 'skull', scale: 1, branches: [], fields: [{ f, bb }], mount: { type: 'cap' },
@@ -27,21 +26,31 @@ const peg = part((x, y, z) => {
   return Math.min(base, p);
 }, [-14, -14, -1, 14, 14, BASE + PEG.h + 2]);
 // a round plug 2.6 mm thicker than the socket all round (the antler's base wall) and 2.2 mm over its top, a flat on its
-// side on the D's flat side; the socket up into it from the bed, its mouth eased 0.8 mm
-const R = so.r + 2.6 + 0.4, H = so.depth + 2.2;
-const plug = part((x, y, z) => {
-  let d = Math.max(Math.hypot(x, y) - R, -z, z - H, -x - (R - 1.2));
-  const hole = Math.max(Math.hypot(x, y) - so.r - Math.max(0, 0.8 - z), -so.flat - x, z - so.depth);
-  return Math.max(d, -hole);
-}, [-R - 2, -R - 2, -1, R + 2, R + 2, H + 2]);
+// side on the D's flat side, dots on its top; the socket up into it from the bed, its mouth eased 0.8 mm
+const plugFor = (clearance) => {
+  const gap = clearance / 2, so = { r: PEG.r + gap, flat: PEG.flat + gap, depth: PEG.h + 0.8 };   // as mountSpec makes it
+  const R = so.r + 2.6 + 0.4, H = so.depth + 2.2, dots = Math.max(1, Math.round(clearance * 10));
+  const sk = part((x, y, z) => {
+    let d = Math.max(Math.hypot(x, y) - R, -z, z - H, -x - (R - 1.2));
+    const hole = Math.max(Math.hypot(x, y) - so.r - Math.max(0, 0.8 - z), -so.flat - x, z - so.depth);
+    d = Math.max(d, -hole);
+    for (let i = 0; i < dots; i++) { const dx = (i - (dots - 1) / 2) * 2.6; d = Math.max(d, -(Math.hypot(x - dx, y, z - H) - 0.9)); }   // dimples
+    return d;
+  }, [-R - 2, -R - 2, -1, R + 2, R + 2, H + 2]);
+  return { sk, so, gap };
+};
 
 fs.mkdirSync(out, { recursive: true });
-const tag = `fit-${clearance.toFixed(2).replace('.', '_')}`;
-for (const [name, sk] of [['peg', peg], ['socket', plug]]) {
+const write = (sk, file, name) => {
   const mesh = Core.meshAntler(sk, 0.4), r = Core.validateMesh(mesh);
   if (!(r.watertight && r.shells === 1 && r.volume > 0)) throw new Error(`${name}: not one watertight solid`);
-  const f = path.join(out, `${tag}-${name}.stl`);
-  fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name: `${tag} ${name}` })));
-  console.log(`${f}  ${r.size.map((v) => v.toFixed(1)).join(' × ')} mm, ${(r.volume / 1000).toFixed(1)} cm³`);
+  const f = path.join(out, file);
+  fs.writeFileSync(f, Buffer.from(Core.toSTL(mesh, { name })));
+  console.log(`${f}  ${r.size.map((v) => v.toFixed(1)).join(' × ')} mm`);
+};
+write(peg, 'fit-peg.stl', 'fit test peg');   // the peg doesn't change with the clearance
+for (const c of clearances) {
+  const { sk, so, gap } = plugFor(c), tag = `fit-${c.toFixed(2).replace('.', '_')}`;
+  write(sk, `${tag}-socket.stl`, `${tag} socket`);
+  console.log(`  Fit clearance ${c} mm: socket ${(2 * so.r).toFixed(2)} mm across (peg ${2 * PEG.r} mm), ${gap.toFixed(2)} mm gap all round, ${Math.max(1, Math.round(c * 10))} dots on top.`);
 }
-console.log(`Socket ${(2 * so.r).toFixed(2)} mm across (peg ${2 * PEG.r} mm): ${gap.toFixed(2)} mm gap all round, ${so.depth} mm deep (peg ${PEG.h} mm).`);
