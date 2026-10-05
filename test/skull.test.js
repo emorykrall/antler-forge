@@ -111,6 +111,26 @@ test('the skull cap’s back is closed and rounded, resting on the head', () => 
   for (let i = 1; i < outline.length; i++) assert.ok(outline[i] >= outline[i - 1] - 0.6, `the outline turns in smoothly at the back: ${outline.join(' ')}`);
 });
 
+// Comfort: only the cap's smooth, rounded outer edge rests on the head. Inside it, nothing comes near the head (the scan's
+// ragged eye-socket rims once dipped to it), and the band channel's sides stand off it, so the wide band takes that line.
+test('the skull cap’s underside: only its rounded rim rests on the head', () => {
+  const sk = cap('eightpoint', { capShape: 'nasal' }), g = sk.spec, f = sk.fields[0].f, M = sk.toBand, H = g.head, F = g.form;
+  const toPrint = (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return [q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]]; };
+  const onHead = (x, y, up) => [x, y, H.zc + H.R * Math.sqrt(Math.max(0, 1 - (x / H.R) ** 2 - (y / H.ryAt(y)) ** 2)) + up];
+  let n = 0;
+  for (let s = F.sB + F.back().L + 4; s < F.sO; s += 3) for (let x = 0; x < F.outline(s) - 7; x += 3) {
+    const p = g.fromSkull(x, s, 0);
+    if (Math.abs(p[1]) < (g.band.w + g.band.gap) / 2 + 5) continue;   // the band's channel (its sides are checked below)
+    for (const up of [0.3, 1, 2]) { assert.ok(f(...toPrint(onHead(p[0], p[1], up))) > 0, `inside the rim, ${up} mm off the head at x ${x}, s ${s}`); n++; }
+  }
+  assert.ok(n > 100, `checked ${n} points`);
+  const rib = (g.band.w + g.band.gap) / 2 + 1.2;   // the middle of the channel's side
+  for (const x of [-25, 0, 25]) for (const y of [-rib, rib]) assert.ok(f(...toPrint(onHead(x, y, 0.4))) > 0, `the band channel's side stands off the head at x ${x}`);
+  // the rim's edge is rounded: just off the head, the wall is narrower than higher up
+  const wall = (s, up) => { let w = 0; for (let x = 20; x < 70; x += 0.1) { const p = g.fromSkull(x, s, 0); if (f(...toPrint(onHead(p[0], p[1], up))) < 0) w += 0.1; } return w; };
+  for (const s of [-25, -10]) assert.ok(wall(s, 0.5) < wall(s, 3) - 0.3, `the rim is rounded at s ${s}: ${wall(s, 0.5).toFixed(1)} mm against ${wall(s, 3).toFixed(1)} mm`);
+});
+
 test('designs saved with the retired cap shapes open as a skull plate', () => {
   assert.equal(Core.resolveParams({ capShape: 'shield' }).capShape, 'plate');
   assert.equal(Core.resolveParams({ capShape: 'round' }).capShape, 'plate');

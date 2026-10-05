@@ -1549,6 +1549,8 @@
   const CAP_T = 2.6;   // shell thickness: four 0.4 mm walls and a little infill
   const SLOT = { len: 15, w: 3.2 };           // a strap slot: ½ in elastic, lying flat
   const PIN = { len: 14, w: 2.2, depth: 1 };   // a bobby-pin groove: on the outside, running in from the rim
+  const EDGE_R = 1.6, RIB_LIFT = 1, CLEAR = 2.5;   // comfort: edges on the head rounded; the band channel's sides held off
+                                                // it; inside the cap's outer edge, nothing nearer the head than CLEAR
   const rotOf = (P, a) => {   // the antler's print frame in the band frame at band angle a (degrees): the same turn as buildAt
     const sp = (P.splay - a) * DEG, rk = P.rake * DEG, cs = Math.cos(sp), ss = Math.sin(sp), ck = Math.cos(rk), sk = Math.sin(rk);
     const inv = ([X, Y, Z]) => { const x = X * cs - Z * ss, z1 = X * ss + Z * cs; return [x, Y * ck + z1 * sk, -Y * sk + z1 * ck]; };
@@ -1729,7 +1731,12 @@
       };
       const O = new Float32Array(tns);
       for (let j = 0; j < tns; j++) for (let i = tnx - 1; i >= 0; i--) if (T[j * tnx + i] > 0.3) { O[j] = tx0 + i * TS; break; }
-      OUT = O.map((_, j) => { let sum = 0, n = 0; for (let q = Math.max(0, j - 8); q <= Math.min(tns - 1, j + 8); q++) { sum += O[q]; n++; } return sum / n; });   // ±12 mm
+      // smoothed over ±12 mm, but never outside the bone's own edge nearby (±3 mm), or the wall stands off it as a thin ledge
+      OUT = O.map((_, j) => {
+        let sum = 0, n = 0, near = 0;
+        for (let q = Math.max(0, j - 8); q <= Math.min(tns - 1, j + 8); q++) { sum += O[q]; n++; if (Math.abs(q - j) <= 2) near = Math.max(near, O[q]); }
+        return Math.min(sum / n, near);
+      });
       blur(T); blur(T); TOP = T.slice();
       const Cl = new Float32Array(T.length);
       for (let j = 0; j < tns; j++) for (let i = 0; i < tnx; i++) {
@@ -1752,7 +1759,16 @@
     };
     // inward from the back's rounded outline (mm): within back().L of it the shell rolls down onto the head
     const backIn = (x, s) => { const B = backOf(); return B.R - (s < B.c ? Math.hypot(x, s - B.c) : Math.abs(x)); };
-    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, outline, topAt, back: backOf, backIn, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
+    // the hollow under the back's roll: inside the same quarter ellipse made CAP_T smaller all round (negative inside),
+    // so the rolled edge is a shell CAP_T thick, not the thin wall left where the inside followed the steep outside down
+    const backHollow = (x, s, h) => {
+      if (s > sB + 60) return -1e3;
+      const B = backOf(), dl = backIn(x, s);
+      if (dl > B.L) return -1e3;
+      const a = B.L - CAP_T, c = B.A - CAP_T, u = (dl - B.L) / a, v = h / c, k0 = Math.hypot(u, v), k1 = Math.hypot(u / a, v / c);
+      return k1 > 1e-9 ? (k0 * (k0 - 1)) / k1 : -a;
+    };
+    return { k, X, sO, sF, sB, plate, bone, edge, top, ceil, outline, topAt, back: backOf, backIn, backHollow, hD: k * (D[2] - base(D[1])), discR: k * S.disc.r };
   }
   function skullSpec(params, antlerBase) {
     const P = resolveParams(params);
@@ -1829,22 +1845,36 @@
       const hHead = ellD([p[0], p[1], p[2] - H.zc], [H.R, g.ryAt(p[1]), H.R]);
       // the bone shell, open underneath along the cut and clear of the head; sawn across behind the antlers (and, for a
       // plate, the forehead) through the shell, so the cut shows the hollow bone
-      let d = Math.max(bone, k.ceil(x, s) - h, saw);
+      let d = Math.max(bone, Math.min(k.ceil(x, s) - h, -k.backHollow(x, s, h)), saw);
       // the side walls closed down to the head behind the eye sockets: a skirt CAP_T thick round the cap's outline (seen
       // from above), from its top down to the head, where the scan's own wall stops short (the eye-socket notch and the
       // hollow under each pedicle left the side open there). In front of the eye sockets it lifts off, so the snout stands
       // clear of the forehead as before.
+      // inside that wall (and the back's roll), nothing comes within CLEAR of the head: the scan's eye-socket rims and
+      // other ragged bits of bone that dipped toward it are lifted clear, so only the smooth outer edge rests on the head
+      if (s < k.sO + 20) {
+        const W0 = k.outline(s), inner = W0 - Math.abs(x) - CAP_T - 0.4, rollIn = k.backIn(x, s) - k.back().L;
+        if (inner > 0 && rollIn > 0) {
+          d = Math.max(d, smin(CLEAR - hHead, CLEAR + 1 - Math.min(inner, rollIn) * 2, 1));
+          d = Math.max(d, Math.min(Math.min(inner, rollIn) * 2, CLEAR + 2.5 - k.topAt(x, s)));   // bone too low to stay whole above that: gone
+        }
+      }
       if (s < k.sO + 20 && s > k.sB - 2) {
         const W = k.outline(s);
         if (W > 4) {
           const dW = (k.outline(s + 1) - k.outline(s - 1)) / 2, e = (Math.abs(x) - W) / Math.sqrt(1 + dW * dW);   // across the wall, not just across x
-          const tp = k.topAt(W - 4, s), lift = tp * sstep((s - k.sO) / 20);
-          d = smin(d, Math.max(e, -e - CAP_T, lift - h, h - tp - 1, saw), 1.2);
+          const tp = Math.max(4, k.topAt(W - 1, s), k.topAt(W - 2.5, s), k.topAt(W - 4, s)), lift = tp * sstep((s - k.sO) / 20);   // up to the skull's surface over it (4 mm at least)
+          d = smin(d, Math.max(e, -e - CAP_T, lift - h, h - tp - 0.5, saw), 2.2);
+          // and nothing past it low down, where the skull's side met the head at a shallow angle in a thin toe
+          if (lift < 0.5) d = Math.max(d, Math.min(e - 0.3, tp - 1 - h));
         }
       }
-      d = Math.max(d, -h, -hHead);
-      // under the band line: a channel round the band that holds the groove, and a thin web from it up to the bone
-      d = Math.min(d, Math.max(Math.abs(p[1]) - ribW, -hHead, hHead - bandH - 2.4, outer), Math.max(Math.abs(p[1]) - 1.2, -hHead, outer));
+      // clear of the head, and every edge that rests on it rounded (EDGE_R), so nothing square or thin presses into the scalp
+      d = smax(smax(d, -h, EDGE_R), -hHead, EDGE_R);
+      // under the band line: a channel round the band that holds the groove, and a thin web from it up to the bone. The
+      // channel's two sides stop RIB_LIFT short of the head, rounded, so the band itself (wide and smooth) bears on the
+      // head along that line, not two narrow ribs beside it.
+      d = Math.min(d, Math.max(smax(Math.abs(p[1]) - ribW, RIB_LIFT - hHead, EDGE_R), hHead - bandH - 2.4, outer), Math.max(Math.abs(p[1]) - 1.2, -hHead, outer));
       // the pedicles: short flared stumps of bone on the skull's own cut ones, and the D-shaped pegs on top
       for (const q of peds) {
         const w = sub(p, q.A), hh = dot(w, q.Z), rad = vlen(sub(w, mul(q.Z, hh))), u = clamp(hh / q.L, 0, 1);
@@ -1854,8 +1884,10 @@
         const rq = vlen(sub(wq, mul(q.Z, hq)));
         d = Math.min(d, Math.max(rq - PEG.r + Math.max(0, hq - PEG.h + 0.8), -PEG.flat - xq, hq - PEG.h, -hq - 1));   // chamfered at the top
       }
+      // behind each bobby-pin groove, the wall thickened inward by the groove's depth, so the groove leaves it whole
+      for (const pn of pins) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s), w = dot(q, pn.dir); d = smin(d, smax(Math.max(Math.abs(b) - PIN.w / 2 - 2.5, -a - 0.3, a - PIN.len - 2, w, -w - CAP_T - PIN.depth - 0.6), 1 - hHead, EDGE_R), 1); }   // held just off the head, so the rim is what rests on it
       // the groove the headband glues into, open toward the head; the strap slots; the bobby-pin grooves
-      d = Math.max(d, -Math.max(Math.abs(p[1]) - groW, hHead - bandH));
+      d = smax(d, -Math.max(Math.abs(p[1]) - groW, hHead - bandH), 1);   // its edges rounded where it leaves the sides
       for (const sl of slots) { const q = sub(p, sl.p); d = Math.max(d, -Math.max(Math.abs(dot(q, sl.u)) - SLOT.len / 2, Math.abs(dot(q, sl.w)) - SLOT.w / 2, dot(q, sl.dir) - 2, -dot(q, sl.dir) - CAP_T - 3)); }
       for (const pn of pins) { const q = sub(p, pn.p), a = dot(q, pn.t), b = dot(q, pn.s); d = Math.max(d, -Math.max(Math.abs(b) - PIN.w / 2, -a - 8, a - PIN.len, -dot(q, pn.dir) - 6, -outer - PIN.depth)); }   // on the side wall only
       return d;

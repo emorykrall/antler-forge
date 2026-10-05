@@ -72,6 +72,12 @@ Newest first within each section. Change one only when the owner asks.
   under each pedicle left the side wall short of the head, so you could see in. A wall (a skirt, the shell's thickness)
   now runs round the cap's outline, from its top down to the head, behind the eye sockets; in front of them it lifts
   off, so the snout still stands clear of the forehead. The only opening left in each side is where the band passes.
+- **A comfortable underside** (owner, 2026-10-04: check for anything sharp underneath). Only the cap's smooth outer edge
+  rests on the head, and every edge on the head is rounded (about 1.5 mm). Inside that edge nothing comes within
+  2.5 mm of the head: the scan's ragged eye-socket rims, which dipped toward it, are lifted clear or removed where too
+  thin to keep. The band channel's two sides stand 1 mm off the head, so the wide, smooth band takes that line instead
+  of two narrow ribs. The rolled back edge is a full-thickness shell, the wall is thickened behind each bobby-pin
+  groove, and the band's exit is rounded.
 - **Front shape controls** (owner asked for width, length, taper "and whatever else makes sense"): beside Front reach,
   Snout width, Snout taper (blunt ↔ long point) and Nose tip (the upper skull only), and Snout curve, from running
   straight forward as a deer's does (as before, the default is halfway) to lying on the forehead.
