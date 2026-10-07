@@ -1920,6 +1920,7 @@
       if (W) g.wires.forEach((w, i) => {   // each wire: its channel (the upper half here), its strip's pocket under it, and the holes for its pins
         const y = w.dp(p);
         d = Math.max(d, -(Math.hypot(y, h - W.hc) - W.D / 2));
+        d = Math.max(d, -Math.max(Math.abs(y) - W.D / 2, h - W.hc));   // open underneath all the way out (past the strip too), so the wire lays in from below
         d = Math.max(d, -Math.max(Math.abs(y) - groW, h - W.hc, WIRE.end - WIRE.fit - dIn, runs[i][0] - WIRE.fit - x, x - runs[i][1] - WIRE.fit));
         for (const q of wpins[i]) d = Math.max(d, -Math.max(Math.hypot(x - q.x, y - q.y) - WIRE.pin.r - WIRE.pin.gap, h - W.hc - WIRE.pin.h - 0.3, W.hc - 1 - h));
       });
