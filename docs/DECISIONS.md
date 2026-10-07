@@ -105,6 +105,18 @@ Newest first within each section. Change one only when the owner asks.
   side broken its own way. On top, sutures meander and interlock unevenly, pores are sparse and drawn out along a faint
   grain (no even stippling), and the antler collars flare unevenly into the plate (no turned disc or separate ring,
   which only repeated the antler's burr).
+  Wire headband (owner, 2026-10-07, with a photo of the fit: a ⅛ in wire over the head instead of a flat band; split the
+  cap so it clamshells round the wire, as little added thickness as possible, minimal registration, the top overlapping
+  the bottom so no seam shows, glued with the wire trapped): a Headband setting in the Skull cap group, Flat band (the
+  groove, as before; the default, so saved designs don't change) or Wire, with Wire thickness (⅛ in) shown for a wire.
+  The cap stays one piece; the bottom of the clamshell is only a narrow strip (about ⅜ in wide, ⅒ in thick) under the
+  wire: a round channel (the wire plus Fit clearance) half in each, split at the wire's centre. The strip sits in a
+  pocket in the cap's underside that surrounds it on all sides and stops 3 mm short of the edge, so the cap overlaps it
+  everywhere and the only seam is underneath, against the head (a full-width split would have put a seam round the whole
+  broken edge, and two thin shells glued over their whole area). Registration: the pocket's walls, plus two small pins on
+  the strip, both on its front side, into holes in the pocket, so it only goes in one way. Over the wire the cap is as
+  thick as over a flat band (its roof at least 1 mm, the bone texture kept shallow there); the bump is narrower than a
+  wide band's. The strip prints standing on its flat back side, its curve flat on the plate, with no supports.
 - **A comfortable underside** (owner, 2026-10-04: check for anything sharp underneath). Only the cap's smooth outer edge
   rests on the head, and every edge on the head is rounded (about 1.5 mm). Inside that edge nothing comes within
   2.5 mm of the head: the scan's ragged eye-socket rims, which dipped toward it, are lifted clear or removed where too

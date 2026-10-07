@@ -43,7 +43,7 @@ node tools/fit-test.js 0.15,0.2,0.25       # skull cap peg + antler sockets at t
   code branches on `YJ`. Each edition shows its own species (`PRESETS[*].set`: none = storybook, `'campfire'` =
   Yellowjackets) and keeps its own autosave and library (`antler-forge-yj-design-v1`, `antler-forge-yj-library-v1`).
   The Yellowjackets edition makes headband antlers only (no crown style) and offers the skull cap base.
-- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued. `buildSkullCap` builds a thin plate
+- **Skull cap** (base style `skull`, Yellowjackets edition): three parts, glued (four on a wire headband). `buildSkullCap` builds a thin plate
   of bone (`PLATE`: about 3 mm, a hair's gap off the head) shaped to the head everywhere (`capHead`: the head
   circumference's typical head, its top under the band's inner surface; plate coordinates x across, s along the head, h
   off it, carried into the band frame by `fromSkull`; band frame: origin at the band arc's centre). `plateForm` gives
@@ -53,7 +53,10 @@ node tools/fit-test.js 0.15,0.2,0.25       # skull cap peg + antler sockets at t
   flares unevenly into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
   where the cap sits); ribbon slots each side, behind the band (`capTie`) and in front (`capTieFront`), along the
   plate's edge, clear of the antler's collar (`slotsMissing` names any that don't fit, for the page);
-  four bobby-pin grooves in the top at the edge. Not mirror-symmetric (each side its own teeth and width, the point a
+  four bobby-pin grooves in the top at the edge. With a wire headband (`capBand: 'wire'`, `wireDia`) the channel is round
+  and split at the wire's centre: the cap keeps the top half, and a fourth part, the wire strip (`wireStrip`, `sk.strip`:
+  `WIRE`, `capWire`), holds the bottom half and glues up into a pocket the cap surrounds on all sides (the seam is only
+  underneath), with two pins on its front side into holes in the pocket. It prints standing on its flat back side. Not mirror-symmetric (each side its own teeth and width, the point a
   little off the middle); plate coordinates are mapped onto a torus round the ear-to-ear axis (`fromSkull`/`toSkull`),
   so it follows the head's own curve front to back. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
   group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down, lowered onto its lowest point.
@@ -111,7 +114,7 @@ node tools/fit-test.js 0.15,0.2,0.25       # skull cap peg + antler sockets at t
 
 - Every export is **one watertight, consistently wound solid, flat at Z = 0**: 0 open edges,
   0 non-manifold edges, 1 shell, positive volume, for every preset × every base style
-  (`tunnel`, `clip`, `flat`, `none`, `skull`), and the skull cap. The mirrored left STL must have positive volume too.
+  (`tunnel`, `clip`, `flat`, `none`, `skull`), and the skull cap and its wire strip. The mirrored left STL must have positive volume too.
 - **Antler angles are in the head frame** (0° spread = straight up from the crown), so moving the
   base along the band (`bandAngle`) doesn't change how the antlers stand.
 - **Headband dimensions and the crown's band never scale.** `mountSpec` uses `hbWidth`, `hbThick`,

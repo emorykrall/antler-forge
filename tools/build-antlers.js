@@ -123,9 +123,17 @@ function main() {
     capOK = crep.watertight && crep.shells === 1 && csk.fit.fits;
     console.log(`skull cap  ${f1(crep.size[0])} × ${f1(crep.size[1])} × ${f1(crep.size[2])} mm · ${f1(crep.volume / 1000)} cm³ · open edges ${crep.openEdges}, shells ${crep.shells} · ${csk.fit.fits ? 'fits' : 'DOES NOT FIT'} · watertight ${crep.watertight ? 'YES' : 'NO'}`);
     const f = path.join(outDir, `${base}-skull.stl`); fs.writeFileSync(f, Buffer.from(Core.toSTL(cmesh, { name: base + ' skull cap', rotZ: csk.fit.angle }))); written.push(f);
+    if (csk.strip) {   // on a wire headband, the fourth: the strip that glues in under the cap over the wire
+      const ssk = csk.strip, smesh = Core.meshAntler(ssk, res), srep = Core.validateMesh(smesh);
+      srep.size = Core.plateSize(smesh, ssk.fit.angle);
+      cap.strip = { report: srep, fit: ssk.fit };
+      capOK = capOK && srep.watertight && srep.shells === 1 && ssk.fit.fits;
+      console.log(`wire strip ${f1(srep.size[0])} × ${f1(srep.size[1])} × ${f1(srep.size[2])} mm · ${f1(srep.volume / 1000)} cm³ · open edges ${srep.openEdges}, shells ${srep.shells} · ${ssk.fit.fits ? 'fits' : 'DOES NOT FIT'} · watertight ${srep.watertight ? 'YES' : 'NO'}`);
+      const fs2 = path.join(outDir, `${base}-skull-strip.stl`); fs.writeFileSync(fs2, Buffer.from(Core.toSTL(smesh, { name: base + ' wire strip', rotZ: ssk.fit.angle }))); written.push(fs2);
+    }
   }
   // how the parts share the plate: each fits on its own; they may need separate prints
-  const plates = crown ? null : Core.platesFor(P, [{ name: 'right antler', w: fit.w, d: fit.d }, { name: 'left antler', w: fit.w, d: fit.d }, ...(cap ? [{ name: 'skull cap', w: cap.report.size[0], d: cap.report.size[1] }] : [])]);
+  const plates = crown ? null : Core.platesFor(P, [{ name: 'right antler', w: fit.w, d: fit.d }, { name: 'left antler', w: fit.w, d: fit.d }, ...(cap ? [{ name: 'skull cap', w: cap.report.size[0], d: cap.report.size[1] }] : []), ...(cap && cap.strip ? [{ name: 'wire strip', w: cap.strip.report.size[0], d: cap.strip.report.size[1] }] : [])]);
   if (plates) console.log(`plates     ${plates.length > 1 ? Core.platesText(plates) : 'all the parts fit on one plate'}`);
   if (args.notes !== 'false') { const f = path.join(outDir, `${base}-print-notes.txt`); fs.writeFileSync(f, Core.printNotes(P, rep, fit, Object.assign({ plates }, cap ? { cap } : {}))); written.push(f); }
   for (const f of written) console.log(`wrote      ${path.relative(process.cwd(), f) || f}`);

@@ -607,6 +607,7 @@ function applyStyle() {
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
     wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
       || ((k === 'capTie' || k === 'capTieFront' || k === 'pegFit') && !cap)   // the skull cap's own settings: head size (its curve), the ribbons, the pegs' fit
+      || (k === 'wireDia' && !(cap && P.capBand === 'wire')) || ((k === 'hbWidth' || k === 'hbThick') && cap && P.capBand === 'wire')   // a wire, or a flat band
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
   }
@@ -682,7 +683,7 @@ function filamentColors(mesh) {
 let shown = null;      // { mesh, key, kind, geo }
 function setShown(mesh, key, kind) {
   if (shown && shown.geo) shown.geo.dispose();
-  if (shown && shown.cap && shown.cap.geo && !(built && built.cap === shown.cap)) { shown.cap.geo.dispose(); shown.cap.geo = null; }
+  if (shown && shown.cap && !(built && built.cap === shown.cap)) for (const c of [shown.cap, shown.cap.strip]) if (c && c.geo) { c.geo.dispose(); c.geo = null; }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(mesh.positions, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(filamentColors(mesh), 3));
@@ -690,7 +691,8 @@ function setShown(mesh, key, kind) {
   geo.computeVertexNormals();
   shown = { mesh, key, kind, geo, filament: P.filament };
 }
-// The skull cap (base style 'skull'), meshed beside the antler: { mesh, report, place: { toBand, Q, X, Y, Z } }.
+// The skull cap (base style 'skull'), meshed beside the antler: { mesh, report, place: { toBand, Q, X, Y, Z }, strip },
+// and on a wire headband its strip (cap.strip: { mesh, report, toBand }). Either one, as it prints.
 function capObject(cap) {
   if (!cap.geo) {
     cap.geo = new THREE.BufferGeometry();
@@ -712,6 +714,7 @@ function platesNow() {
   const f = shown.fit, parts = [{ name: 'right antler', w: f.w, d: f.d }];
   if (P.style !== 'crown') parts.push({ name: 'left antler', w: f.w, d: f.d });
   if (shown.cap && P.mount === 'skull' && P.style !== 'crown') parts.push({ name: 'skull cap', w: shown.cap.report.fit.w, d: shown.cap.report.fit.d });
+  if (shown.cap && shown.cap.strip && P.mount === 'skull' && P.style !== 'crown') parts.push({ name: 'wire strip', w: shown.cap.strip.report.fit.w, d: shown.cap.strip.report.fit.d });
   return C.platesFor(P, parts);
 }
 function bedObject() {
@@ -733,7 +736,8 @@ function bustFit(p) {
   const r = C.capHead(p).r, f = [r[0] / 74, r[1] / 92, r[2] / 92];   // the faun's skull (74 × 92 × 92 at y = −6)
   return { f, y: 6 * f[1] };
 }
-const bandZ = (p) => 92 * bustFit(p).f[2] - p.hbRadius + p.hbThick / 2 + 1;   // the band's centre: its inside 1 mm over the crown
+const onWire = (p) => p.style !== 'crown' && p.mount === 'skull' && p.capBand === 'wire';   // a skull cap clamped round a wire
+const bandZ = (p) => 92 * bustFit(p).f[2] - p.hbRadius + (onWire(p) ? C.capWire(p).hc : p.hbThick / 2) + 1;   // the band's centre: its inside 1 mm over the crown (a wire's centre, at the cap's split)
 function placeBust() {
   const b = bustFit(P);
   faunGroup.scale.set(...b.f); faunGroup.position.set(0, b.y, 0);
@@ -776,7 +780,7 @@ function ribbonGeometry(pts, normals, width) {   // a flat strip along pts, lyin
   return geo;
 }
 function bandObject() {
-  const cz = bandZ(P), key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, cz, EDITION].join('|');
+  const cz = bandZ(P), wire = onWire(P), key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, wire && P.wireDia, cz, EDITION].join('|');
   if (!bandCache || bandCache.key !== key) {
     const Rb = P.hbRadius, centre = new THREE.Vector3(0, 0, cz);
     // on its own curve this far from the top; under the skull cap it's bent to the head all the way (glued in the cap's groove)
@@ -785,14 +789,17 @@ function bandObject() {
     for (let i = 0; i <= 120; i++) {
       const th = -2.0 + (4.0 * i) / 120, dir = new THREE.Vector3(Math.sin(th), 0, Math.cos(th));
       const onCurve = centre.clone().addScaledVector(dir, Rb), w = Math.min(1, Math.max(0, (Math.abs(th) - free) / 0.45));
-      const sw = w * w * (3 - 2 * w), onHead = sw > 0 ? bustSurface(dir, new THREE.Vector3(0, 0, -10), P.hbThick / 2 + 0.6) : null;
+      const sw = w * w * (3 - 2 * w), onHead = sw > 0 ? bustSurface(dir, new THREE.Vector3(0, 0, -10), (wire ? P.wireDia : P.hbThick) / 2 + 0.6) : null;
       pts.push(onHead ? onCurve.lerp(onHead, sw) : onCurve); nrm.push(new THREE.Vector3(0, 1, 0));
     }
-    // a strip across the band's width (y), so build it from the path and the y axis
-    const pos = [], idx = [], hw = P.hbWidth / 2;
-    pts.forEach((p, i) => { pos.push(p.x, -hw, p.z, p.x, hw, p.z); if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i); });
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    let geo;
+    if (wire) geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, P.wireDia / 2, 8, false);   // a round wire
+    else {   // a strip across the band's width (y), so build it from the path and the y axis
+      const pos = [], idx = [], hw = P.hbWidth / 2;
+      pts.forEach((p, i) => { pos.push(p.x, -hw, p.z, p.x, hw, p.z); if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i); });
+      geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.setIndex(idx); geo.computeVertexNormals();
+    }
     if (bandCache) bandCache.geo.dispose();
     bandCache = { key, geo };
   }
@@ -859,6 +866,7 @@ function antlerPair(sk) {
   if (sk.params.mount === 'skull' && shown && shown.cap) {   // on the skull cap: the cap on the band, each antler on its pedicle
     const pl = shown.cap.place, up = new THREE.Matrix4().makeTranslation(0, 0, cz);
     const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(pl.toBand)); c.applyMatrix4(up); g.add(c);
+    if (shown.cap.strip) { const s = capObject(shown.cap.strip); s.applyMatrix4(new THREE.Matrix4().fromArray(shown.cap.strip.toBand)); s.applyMatrix4(up); g.add(s); }
     if (pl.slots && pl.slots.length && faunGroup && view !== 'ar') g.add(strapObject(pl, cz));
     const M = rightAntlerMatrix(sk);
     const right = antlerObject(); right.applyMatrix4(M);
@@ -930,7 +938,10 @@ function tuneObject() {
   const sk = TUNE.drag ? TUNE.drag.sk : tuneSkeleton();
   TUNE.skel = sk; TUNE.handles = [];
   const M = rightAntlerMatrix(sk), Cz = bandZ(P);
-  if (P.mount === 'skull' && shown && shown.cap) { const c = capObject(shown.cap); c.applyMatrix4(new THREE.Matrix4().fromArray(shown.cap.place.toBand)); c.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, Cz)); g.add(c); }
+  if (P.mount === 'skull' && shown && shown.cap) for (const [part, M] of [[shown.cap, shown.cap.place.toBand], [shown.cap.strip, shown.cap.strip && shown.cap.strip.toBand]]) {
+    if (!part) continue;
+    const c = capObject(part); c.applyMatrix4(new THREE.Matrix4().fromArray(M)); c.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, Cz)); g.add(c);
+  }
   const A = new THREE.Group(), L = new THREE.Group();
   A.applyMatrix4(M); L.applyMatrix4(M); L.applyMatrix4(new THREE.Matrix4().makeScale(-1, 1, 1));
   if (shown) { A.add(new THREE.Mesh(shown.geo, mats.ghost)); L.add(new THREE.Mesh(shown.geo, mats.ghost)); }
@@ -1277,6 +1288,7 @@ function rebuildScene() {
       objs['right antler'] = antlerObject(); objs['right antler'].rotation.z = ang;
       if (P.style !== 'crown') { objs['left antler'] = antlerObject(); objs['left antler'].scale.x = -1; objs['left antler'].rotation.z = -ang; }
       if (shown.cap && P.mount === 'skull' && P.style !== 'crown') objs['skull cap'] = capObject(shown.cap);
+      if (shown.cap && shown.cap.strip && P.mount === 'skull' && P.style !== 'crown') { objs['wire strip'] = capObject(shown.cap.strip); objs['wire strip'].rotation.z = shown.cap.strip.report.fit.angle * Math.PI / 180; }
       const plates = platesNow(), m = 6;
       plates.forEach((pl, i) => {
         const bed = bedObject(); bed.position.x = i * (P.bedX + 40); root.add(bed);
@@ -1544,7 +1556,8 @@ document.addEventListener('keydown', (e) => { if (tutor && e.key === 'Escape') t
 function updateReadout() {
   const fresh = built && built.key === keyOf(P);
   const capOn = P.style !== 'crown' && P.mount === 'skull', cap = fresh ? built.cap : shown ? shown.cap : null;
-  const capOK = !capOn || !!(fresh && cap && cap.report.watertight && cap.report.shells === 1);
+  const sound = (q) => !!(q && q.report.watertight && q.report.shells === 1);
+  const capOK = !capOn || !!(fresh && sound(cap) && (P.capBand !== 'wire' || sound(cap.strip)));
   const r = fresh ? built.report : null, ok = !!(r && r.watertight && r.shells === 1) && capOK;
   const fit = fresh ? r.fit : shown ? shown.fit : null, capFit = capOn && cap ? cap.report.fit : null;
   const fits = (fit ? fit.fits : true) && (capFit ? capFit.fits : true);
@@ -1580,7 +1593,7 @@ function updateReadout() {
   const pb = $('primary');
   pb.disabled = building || (fresh && !ok);
   pb.dataset.action = ok ? 'download' : 'build';
-  const nStl = P.style === 'crown' ? 1 : capOn ? 3 : 2;   // a crown is one piece; a headband pair is two; on a skull cap, three
+  const nStl = P.style === 'crown' ? 1 : capOn ? (P.capBand === 'wire' ? 4 : 3) : 2;   // a crown is one piece; a headband pair is two; on a skull cap, three (four with a wire's strip)
   pb.textContent = building ? 'Building…' : ok ? `Download ${nStl > 1 ? 'STLs' : 'STL'} · ${Math.max(1, Math.round((84 + r.triangles * 50) * nStl / 1e6))} MB` : fresh ? 'Mesh failed its check' : 'Build final mesh';
 }
 
@@ -1613,6 +1626,7 @@ function makeWorker() {
           report.fit = sk.fit;
           var cap = capJob(AntlerCore, j), bufs = [mesh.positions.buffer, mesh.indices.buffer, mesh.attr.buffer];
           if (cap) bufs.push(cap.mesh.positions.buffer, cap.mesh.indices.buffer, cap.mesh.attr.buffer);
+          if (cap && cap.strip) bufs.push(cap.strip.mesh.positions.buffer, cap.strip.mesh.indices.buffer, cap.strip.mesh.attr.buffer);
           self.postMessage({ type: 'done', id: j.id, mesh: mesh, report: report, cap: cap }, bufs);
         } catch (err) { self.postMessage({ type: 'error', id: j.id, message: String(err && err.message || err) }); }
       };`;
@@ -1630,8 +1644,13 @@ function capJob(Core, j) {
   var report = j.kind === 'build' ? Core.validateMesh(mesh) : Core.meshBounds(mesh), size = Core.meshBounds(mesh).size;
   var W = j.params.bedX - 12, D = j.params.bedY - 12;   // the part's own size, not the box it was meshed in (6 mm brim margin)
   report.fit = Object.assign({}, sk.fit, { w: size[0], d: size[1], h: size[2], fits: ((size[0] <= W && size[1] <= D) || (size[1] <= W && size[0] <= D)) && size[2] <= j.params.bedZ - 1 });
-  var g = sk.spec;
-  return { mesh: mesh, report: report, place: { toBand: sk.toBand, Q: g.Q, X: g.F.X, Y: g.F.Y, Z: g.F.Z, slots: g.slots, missing: g.slotsMissing } };
+  var g = sk.spec, strip = null;
+  if (sk.strip) {   // a wire headband's strip: small, so always meshed fine
+    var smesh = Core.meshAntler(sk.strip, Math.min(0.5, j.res)), srep = j.kind === 'build' ? Core.validateMesh(smesh) : Core.meshBounds(smesh), ss = Core.meshBounds(smesh).size;
+    srep.fit = Object.assign({}, sk.strip.fit, { w: ss[0], d: ss[1], h: ss[2] });
+    strip = { mesh: smesh, report: srep, toBand: sk.strip.toBand };
+  }
+  return { mesh: mesh, report: report, strip: strip, place: { toBand: sk.toBand, Q: g.Q, X: g.F.X, Y: g.F.Y, Z: g.F.Z, slots: g.slots, missing: g.slotsMissing } };
 }
 function previewRes(p) {
   if (p.style === 'crown') return 1.3;
@@ -1755,20 +1774,23 @@ async function downloadSTLs() {
   let b = built && built.key === keyOf(P) ? built : await build();
   if (b === false) return;   // the build failed and said so
   if (!b) { toast('A build is already running. Download again when it finishes.'); return; }
-  if (!b.report.watertight || b.report.shells !== 1 || (b.cap && (!b.cap.report.watertight || b.cap.report.shells !== 1))) { toast('Mesh failed its check, so nothing was exported.'); return; }
+  const bad = (q) => q && (!q.report.watertight || q.report.shells !== 1);
+  if (!b.report.watertight || b.report.shells !== 1 || bad(b.cap) || (b.cap && bad(b.cap.strip))) { toast('Mesh failed its check, so nothing was exported.'); return; }
   const params = Object.assign({}, b.params, { filament: P.filament });   // filament doesn't change the mesh, so it isn't in the build's key
   const base = slug();
   const angle = b.report.fit.angle, stls = params.style === 'crown'
     ? [{ name: base + '.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base, rotZ: angle })) }]   // one piece
     : [{ name: base + '-right.stl', data: new Uint8Array(C.toSTL(b.mesh, { name: base + ' right', rotZ: angle })) },
       { name: base + '-left.stl', data: new Uint8Array(C.toSTL(b.mesh, { mirror: true, name: base + ' left', rotZ: -angle })) },
-      ...(b.cap ? [{ name: base + '-skull.stl', data: new Uint8Array(C.toSTL(b.cap.mesh, { name: base + ' skull cap', rotZ: b.cap.report.fit.angle })) }] : [])];
+      ...(b.cap ? [{ name: base + '-skull.stl', data: new Uint8Array(C.toSTL(b.cap.mesh, { name: base + ' skull cap', rotZ: b.cap.report.fit.angle })) }] : []),
+      ...(b.cap && b.cap.strip ? [{ name: base + '-skull-strip.stl', data: new Uint8Array(C.toSTL(b.cap.strip.mesh, { name: base + ' wire strip', rotZ: b.cap.strip.report.fit.angle })) }] : [])];
   const notesReport = Object.assign({}, b.report, { size: C.plateSize(b.mesh, angle) });   // size as it sits on the plate
   const zip = C.makeZip([
     ...stls,
     ...(params.headSource === 'scan' && scanStore.get(params.headScan) ? [{ name: base + '-head-scan.json', data: JSON.stringify(scanStore.get(params.headScan)) }] : []),
     { name: base + '-design.json', data: JSON.stringify({ app: 'antler-forge', version: 1, params }, null, 2) },
-    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in', plates: params.style === 'crown' ? null : platesNow(), cap: b.cap ? { report: Object.assign({}, b.cap.report, { size: C.plateSize(b.cap.mesh, b.cap.report.fit.angle) }), fit: b.cap.report.fit } : undefined }) },
+    { name: 'PRINT-NOTES.txt', data: C.printNotes(C.resolveParams(params), notesReport, b.report.fit, { units: 'in', plates: params.style === 'crown' ? null : platesNow(), cap: b.cap ? { report: Object.assign({}, b.cap.report, { size: C.plateSize(b.cap.mesh, b.cap.report.fit.angle) }), fit: b.cap.report.fit,
+      strip: b.cap.strip ? { report: Object.assign({}, b.cap.strip.report, { size: C.plateSize(b.cap.strip.mesh, b.cap.strip.report.fit.angle) }) } : undefined } : undefined }) },
   ]);
   offerFile(base + '.zip', zip);
 }
