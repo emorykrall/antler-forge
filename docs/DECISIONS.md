@@ -88,7 +88,7 @@ Newest first within each section. Change one only when the owner asks.
   forehead (it used to dive into it); the ribbon slots sit at the plate's side edge (the ribbon goes up through one and
   back down over the edge), outboard of and behind each antler, clear of its collar: usually both just behind the
   antler, where the plate is wide; one in front only when the plate reaches far enough forward. The plate's default
-  width beyond the antlers is 16 mm, so two slots fit.
+  width beyond the antlers was 16 mm, so two slots fit (now 40 mm: see the wire headband below).
   Peg fit (owner, 2026-10-05, from printed test pieces on the P2S in PLA: 0.5 and 0.3 mm were loose, 0.2 mm "a tiny bit
   of friction, but it still slides on very easily"): the antler's socket is 0.2 mm bigger across than the peg (0.1 mm all
   round), its own setting under Advanced (shown with the skull cap), separate from Fit clearance, which the band's fits
@@ -105,6 +105,33 @@ Newest first within each section. Change one only when the owner asks.
   side broken its own way. On top, sutures meander and interlock unevenly, pores are sparse and drawn out along a faint
   grain (no even stippling), and the antler collars flare unevenly into the plate (no turned disc or separate ring,
   which only repeated the antler's burr).
+  Wire headband (owner, 2026-10-07, with a photo of the fit: a ⅛ in wire over the head instead of a flat band; split the
+  cap so it clamshells round the wire, as little added thickness as possible, minimal registration, the top overlapping
+  the bottom so no seam shows, glued with the wire trapped): a Headband setting in the Skull cap group, Flat band (the
+  groove, as before; the setting's default, so saved designs don't change) or Double wire (the Yellowjackets page opens
+  on it). There is no single-wire cap (owner: "that was never a plan"). The owner's double-wire band (photo and
+  measurements, 2026-10-07): the wires 56 mm apart over the top, the antlers midway between them, and 1⅜ in apart just
+  above the ears; in the photo the pair leans back as it comes down, the front wire more. Each wire lies in a plane from
+  where it crosses the top down to the tape line just above the ear, so its channel follows it across the cap, curving
+  back toward the ears. Settings: Wire thickness, Front wire and Back wire (where each crosses the top, from the
+  antlers' line: 28 mm each way), Wires apart above the ears (35 mm). With the antlers midway, both wires cross the wide
+  part of the plate and hold it in front of and behind the antlers. A wire the plate doesn't reach gets no strip and the
+  page says so. Ribbon slots and bobby-pin grooves keep clear of the channels.
+  Also asked the same day: by default the cap reaches further down the sides (Width beyond the antlers 40 mm, was 16; up
+  to 60), and the ribbon slots and bobby-pin grooves are off (the grooves got their own switch). To reach down the sides
+  the plate now follows the head's real oval across (the circle it followed matched the head at the antlers but would
+  have dug in lower down), front to back round the ear-to-ear axis, with lengths kept both ways. On the double wire the
+  outline stays wide out past each wire, so both come out through the plate's sides, not its front or back corners (the
+  shoulders in front are wider; the nose starts further forward). The cap rests on its few lowest rim points rather than
+  one tooth's tip, so it always has a flat on the bed.
+  The cap stays one piece; the bottom of the clamshell is only a narrow strip (about ⅜ in wide, ⅒ in thick) under each
+  wire, one run from the middle out to the edge: a round channel (the wire plus Fit clearance) half in each, split at the wire's centre. The strip sits in a
+  pocket in the cap's underside that surrounds it on all sides and stops 3 mm short of the edge, so the cap overlaps it
+  everywhere and the only seam is underneath, against the head (a full-width split would have put a seam round the whole
+  broken edge, and two thin shells glued over their whole area). Registration: the pocket's walls, plus two small pins on
+  the strip, both on its front side, into holes in the pocket, so it only goes in one way. Over the wire the cap is as
+  thick as over a flat band (its roof at least 1 mm, the bone texture kept shallow there); the bump is narrower than a
+  wide band's. The strip prints standing on its flat back side, its curve flat on the plate, with no supports.
 - **A comfortable underside** (owner, 2026-10-04: check for anything sharp underneath). Only the cap's smooth outer edge
   rests on the head, and every edge on the head is rounded (about 1.5 mm). Inside that edge nothing comes within
   2.5 mm of the head: the scan's ragged eye-socket rims, which dipped toward it, are lifted clear or removed where too
