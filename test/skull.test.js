@@ -39,11 +39,11 @@ test('the skull cap holds up across the ends of its settings, and Surprise me’
     { capSnoutWidth: 1.6, capTaper: 0, capJag: 1, hbWidth: 25.4 }, { capSnoutWidth: 0.6, capTaper: 1, capJag: 0.3, headCirc: 640 },
     { seed: 3 }, { seed: 4071, capJag: 0.9 }, { headCirc: 520, hbWidth: 12 },
     { capBand: 'wire', wireDia: 1.5, clearance: 0, capJag: 1, seed: 4071 }, { capBand: 'wire', wireDia: 5, clearance: 1.5, capWidth: -6, capSpacing: 60, capLength: 30, capBack: 20 },
-    { capBand: 'wire', headCirc: 640, capWidth: 30, capSpacing: 110, capTieFront: true }];
+    { capBand: 'wire', headCirc: 640, capWidth: 30, capSpacing: 110, capTieFront: true },
+    { capBand: 'wires', wireFront: -20, wireBack: 80, capJag: 1 }, { capBand: 'wires', wireFront: 100, wireBack: -20, wireDia: 5, capLength: 110, headCirc: 520 }];
   for (const q of cases) {
     const sk = cap('buck', q);
-    for (const part of [sk, sk.strip]) {
-      if (!part) continue;
+    for (const part of [sk, ...(sk.strips || [])]) {
       const r = Core.validateMesh(Core.meshAntler(part, part === sk ? 1.2 : 0.5));
       assert.ok(r.watertight && r.shells === 1 && r.volume > 0 && part.fit.fits, (part === sk ? 'cap ' : 'strip ') + JSON.stringify(q));
     }
@@ -195,97 +195,126 @@ test('both pegs on the cap have their flat facing the middle of the head, as bot
   }
 });
 
-// A wire headband (capBand 'wire'): the cap splits round it. A round channel, half in the cap and half in a strip that glues
-// up into a pocket in the cap's underside. The cap overlaps the strip all round (the only seam is underneath), two pins on
-// the strip go into holes in the pocket, and the cap is no thicker over the wire than it is over a flat band.
+// A wire headband (capBand 'wire': one wire under the antlers; 'wires': a double-wire band, two wires spreading over the
+// top from where their ends join by the ears): the cap splits round each wire. A round channel, half in the cap and half
+// in a strip that glues up into a pocket in the cap's underside. The cap overlaps each strip all round (the only seam is
+// underneath), two pins on each strip go into holes in its pocket, and the cap is no thicker over a wire than it needs.
 const solidIn = (part) => {   // a part's field, in the band frame
   const M = part.toBand, f = part.fields[0].f;
   return (b) => { const q = [b[0] - M[12], b[1] - M[13], b[2] - M[14]]; return f(q[0] * M[0] + q[1] * M[1] + q[2] * M[2], q[0] * M[4] + q[1] * M[5] + q[2] * M[6], q[0] * M[8] + q[1] * M[9] + q[2] * M[10]) < 0; };
 };
-const wireCap = (preset, extra) => cap(preset, Object.assign({ capBand: 'wire', hbWidth: 24 }, extra));
-// the band-frame point x across (plate coordinates), y forward (band frame), h off the head
-const atY = (g, x, y, h) => { let s = y; for (let i = 0; i < 4; i++) { const b = g.fromSkull(x, s, h); if (Math.abs(b[1]) > 1e-6) s *= y / b[1]; } return g.fromSkull(x, s, h); };
+const wireCap = (preset, extra) => cap(preset, Object.assign({ capBand: 'wires', hbWidth: 24 }, extra));
+// the band-frame point x across (plate coordinates), y from the wire's plane (+ toward the face), h off the head
+const atW = (g, w, x, y, h) => { let s = w.sAt(x); for (let i = 0; i < 6; i++) { const d0 = w.dp(g.fromSkull(x, s, h)) - y, d1 = w.dp(g.fromSkull(x, s + 0.5, h)) - y; s -= d0 * 0.5 / (d1 - d0); } return g.fromSkull(x, s, h); };
 
-for (const preset of ['trial', 'feral', 'eightpoint']) {
-  test(`${preset} on a wire: the cap and its strip are each one watertight solid, flat on the bed, that fits the P2S`, () => {
-    const sk = wireCap(preset);
-    assert.ok(sk.strip, 'a strip with the cap');
-    for (const [name, part, res] of [['cap', sk, 1.0], ['strip', sk.strip, 0.5]]) {
+for (const [preset, capBand] of [['trial', 'wires'], ['feral', 'wires'], ['eightpoint', 'wire'], ['trial', 'wire']]) {
+  test(`${preset} on ${capBand === 'wires' ? 'two wires' : 'a wire'}: the cap and each strip are one watertight solid, flat on the bed, that fits the P2S`, () => {
+    const sk = wireCap(preset, { capBand });
+    assert.equal(sk.strips.length, capBand === 'wires' ? 2 : 1, 'a strip for each wire');
+    for (const [name, part, res] of [['cap', sk, 1.0], ...sk.strips.map((st) => [`${st.wire || 'wire'} strip`, st, 0.5])]) {
       const mesh = Core.meshAntler(part, res), r = Core.validateMesh(mesh);
       assert.ok(r.openEdges === 0 && r.nonManifoldEdges === 0 && r.shells === 1 && r.volume > 0, `${name}: one watertight solid`);
       assert.ok(part.fit.fits, `${name} fits`);
       const { bbox, size } = plateSize(mesh, part.fit.angle);
       assert.ok(bbox[2] >= 0 && bbox[2] < 0.05, `${name} sits on the bed (min Z ${bbox[2]})`);
-      if (name === 'strip') assert.ok(Math.abs(size[2] - 2 * sk.spec.wire.hw) < 0.2, `the strip stands on its side (${size[2].toFixed(1)} mm tall)`);
+      if (part !== sk) assert.ok(Math.abs(size[2] - 2 * sk.spec.wire.hw) < 0.2, `the ${name} stands on its side (${size[2].toFixed(1)} mm tall)`);
     }
   });
 }
 
-test('on a wire, the cap clamshells round it: channel clear, strip in its pocket, overlapped all round, pinned one way', () => {
-  for (const extra of [{}, { wireDia: 2, clearance: 0.6 }, { capJag: 1, seed: 11 }]) {
-    const sk = wireCap('trial', extra), g = sk.spec, W = g.wire, P = g.P, k = g.form;
-    const top = solidIn(sk), strip = solidIn(sk.strip), tag = JSON.stringify(extra);
+test('on wires, the cap clamshells round each: channel clear, strip in its pocket, overlapped all round, pinned one way', () => {
+  for (const extra of [{}, { capBand: 'wire' }, { wireDia: 2, clearance: 0.6, wireFront: 40, wireBack: 10 }, { capJag: 1, seed: 11 }]) {
+    const sk = wireCap('trial', extra), g = sk.spec, W = g.wire, P = g.P, k = g.form, top = solidIn(sk), tag = JSON.stringify(extra);
     assert.ok(Math.abs(W.D - (P.wireDia + P.clearance)) < 1e-9, 'the channel is the wire plus the Fit clearance');
-    const span = k.wAt(0) - Core.WIRE.end - 2;
-    for (let x = -span; x <= span; x += 7) {
-      // the wire itself (with a little of its clearance) touches neither part
-      for (let a = 0; a < 6.28; a += 0.5) {
-        const r = P.wireDia / 2 + 0.05, b = atY(g, x, r * Math.cos(a), W.hc + r * Math.sin(a));
-        assert.ok(!top(b) && !strip(b), `${tag} the wire is clear at x ${x.toFixed(0)}`);
+    g.wires.forEach((w) => {
+      const st = sk.strips.find((q) => q.wire === w.name), strip = solidIn(st), name = `${tag} ${w.name || 'the'} wire`;
+      for (let x = -k.wAt(w.s0); x <= k.wAt(w.s0); x += 4) {
+        if (!strip(atW(g, w, x, W.D / 2 + 1, W.hc - 1))) continue;   // only along the strip
+        for (let a = 0; a < 6.28; a += 0.5) {   // the wire itself (with a little of its clearance) touches neither part
+          const r = P.wireDia / 2 + 0.05, b = atW(g, w, x, r * Math.cos(a), W.hc + r * Math.sin(a));
+          assert.ok(!top(b) && !strip(b), `${name} is clear at x ${x.toFixed(0)}`);
+        }
+        assert.ok(!top(atW(g, w, x, W.D / 2 + 1, W.hc - 1)), `${name}: strip and cap never overlap at x ${x.toFixed(0)}`);
+        assert.ok(top(atW(g, w, x, 0, W.hc + W.D / 2 + 0.6)), `${name}: the cap over it at x ${x.toFixed(0)}`);
+        for (const sy of [1, -1]) {   // the cap comes down outside the strip on both sides (the seam is underneath), with a glue gap
+          const side = g.toSkull(atW(g, w, x, sy * (W.hw + 0.5), W.hc - 1.2));
+          if (!strip(atW(g, w, x, sy * (W.hw - 0.3), W.hc - 1.2)) || -k.sdf(side[0], side[1]) < Core.WIRE.end + 1) continue;   // along the strip's sides, not its end corners
+          assert.ok(!top(atW(g, w, x, sy * (W.hw + 0.05), W.hc - 1.2)), `${name}: a glue gap beside the strip at x ${x.toFixed(0)}`);
+          assert.ok(top(atW(g, w, x, sy * (W.hw + Core.WIRE.fit + 0.5), W.hc - 1.2)), `${name}: the cap overlaps the strip at x ${x.toFixed(0)}`);
+        }
       }
-      // the strip under it, the cap over it, never both
-      assert.ok(strip(atY(g, x, W.D / 2 + 1, W.hc - 1)) && !top(atY(g, x, W.D / 2 + 1, W.hc - 1)), `${tag} the strip beside the wire at x ${x.toFixed(0)}`);
-      assert.ok(top(atY(g, x, 0, W.hc + W.D / 2 + 0.6)), `${tag} the cap over the wire at x ${x.toFixed(0)}`);
-      // the cap comes down outside the strip on both sides (the seam is underneath), with a glue gap between
-      for (const sy of [1, -1]) {
-        if (!strip(atY(g, x, sy * (W.hw - 0.3), W.hc - 1.2))) continue;   // past the strip's end here (a jagged edge comes in)
-        assert.ok(!top(atY(g, x, sy * (W.hw + 0.05), W.hc - 1.2)), `${tag} a glue gap beside the strip at x ${x.toFixed(0)}`);
-        assert.ok(top(atY(g, x, sy * (W.hw + Core.WIRE.fit + 0.5), W.hc - 1.2)), `${tag} the cap overlaps the strip at x ${x.toFixed(0)}`);
+      for (const sx of [1, -1]) {   // the strip stops short of the edge, and the cap closes round its end (all but the wire's way out)
+        const beside = (x) => atW(g, w, x, W.D / 2 + 1, W.hc - 1);
+        let x = 0; while (strip(beside(x + 0.1 * sx))) x += 0.1 * sx;
+        const b = beside(x), [bx, bs] = g.toSkull(b);
+        assert.ok(k.sdf(bx, bs) < -Core.WIRE.end + 0.5, `${name}: the strip stops inside the edge`);
+        let gap = 0; while (gap < 3 && !top(beside(x + gap * sx))) gap += 0.05;
+        assert.ok(gap < 1, `${name}: the cap closes round the strip's end (${gap.toFixed(2)} mm on)`);
+        assert.ok(!top(atW(g, w, x + (gap + 0.5) * sx, 0, W.hc)), `${name}: and the wire runs on out`);
       }
-    }
-    // the strip stops short of the edge each side, and the cap closes round its end (all but the wire's way out)
-    for (const sx of [1, -1]) {
-      const y = W.D / 2 + 1, beside = (x) => atY(g, x, y, W.hc - 1);
-      let x = 0; while (strip(beside(x + 0.1 * sx))) x += 0.1 * sx;   // the strip's end, beside the wire
-      assert.ok(k.sdf(x, y) < -Core.WIRE.end + 0.5, `${tag} the strip stops inside the edge`);
-      let gap = 0; while (gap < 3 && !top(beside(x + gap * sx))) gap += 0.05;
-      assert.ok(gap < 1, `${tag} the cap closes round the strip's end (${gap.toFixed(2)} mm on)`);
-      assert.ok(!top(atY(g, x + (gap + 0.5) * sx, 0, W.hc)), `${tag} and the wire runs on out`);
-    }
-    // two pins on the strip, both on its front side, each in a hole in the cap
-    const pins = [0.5, -0.5].map((u) => u * k.X);
-    for (const px of pins) for (const dh of [0.3, 0.7]) {
-      const b = atY(g, px, W.pinY, W.hc + dh);
-      assert.ok(strip(b) && !top(b), `${tag} the pin at x ${px.toFixed(0)} stands in its hole`);
-      assert.ok(!strip(atY(g, px, -W.pinY, W.hc + dh)), `${tag} and only on the front side`);
-    }
+      // two pins on the strip, both on its front side, each in a hole in the cap
+      let pins = 0;
+      for (let x = -k.wAt(w.s0); x <= k.wAt(w.s0); x += 0.25) if (strip(atW(g, w, x, W.pinY, W.hc + 0.5))) {
+        pins++; x += 3;
+        assert.ok(!top(atW(g, w, x - 3, W.pinY, W.hc + 0.5)), `${name}: its pin stands in a hole`);
+      }
+      assert.equal(pins, 2, `${name}: two pins`);   // (one, on a strip too short for two)
+      for (let x = -k.wAt(w.s0); x <= k.wAt(w.s0); x += 0.5) assert.ok(!strip(atW(g, w, x, -W.pinY, W.hc + 0.5)), `${name}: pins only on the front side`);
+    });
   }
 });
 
-test('on a wire, the cap is no thicker than on a flat band, and its roof over the wire stays whole', () => {
+test('two wires cross the top where they’re set, and follow the double band down toward where its ends join', () => {
+  const sk = wireCap('trial'), g = sk.spec, top = solidIn(sk), W = g.wire;
+  const [front, back] = g.wires;
+  assert.deepEqual(g.wires.map((w) => w.name), ['front', 'back']);
+  assert.equal(front.s0, g.P.wireFront); assert.equal(back.s0, -g.P.wireBack);
+  for (const w of g.wires) {
+    assert.ok(Math.abs(w.dp(g.fromSkull(0, w.s0, W.hc))) < 1e-6, `the ${w.name} wire crosses the top at ${w.s0} mm`);
+    assert.ok(!top(g.fromSkull(0, w.s0, W.hc)) && top(g.fromSkull(0, w.s0, W.hc + W.D / 2 + 0.6)), `its channel is there, under the cap`);
+  }
+  // toward the sides the front wire leans back toward the join (as in the owner's photo); the back one stands nearly upright
+  const y = (w, x) => g.fromSkull(x, w.sAt(x), W.hc)[1];
+  assert.ok(y(front, 0) - y(front, 50) > 3, 'the front wire comes back toward the ears');
+  assert.ok(Math.abs(y(back, 0) - y(back, 50)) < 2, 'the back wire stands nearly upright');
+  // nothing else cut through the plate lands on a channel: the ribbon slots and the bobby-pin grooves stay clear
+  const both = wireCap('trial', { capTieFront: true }).spec;
+  for (const sl of both.slots) assert.ok(both.wd(sl.x, sl.s) > both.groW + 2, `the slot at s ${sl.s.toFixed(0)} is clear of the wires`);
+  for (const pn of both.pins) assert.ok(both.wd(both.form.wAt(pn.s) - 1, pn.s) > both.groW + 3, `the bobby-pin groove at s ${pn.s.toFixed(0)} is clear of the wires`);
+  // a wire the plate doesn't reach gets no strip, and the cap says which
+  const short = wireCap('trial', { wireFront: 100, capLength: 40 });
+  assert.deepEqual(short.wiresMissing, ['front']); assert.equal(short.strips.length, 1);
+});
+
+test('over a wire, the cap is no thicker than it needs to be, and its roof stays whole', () => {
+  const height = (sk, x, s) => { const g = sk.spec, t = solidIn(sk); let h = 0; for (let u = 0; u < 14; u += 0.05) if (t(g.fromSkull(x, s, u))) h = u; return h; };
   for (const preset of ['trial', 'feral']) {
-    const wire = wireCap(preset), band = cap(preset, { hbWidth: 24 }), W = wire.spec.wire;
-    const height = (sk, x, s) => { const g = sk.spec, t = solidIn(sk); let h = 0; for (let u = 0; u < 14; u += 0.05) if (t(g.fromSkull(x, s, u))) h = u; return h; };
+    const one = wireCap(preset, { capBand: 'wire' }), band = cap(preset, { hbWidth: 24 });
     for (const x of [-25, 0, 25]) {
-      const hw = height(wire, x, 0), hb = height(band, x, 0);
+      const hw = height(one, x, 0), hb = height(band, x, 0);
       assert.ok(hw <= hb + 0.4, `${preset}: over the wire at x ${x} ${hw.toFixed(1)} mm, over a flat band ${hb.toFixed(1)} mm`);
     }
-    const g = wire.spec;
-    for (let x = -g.form.wAt(0) + 3; x < g.form.wAt(0) - 3; x += 1.5) {
-      if (-g.form.sdf(x, 0) < 2) continue;
-      assert.ok(height(wire, x, 0) - (W.hc + W.D / 2) >= 0.95, `${preset}: roof over the wire at x ${x.toFixed(1)}`);
+    for (const sk of [one, wireCap(preset)]) {
+      const g = sk.spec, W = g.wire;
+      for (const w of g.wires) for (let x = -g.form.wAt(w.s0) + 3; x < g.form.wAt(w.s0) - 3; x += 1.5) {
+        const s = w.sAt(x); if (-g.form.sdf(x, s) < 2) continue;
+        const roof = height(sk, x, s) - (W.hc + W.D / 2);
+        assert.ok(roof >= 0.95, `${preset} ${w.name || 'wire'}: roof over the wire at x ${x.toFixed(1)} ${roof.toFixed(2)} mm`);
+        if (Math.abs(x) > 10 && Math.abs(x) < 20 && !sk.spec.slots.length) assert.ok(roof < 2, `${preset} ${w.name || 'wire'}: no thicker than it needs at x ${x.toFixed(1)}`);
+      }
     }
   }
 });
 
-test('a flat band has no strip, and a wire design keeps its headband through a species change', () => {
-  assert.equal(cap('trial').strip, undefined);
+test('a flat band has no strips, and a wire design keeps its headband through a species change', () => {
+  assert.equal(cap('trial').strips, undefined);
   const P = Core.presetParams('feral', Core.presetParams('trial', null));
-  const kept = Core.presetParams('feral', Object.assign(Core.presetParams('trial'), { mount: 'skull', capBand: 'wire', wireDia: 2.5 }));
+  const kept = Core.presetParams('feral', Object.assign(Core.presetParams('trial'), { mount: 'skull', capBand: 'wires', wireDia: 2.5, wireFront: 40, wireBack: 20 }));
   assert.equal(P.capBand, 'band');
-  assert.equal(kept.capBand, 'wire'); assert.equal(kept.wireDia, 2.5);
-  const notes = Core.printNotes(kept, { size: [1, 1, 1], triangles: 1, volume: 1, watertight: true }, null, { cap: { report: { size: [120, 120, 48], volume: 50000 }, strip: { report: { size: [120, 37, 9] } } } });
-  assert.match(notes, /four parts/); assert.match(notes, /Wire strip/); assert.doesNotMatch(notes, /groove under the cap/);
+  assert.deepEqual([kept.capBand, kept.wireDia, kept.wireFront, kept.wireBack], ['wires', 2.5, 40, 20]);
+  const strip = (wire) => ({ wire, report: { size: [120, 37, 9] } });
+  const notes = Core.printNotes(kept, { size: [1, 1, 1], triangles: 1, volume: 1, watertight: true }, null, { cap: { report: { size: [120, 120, 48], volume: 50000 }, strips: [strip('front'), strip('back')] } });
+  assert.match(notes, /five parts/); assert.match(notes, /front wire’s strip/); assert.match(notes, /back wire’s strip/); assert.doesNotMatch(notes, /groove under the cap/);
 });
 
 test('the headband groove under the cap matches the band and never scales', () => {

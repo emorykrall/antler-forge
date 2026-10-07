@@ -108,8 +108,17 @@ Newest first within each section. Change one only when the owner asks.
   Wire headband (owner, 2026-10-07, with a photo of the fit: a ⅛ in wire over the head instead of a flat band; split the
   cap so it clamshells round the wire, as little added thickness as possible, minimal registration, the top overlapping
   the bottom so no seam shows, glued with the wire trapped): a Headband setting in the Skull cap group, Flat band (the
-  groove, as before; the default, so saved designs don't change) or Wire, with Wire thickness (⅛ in) shown for a wire.
-  The cap stays one piece; the bottom of the clamshell is only a narrow strip (about ⅜ in wide, ⅒ in thick) under the
+  groove, as before; the default, so saved designs don't change), One wire (under the antlers) or Two wires, with Wire
+  thickness (⅛ in) shown for a wire. Two wires (owner, same day: "there are two wires, they will sit as shown"): the
+  photo shows a double-wire band, the wires about 2¼ in apart over the top and coming together by the tops of the ears,
+  the front one leaning forward about 22°, the back one nearly upright. Each wire lies in a plane through the line where
+  the ends join, so its channel follows it across the cap, curving back toward the ears. Front wire and Back wire set
+  where each crosses the top, from the antlers' line; the defaults put the antlers midway (28 mm each way), so both wires
+  cross the wide part of the plate and hold it in front of and behind the antlers (with the antlers over the back wire,
+  the front one crossed only the cap's narrow point). A wire the plate doesn't reach gets no strip and the page says so.
+  Ribbon slots and bobby-pin grooves keep clear of the channels. The cap now rests on its few lowest rim points rather
+  than one tooth's tip, so it always has a flat on the bed (it sinks 0.2–0.5 mm deeper).
+  The cap stays one piece; the bottom of the clamshell is only a narrow strip (about ⅜ in wide, ⅒ in thick) under each
   wire: a round channel (the wire plus Fit clearance) half in each, split at the wire's centre. The strip sits in a
   pocket in the cap's underside that surrounds it on all sides and stops 3 mm short of the edge, so the cap overlaps it
   everywhere and the only seam is underneath, against the head (a full-width split would have put a seam round the whole
