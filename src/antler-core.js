@@ -1823,7 +1823,7 @@
         const w = sub(p, q.A), hh = dot(w, q.Z), rad = vlen(sub(w, mul(q.Z, hh))), u = clamp(hh / q.L, 0, 1);
         const lump = vnoise(p[0] * 0.18 + so, p[1] * 0.18, p[2] * 0.18) - 0.5, rr = g.rp * (1 + (0.6 + 0.5 * lump) * (1 - sstep(u)));
         d = smin(d, Math.max(rad - rr * (1 + 0.06 * (vnoise(p[0] * 0.5, p[1] * 0.5, p[2] * 0.5) - 0.5)), -hh, hh - q.L), 6 + 3 * lump);
-        const wq = sub(p, q.Q), hq = dot(wq, q.Z), xq = dot(wq, q.X) * q.s;
+        const wq = sub(p, q.Q), hq = dot(wq, q.Z), xq = dot(wq, q.X);   // q.X is mirrored already: the flat faces the midline on both
         const rq = vlen(sub(wq, mul(q.Z, hq)));
         d = Math.min(d, Math.max(rq - PEG.r + Math.max(0, hq - PEG.h + 0.8), -PEG.flat - xq, hq - PEG.h, -hq - 1));   // chamfered at the top
       }

@@ -175,6 +175,20 @@ test('each antler stands on its pedicle with the axes it was built with, and its
   }
 });
 
+test('both pegs on the cap have their flat facing the middle of the head, as both antlers’ sockets do', () => {
+  for (const preset of ['trial', 'feral']) {
+    const sk = cap(preset), g = sk.spec, { solid } = probe(sk);
+    const { add, mul, sub, dot } = Core._util;
+    for (const s of [1, -1]) {   // the wearer's right, then left (the left antler is the right one mirrored)
+      const fl = (v) => [s * v[0], v[1], v[2]], Q = fl(g.Q), Z = fl(g.F.Z), mid = add(Q, mul(Z, Core.PEG.h / 2));
+      let m = [-s, 0, 0]; m = sub(m, mul(Z, dot(m, Z))); m = mul(m, 1 / Math.hypot(...m));   // toward the midline, across the peg
+      const r = (Core.PEG.flat + Core.PEG.r) / 2, side = s > 0 ? 'right' : 'left';
+      assert.ok(!solid(add(mid, mul(m, r))), `${preset}: the ${side} peg's flat faces the middle`);
+      assert.ok(solid(add(mid, mul(m, -r))), `${preset}: the ${side} peg's round side faces out`);
+    }
+  }
+});
+
 test('the headband groove under the cap matches the band and never scales', () => {
   const at = (scale) => Core.skullSpec(design('trial', 'skull', { scale })).band;
   assert.deepEqual(at(0.3), at(1.4));
