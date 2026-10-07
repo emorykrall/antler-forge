@@ -120,8 +120,10 @@ Newest first within each section. Change one only when the owner asks.
   Also asked the same day: by default the cap reaches further down the sides (Width beyond the antlers 40 mm, was 16; up
   to 60), and the ribbon slots and bobby-pin grooves are off (the grooves got their own switch). To reach down the sides
   the plate now follows the head's real oval across (the circle it followed matched the head at the antlers but would
-  have dug in lower down), front to back round the ear-to-ear axis, with lengths kept both ways. The cap rests on its
-  few lowest rim points rather than one tooth's tip, so it always has a flat on the bed.
+  have dug in lower down), front to back round the ear-to-ear axis, with lengths kept both ways. On the double wire the
+  outline stays wide out past each wire, so both come out through the plate's sides, not its front or back corners (the
+  shoulders in front are wider; the nose starts further forward). The cap rests on its few lowest rim points rather than
+  one tooth's tip, so it always has a flat on the bed.
   The cap stays one piece; the bottom of the clamshell is only a narrow strip (about ⅜ in wide, ⅒ in thick) under each
   wire, one run from the middle out to the edge: a round channel (the wire plus Fit clearance) half in each, split at the wire's centre. The strip sits in a
   pocket in the cap's underside that surrounds it on all sides and stops 3 mm short of the edge, so the cap overlaps it

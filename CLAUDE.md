@@ -59,7 +59,8 @@ node tools/fit-test.js 0.15,0.2,0.25       # skull cap peg + antler sockets at t
   `spec.wires`: `J`, `n`, `dp`, `sAt`), in a round channel split at its centre: the cap keeps
   the top half, and a strip for each wire (`wireStrip`, `sk.strips`; `capWire`) holds the bottom half and glues up into a
   pocket the cap surrounds on all sides (the seam is only underneath), with pins on its front side into holes in the
-  pocket, each strip one run from the middle out to the edge. Strips print standing on their flat back side. A wire the
+  pocket, each strip one run from the middle out to the edge; the outline stays wide out past each wire (`plateForm`'s
+  `cover`), so the wires leave through its sides. Strips print standing on their flat back side. A wire the
   plate misses is in `sk.wiresMissing`. Not mirror-symmetric (each side its own teeth and width, the point a
   little off the middle); plate coordinates are mapped onto the head itself (`fromSkull`/`toSkull`: across along
   its oval, front to back round the ear-to-ear axis; lengths kept both ways at every height), so it can reach well down

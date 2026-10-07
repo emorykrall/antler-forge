@@ -1603,14 +1603,23 @@
   // at the back, narrowing to a point at the front, broken along its edge), and how thick it is where. Cached: the
   // antlers' placement asks for it on every build.
   const PLATES = new Map();
-  function plateForm(P) {
-    const key = ['capSpacing', 'capWidth', 'capLength', 'capBack', 'capSnoutWidth', 'capTaper', 'capJag', 'seed'].map((k) => P[k]).join('|');
+  // cover (optional): [x, s] points the plate must reach past, wherever it would otherwise taper in before them: the wires,
+  // which should come out through the plate's sides, not its front or back corners.
+  function plateForm(P, cover) {
+    const key = ['capSpacing', 'capWidth', 'capLength', 'capBack', 'capSnoutWidth', 'capTaper', 'capJag', 'seed'].map((k) => P[k]).join('|')
+      + (cover ? '|' + cover.map((c) => c.map((v) => v.toFixed(1)).join(',')).join(';') : '');
     if (PLATES.has(key)) return PLATES.get(key);
     const X = P.capSpacing / 2, Wm = X + 14 + P.capWidth, F = P.capLength, B = P.capBack;
     const pe = 0.6 + 1.6 * P.capTaper, fw = P.capSnoutWidth;
     // in front: a shoulder past the antlers, then in to a narrow neck at Fb, and the nose: a point over the last of it
     const Fb = 0.74 * F, wn = 7 * Math.sqrt(fw), q = wn / Wm;
-    const wAt = (s) => {   // the base outline's half-width (before it's broken)
+    const reach = (s) => {   // how wide the plate must stay at s to cover the points (eased off past them)
+      let w = 0;
+      for (const [x, sc] of cover || []) w = Math.max(w, (Math.min(x, Wm - 2)) * (1 - sstep((Math.abs(s) - Math.abs(sc) - 10) / 14)) * (s * sc > 0 ? 1 : 0));
+      return w;
+    };
+    const wAt = (s) => Math.max(wBase(s), s > -B && s < Fb ? reach(s) : 0);
+    const wBase = (s) => {   // the base outline's half-width (before it's broken)
       if (s <= -B || s >= F) return 0;
       if (s <= 0) return Wm * Math.pow(1 - Math.pow(-s / B, 2.4), 1 / 2.4);   // rounded at the back
       if (s >= Fb) return wn * Math.pow(1 - (s - Fb) / (F - Fb), 0.75);
@@ -1716,7 +1725,6 @@
     const P = resolveParams(params);
     const band = { r: P.hbRadius, w: P.hbWidth, t: P.hbThick, gap: P.clearance };
     const head = capHead(P), rin = head.top, { ry, ryF, ryAt } = head;
-    const form = plateForm(P);
     // between plate coordinates and the band frame, on the head itself: across, along the head's oval (half-width a, height
     // b over the ear-to-ear axis C, so the plate follows it down the sides), and front to back round C (the head's length
     // Ry, so a long nose lies on the forehead). h is straight off the head; x and s are lengths along it at every height.
@@ -1760,6 +1768,10 @@
       return { name, s0, J, n, dp, sAt };
     });
     const wd = (x, s) => { let d = Infinity; for (const w of wires) d = Math.min(d, Math.abs(w.dp(fromSkull(x, s, wire.hc)))); return d; };   // to the nearest wire
+    // the outline, wide enough that each wire comes out through the plate's sides (4 mm short of them, its broken edge aside)
+    const Wm = P.capSpacing / 2 + 14 + P.capWidth, cover = [];
+    for (const w of wires) for (let x = 0; x <= Wm - 6; x += 3) cover.push([x + 4, w.sAt(x)]);
+    const form = plateForm(P, wires.length ? cover : null);
     // the plate's underside and top (smooth: no texture), h off the head, from how far in from its edge it is
     const bandH = band.t + band.gap / 2, groW = wire ? wire.hw + WIRE.fit : (band.w + band.gap) / 2;
     // thicker over the channel, eased in: over a wire, enough for its roof all the way out (the plate thins at its edge),
