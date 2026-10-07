@@ -288,6 +288,14 @@ test('two wires cross the top where they’re set, and come down toward each oth
   const both = wireCap('trial', { capTie: true, capTieFront: true, capPins: true }).spec;
   for (const sl of both.slots) assert.ok(both.wd(sl.x, sl.s) > both.groW + 2, `the slot at s ${sl.s.toFixed(0)} is clear of the wires`);
   for (const pn of both.pins) assert.ok(both.wd(both.form.wAt(pn.s) - 1, pn.s) > both.groW + 3, `the bobby-pin groove at s ${pn.s.toFixed(0)} is clear of the wires`);
+  // the cap is open underneath each wire all the way across, strip or no strip, so the wires lay in from below: nowhere
+  // does a wire have to be threaded through a hole (owner, 2026-10-07)
+  for (const extra of [{}, { capJag: 1, seed: 11 }, { capWidth: 60 }]) {
+    const q = wireCap('trial', extra), gq = q.spec, tq = solidIn(q);
+    for (const w of gq.wires) for (let x = -140; x <= 140; x += 0.5) for (let h = 0.1; h < gq.wire.hc - gq.wire.D / 2 + 0.2; h += 0.15) {
+      assert.ok(!tq(atW(gq, w, x, 0, h)), `${JSON.stringify(extra)} ${w.name} wire: open underneath at x ${x}, ${h.toFixed(2)} mm up`);
+    }
+  }
   // a wire the plate doesn't reach gets no strip, and the cap says which
   const short = wireCap('trial', { wireFront: 100, capLength: 40 });
   assert.deepEqual(short.wiresMissing, ['front']); assert.equal(short.strips.length, 1);

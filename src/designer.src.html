@@ -795,11 +795,25 @@ function bandObject() {
       pts.push(onHead ? onCurve.lerp(onHead, sw) : onCurve); nrm.push(new THREE.Vector3(0, 1, 0));
     }
     let geos;
-    if (wire) {   // a round wire, or two: each tilted into its plane (through where a double band's ends join), down to the join
-      geos = C.skullSpec(P).wires.map((w) => new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map((p) => {
-        const zb = Math.max(p.z - cz, w.J[2]);
-        return new THREE.Vector3(p.x, w.J[1] - (zb - w.J[2]) * w.n[2] / w.n[1], p.z);
-      })), 160, P.wireDia / 2, 8, false));
+    if (wire) {   // the double wire, each where the cap's channel holds it: on the cap's own head, its centre hc off it, down
+      // past the tape line just above the ear, then on down a little
+      const g = C.skullSpec(P), hc = g.wire.hc, zEar = g.rin - g.head.r[2];
+      geos = g.wires.map((w) => {
+        const side = [];
+        for (let x = 0; x < 300; x += 2) {
+          const sw = w.sAt(x), b = g.fromSkull(x, sw, hc);
+          if (g.form.sdf(x, sw) > 0) {   // past the cap's edge: on the bust where it's fuller than the cap's head
+            const from = new THREE.Vector3(0, b[1], zEar + cz), at = new THREE.Vector3(b[0], b[1], b[2] + cz), dir = at.clone().sub(from).normalize();
+            const hit = bustSurface(dir, from, P.wireDia / 2 + 0.6);
+            if (hit && hit.distanceTo(from) > at.distanceTo(from)) { b[0] = hit.x; b[1] = hit.y; b[2] = hit.z - cz; }
+          }
+          side.push(b); if (b[2] < zEar) break;
+        }
+        const end = side[side.length - 1];
+        for (let i = 1; i <= 4; i++) side.push([end[0], end[1], end[2] - 8 * i]);
+        const path = side.slice(1).reverse().map((b) => [-b[0], b[1], b[2]]).concat(side);
+        return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(path.map((b) => new THREE.Vector3(b[0], b[1], b[2] + cz))), 240, P.wireDia / 2, 8, false);
+      });
     } else {   // a strip across the band's width (y), so build it from the path and the y axis
       const pos = [], idx = [], hw = P.hbWidth / 2;
       pts.forEach((p, i) => { pos.push(p.x, -hw, p.z, p.x, hw, p.z); if (i) idx.push(2 * i - 2, 2 * i - 1, 2 * i, 2 * i - 1, 2 * i + 1, 2 * i); });

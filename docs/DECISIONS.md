@@ -116,7 +116,9 @@ Newest first within each section. Change one only when the owner asks.
   back toward the ears. Settings: Wire thickness, Front wire and Back wire (where each crosses the top, from the
   antlers' line: 28 mm each way), Wires apart above the ears (35 mm). With the antlers midway, both wires cross the wide
   part of the plate and hold it in front of and behind the antlers. A wire the plate doesn't reach gets no strip and the
-  page says so. Ribbon slots and bobby-pin grooves keep clear of the channels.
+  page says so. Ribbon slots and bobby-pin grooves keep clear of the channels. The cap is open underneath each wire all
+  the way across, strip or no strip (owner: the wires seemed to pass through holes in the cap's sides, which doesn't
+  work when they're laid in from below); the page draws each wire in its channel, under the cap.
   Also asked the same day: by default the cap reaches further down the sides (Width beyond the antlers 40 mm, was 16; up
   to 60), and the ribbon slots and bobby-pin grooves are off (the grooves got their own switch). To reach down the sides
   the plate now follows the head's real oval across (the circle it followed matched the head at the antlers but would
