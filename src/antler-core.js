@@ -119,15 +119,17 @@
       { k: 'capTaper', label: 'Point', min: 0, max: 1, step: 0.05, u: '', hint: 'A broad, blunt point ← → a long, thin one' },
       { k: 'capJag', label: 'Jagged edge', min: 0, max: 1, step: 0.05, u: '', hint: 'How big the broken points round the edge are (Surprise me gives a new edge)' },
       { k: 'capBack', label: 'Back reach', min: 20, max: 100, step: 1, u: 'mm', hint: 'How far the plate reaches back behind the antlers' },
-      { k: 'capWidth', label: 'Width beyond the antlers', min: -6, max: 30, step: 1, u: 'mm', hint: 'How far the plate reaches out past the antlers to each side' },
+      { k: 'capWidth', label: 'Width beyond the antlers', min: -6, max: 60, step: 1, u: 'mm', hint: 'How far the plate reaches out past the antlers to each side, down the sides of the head' },
       { k: 'capSpacing', label: 'Antler spacing', min: 60, max: 110, step: 1, u: 'mm', hint: 'Between the centres of the two antlers (a deer’s is about 3 in)' },
       { k: 'capPedicle', label: 'Pedicle height', min: 4, max: 24, step: 0.5, u: 'mm', hint: 'The stumps of bone the antlers stand on' },
-      { k: 'capBand', label: 'Headband', type: 'select', options: [['band', 'Flat band, glued in a groove'], ['wire', 'One wire, under the antlers'], ['wires', 'Two wires (a double-wire band)']], hint: 'A flat band glues into a groove under the cap. A wire lies in a channel under the cap and a thin strip glues in over it from underneath, set into the cap so no seam shows.' },
+      { k: 'capBand', label: 'Headband', type: 'select', options: [['band', 'Flat band, glued in a groove'], ['wires', 'Double wire, clamped in strips']], hint: 'A flat band glues into a groove under the cap. A double-wire band’s two wires each lie in a channel under the cap, and a thin strip glues in over each from underneath, set into the cap so no seam shows.' },
       { k: 'wireDia', label: 'Wire thickness', min: 1.5, max: 5, step: 0.05, u: 'mm', hint: 'Across the wire (⅛ in is 3.2 mm). Its channel is this plus the Fit clearance.' },
-      { k: 'wireFront', label: 'Front wire, at the top', min: -20, max: 100, step: 1, u: 'mm', hint: 'Where the front wire crosses the top of your head: how far in front of the antlers, along the head (negative is behind them). Toward the ears it follows the wire down to where the two meet.' },
+      { k: 'wireFront', label: 'Front wire, at the top', min: -20, max: 100, step: 1, u: 'mm', hint: 'Where the front wire crosses the top of your head: how far in front of the antlers, along the head (negative is behind them).' },
       { k: 'wireBack', label: 'Back wire, at the top', min: -20, max: 80, step: 1, u: 'mm', hint: 'Where the back wire crosses the top of your head: how far behind the antlers, along the head (negative is in front of them).' },
+      { k: 'wireEarGap', label: 'Wires apart above the ears', min: 0, max: 80, step: 1, u: 'mm', hint: 'How far apart the two wires are just above your ears, where they come down toward each other. It sets how they curve across the cap.' },
       { k: 'capTie', label: 'Ribbon slot behind the antlers', type: 'bool', hint: 'A slot each side, behind the band, for ½ in ribbon: up through it and back down over the plate’s edge. Tie the ribbons under your chin or behind your head to hold the plate down so the antlers can’t rock it.' },
-      { k: 'capTieFront', label: 'Ribbon slot in front of the antlers', type: 'bool', hint: 'A slot each side, in front of the band. With both, a ribbon each way holds the plate from rocking forward or back. Bobby pins slid onto the four grooves at the plate’s edge hold it too.' },
+      { k: 'capTieFront', label: 'Ribbon slot in front of the antlers', type: 'bool', hint: 'A slot each side, in front of the band. With both, a ribbon each way holds the plate from rocking forward or back.' },
+      { k: 'capPins', label: 'Bobby-pin grooves', type: 'bool', hint: 'Four grooves in the top at the plate’s edge, two in front and two behind: a bobby pin slid onto the edge at each, its top prong in the groove, holds the plate to your hair.' },
     ] },
     { group: 'Surface', tier: 'details', items: [
       { k: 'burr', label: 'Burr (coronet)', type: 'bool', hint: 'The knobbly ring at the antler\'s base' },
@@ -225,7 +227,7 @@
     crownCount: 0, crownShape: 'cup', crownLength: 50, palmation: 0, forkDepth: 0, forkAngle: 32, forkTines: false,
     jitter: 0.08, seed: 7,
     ovality: 0.12, grooveDepth: 0.45, grooveCount: 9, pearling: 0.45, burr: true, burrSize: 3.5, fillet: 5, smoothing: 3,
-    mount: 'tunnel', baseFlare: 1.65, baseHeight: 15, padLength: 44, hbWidth: 12, hbThick: 3, hbRadius: 85, clearance: 0.4, pegFit: 0.2, wall: 2.2, capBand: 'band', wireDia: 3.175, wireFront: 28, wireBack: 28,
+    mount: 'tunnel', baseFlare: 1.65, baseHeight: 15, padLength: 44, hbWidth: 12, hbThick: 3, hbRadius: 85, clearance: 0.4, pegFit: 0.2, wall: 2.2, capBand: 'band', wireDia: 3.175, wireFront: 28, wireBack: 28, wireEarGap: 35,
     bandAngle: 34, splay: 0, rake: 0,
     filament: 'bone', autoFit: true, scale: 0.62, resolution: '0.5', bedX: 256, bedY: 256, bedZ: 256,
     style: 'headband', headSource: 'tape', headScan: '', headCirc: 571.5, headMeasured: false, headArcFB: 285.75, headArcEE: 254, ringBase: 'closed', ringGap: 70, ringPos: 50, ringFit: 10, ringTilt: 10,
@@ -234,7 +236,7 @@
     character: 0.3, ringPattern: 'band',   // 0.3: natural antler (the antlers as they have always been); species set their own
     tineScale: 1, thickness: 1, wildness: 1, ornament: 1,   // combined controls: ×1 is the species' own design
     tweaks: {},   // Fine-tune: { branch id: { rot: rotation vector (rad, head frame), len: ×, thick: ×, s: where it leaves its parent, a0/a1: tangent arms } }
-    capTie: true, capTieFront: false, capLength: 66, capBack: 60, capWidth: 16, capSpacing: 80, capPedicle: 5,   // the skull cap
+    capTie: false, capTieFront: false, capPins: false, capLength: 66, capBack: 60, capWidth: 40, capSpacing: 80, capPedicle: 5,   // the skull cap
     capSnoutWidth: 1, capTaper: 0.5, capJag: 0.6,                                            // its front and edge
   };
 
@@ -319,7 +321,7 @@
     const pr = PRESETS[name] || PRESETS.whitetail;
     const keep = {}; // style, fit (headband or head size) and printer settings survive a species change
     if (base) for (const k of ['mount', 'hbWidth', 'hbThick', 'hbRadius', 'clearance', 'pegFit', 'wall', 'resolution', 'bedX', 'bedY', 'bedZ', 'bandAngle', 'filament', 'autoFit', 'smoothing',
-      'capTie', 'capTieFront', 'capBand', 'wireDia', 'wireFront', 'wireBack', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capJag', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
+      'capTie', 'capTieFront', 'capPins', 'capBand', 'wireDia', 'wireFront', 'wireBack', 'wireEarGap', 'capLength', 'capBack', 'capWidth', 'capSpacing', 'capPedicle', 'capSnoutWidth', 'capTaper', 'capJag', 'style', 'headSource', 'headScan', 'headCirc', 'headMeasured', 'headArcFB', 'headArcEE', 'ringBase', 'ringGap', 'ringPos', 'ringFit', 'ringTilt']) keep[k] = base[k];   // crown shape comes from the species
     return resolveParams(Object.assign({}, DEFAULTS, pr.p, keep, { preset: name }));
   }
 
@@ -1558,24 +1560,24 @@
                                                                       // curl off the head; over the band's channel
   const SLOT = { len: 14, w: 3.2 };            // a ribbon slot: ½ in ribbon, threaded down through the plate
   const PIN = { len: 11, w: 2.2, depth: 1 };   // a bobby-pin groove: on top, running in from the edge (a pin's top prong)
-  // A wire headband (capBand 'wire': one wire, under the antlers; 'wires': a double-wire band, its two wires spreading apart
-  // over the top from where their ends join, by the ears): the cap splits round each wire. A wire lies across the head in a
+  // A double-wire headband (capBand 'wires': two wires spreading apart over the top of the head from where their ends join,
+  // by the ears): the cap splits round each wire. A wire lies across the head in a
   // round channel, half in the cap and half in a thin strip that glues up into a pocket in the cap's underside, trapping it.
   // The pocket's walls surround the strip and it stops short of the plate's edge, so the cap overlaps it all round and
   // the only seam is underneath, against the head. Two small pins on the strip, both on its front side, go into holes in
   // the pocket: they line it up and only let it go in one way round. Under the strip: floor; beside the channel: side;
   // over it: roof (the cap's bone texture is kept shallow there); end: how far in from the edge the strip stops; fit: the
   // gap round the strip in its pocket (for glue).
-  // Each wire lies in a plane through the ear-to-ear line where a double band's ends join (join: y in the band frame, and
-  // how far below the top of the head, for a 22½ in head). From the owner's photo: the wires about 2¼ in apart over the
-  // top, coming together by the tops of the ears, the front one leaning forward about 22°, the back one nearly upright;
-  // with the antlers midway between them (the defaults), that puts the join a little behind the antlers' line. One wire's
-  // plane stands straight up through the band line.
-  const WIRE = { floor: 0.8, side: 2.8, roof: 1.2, end: 3, fit: 0.15, pin: { r: 0.8, h: 1, gap: 0.15 }, join: { y: -22, drop: 125 } };
+  // Each wire lies in a plane from where it crosses the top of the head (wireFront, wireBack) down to just above the ear,
+  // at the tape line (the head's widest), where the two are wireEarGap apart. From the owner's photo and measurements
+  // (2026-10-07): 2¼ in apart over the top and 1⅜ in just above the ears, the pair leaning back as it comes down (lean:
+  // its middle moves back this much per mm down), so the front wire leans forward about 15° and the back one is nearly
+  // upright.
+  const WIRE = { floor: 0.8, side: 2.8, roof: 1.2, end: 3, fit: 0.15, pin: { r: 0.8, h: 1, gap: 0.15 }, lean: 0.168 };
   // the wire's channel: diameter D (the wire plus the Fit clearance), its centre hc off the head (where the strip and the
   // cap meet), and the strip's half-width hw. null for a flat band.
   function capWire(P) {
-    if (P.capBand !== 'wire' && P.capBand !== 'wires') return null;
+    if (P.capBand !== 'wires') return null;
     const D = P.wireDia + P.clearance, hc = PLATE.gap + WIRE.floor + D / 2;
     return { D, hc, hw: D / 2 + WIRE.side, pinY: D / 2 + WIRE.side / 2 };
   }
@@ -1715,23 +1717,44 @@
     const band = { r: P.hbRadius, w: P.hbWidth, t: P.hbThick, gap: P.clearance };
     const head = capHead(P), rin = head.top, { ry, ryF, ryAt } = head;
     const form = plateForm(P);
-    // between plate coordinates and the band frame, round the head: front to back along its own curve (a circle of the
-    // head's length, Ry, so a long nose stays on the forehead instead of diving into it), across along a circle of radius
-    // R (the head's curve across at the pedicles); a torus round the ear-to-ear axis C. Lengths kept at every height h.
-    const R = head.R, Ry = Math.max(head.r[1], R + 1), Rm = Ry - R, cz = rin - Ry;
+    // between plate coordinates and the band frame, on the head itself: across, along the head's oval (half-width a, height
+    // b over the ear-to-ear axis C, so the plate follows it down the sides), and front to back round C (the head's length
+    // Ry, so a long nose lies on the forehead). h is straight off the head; x and s are lengths along it at every height.
+    const Ry = head.r[1], cz = rin - Ry, oa = head.r[0], ob = head.r[2], e0 = Ry - ob;
+    const tw = (t) => Math.sqrt(oa * oa * Math.cos(t) ** 2 + ob * ob * Math.sin(t) ** 2);   // the oval's speed at angle t
+    const LN = 1024, LT = 2.4, Lt = new Float64Array(LN + 1);   // arc length over the top, from the middle, by angle
+    for (let i = 1; i <= LN; i++) { const t0 = ((i - 1) * LT) / LN, t1 = (i * LT) / LN; Lt[i] = Lt[i - 1] + ((t1 - t0) / 6) * (tw(t0) + 4 * tw((t0 + t1) / 2) + tw(t1)); }
+    const arcAt = (t) => { const u = clamp(t / LT, 0, 1) * LN, i = Math.min(LN - 1, Math.floor(u)); return Lt[i] + (Lt[i + 1] - Lt[i]) * (u - i); };
+    const turn = (t) => Math.atan2(ob * Math.sin(t), oa * Math.cos(t));   // how far the oval's normal has turned from straight up
+    const across = (x, h) => {   // the angle t where the length along the oval, h off it, reaches x (≥ 0)
+      let lo = 0, hi = LN;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (Lt[m] < x) lo = m; else hi = m; }
+      let t = (lo * LT) / LN;
+      for (let i = 0; i < 4; i++) { const v = tw(t); t -= (arcAt(t) + h * turn(t) - x) / (v + h * oa * ob / (v * v)); }
+      return t;
+    };
     const fromSkull = (x, s, h) => {
-      const ph = s / (Ry + h), ps = x / (R + h), dy = Math.sin(ph), dz = Math.cos(ph), c = Rm + (R + h) * Math.cos(ps);
-      return [(R + h) * Math.sin(ps), c * dy, cz + c * dz];
+      const t = across(Math.abs(x), h), v = tw(t), st = Math.sin(t), ct = Math.cos(t);
+      const px = oa * st + (h * ob * st) / v, c = Math.max(10, e0 + ob * ct + (h * oa * ct) / v), ph = s / c;
+      return [Math.sign(x) * px, c * Math.sin(ph), cz + c * Math.cos(ph)];
     };
     const toSkull = (p) => {
-      const y = p[1], z = p[2] - cz, ph = Math.atan2(y, z), u = Math.hypot(y, z) - Rm, rho = Math.hypot(p[0], u), h = rho - R;
-      return [Math.atan2(p[0], u) * (R + h), ph * (Ry + h), h];
+      const y = p[1], z = p[2] - cz, ph = Math.atan2(y, z), c = Math.hypot(y, z), qx = Math.abs(p[0]), qz = c - e0;
+      let t = Math.atan2(qx / oa, qz / ob);
+      for (let i = 0; i < 4; i++) {   // the nearest point on the oval
+        const st = Math.sin(t), ct = Math.cos(t), dx = qx - oa * st, dz = qz - ob * ct;
+        t -= (dx * oa * ct - dz * ob * st) / (-(oa * oa * ct * ct + ob * ob * st * st) - dx * oa * st - dz * ob * ct);
+      }
+      const st = Math.sin(t), ct = Math.cos(t), v = tw(t), h = ((qx - oa * st) * ob * st + (qz - ob * ct) * oa * ct) / v;
+      return [Math.sign(p[0]) * (arcAt(t) + h * turn(t)), ph * c, h];
     };
-    // the wires (on a wire headband): each in its plane, through the join line and where it crosses the top of the head
-    // (s0, its centre hc off the head). dp: signed distance from the plane (+ toward the face); sAt: where it crosses x.
-    const wire = capWire(P), two = P.capBand === 'wires';
-    const wires = !wire ? [] : (two ? [['front', P.wireFront], ['back', -P.wireBack]] : [['', 0]]).map(([name, s0]) => {
-      const J = [0, two ? WIRE.join.y : 0, rin - WIRE.join.drop * P.headCirc / 571.5], T = fromSkull(0, s0, wire.hc);
+    // the wires (on a double-wire headband): each in its plane, through where it crosses the top of the head (s0, its
+    // centre hc off the head) and where it is just above the ear (J: at the tape line, ob below the top, the pair
+    // wireEarGap apart there). dp: signed distance from the plane (+ toward the face); sAt: where it crosses x.
+    const wire = capWire(P), crossings = wire ? [fromSkull(0, P.wireFront, wire.hc), fromSkull(0, -P.wireBack, wire.hc)] : [];
+    const earY = wire ? (crossings[0][1] + crossings[1][1]) / 2 - WIRE.lean * ob : 0;
+    const wires = !wire ? [] : [['front', P.wireFront, 1], ['back', -P.wireBack, -1]].map(([name, s0, sg], i) => {
+      const J = [0, earY + sg * P.wireEarGap / 2, rin - ob], T = crossings[i];
       const n = norm([0, T[2] - J[2], J[1] - T[1]]), dp = (p) => (p[1] - J[1]) * n[1] + (p[2] - J[2]) * n[2];
       const sAt = (x) => { let s = s0; for (let i = 0; i < 8; i++) { const d0 = dp(fromSkull(x, s, wire.hc)), d1 = dp(fromSkull(x, s + 0.5, wire.hc)); s -= d0 * 0.5 / (d1 - d0); } return s; };
       return { name, s0, J, n, dp, sAt };
@@ -1817,7 +1840,7 @@
       const d = slots.length ? Math.min(...slots.map((sl) => Math.abs(sq - sl.s) - SLOT.len / 2)) : 99;
       if (d > farF + 0.5) { farF = d; sFront = sq; }
     }
-    const pins = [sFront, sBack].map((s) => ({ s, x0: form.wIn(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) }));
+    const pins = P.capPins ? [sFront, sBack].map((s) => ({ s, x0: form.wIn(s) - PIN.len, back: s < 0, p: fromSkull(form.wAt(s), s, 0) })) : [];
     return { P, band, wire, wires, wd, groW, head, rin, ry, ryF, ryAt, form, fromSkull, toSkull, topAt, bottomAt, a, rp, B0, Q, F, n, h0, rim, slots, slotsMissing, pins, peg: PEG };
   }
   function buildSkullCap(params) {
@@ -1827,9 +1850,12 @@
     const groW = g.groW, bandH = g.band.t + g.band.gap / 2, so = P.seed * 1.37, W = g.wire;
     // each wire strip's two pins: both on its front side, so it only goes in one way round (x across; y: from the wire's
     // plane, + toward the face), a third of the way in from each end of the strip (one, in the middle, on a short strip)
+    // Each strip runs out from the middle to where its wire first comes within WIRE.end of the edge (run: x from and to), so
+    // a notch in the broken edge never leaves a separate scrap of strip beyond it.
+    const along = (w, sx, m) => { let x = 0; while (Math.abs(x) < 200 && -k.sdf(x + 0.25 * sx, w.sAt(x + 0.25 * sx)) > m) x += 0.25 * sx; return x; };
+    const runs = g.wires.map((w) => [along(w, -1, WIRE.end), along(w, 1, WIRE.end)]);
     const wpins = g.wires.map((w) => {
-      const end = (sx) => { let x = 0; while (Math.abs(x) < 200 && -k.sdf(x + sx, w.sAt(x + sx)) > WIRE.end + 2.5) x += sx; return x; };
-      const xl = end(-1), xr = end(1);
+      const xl = along(w, -1, WIRE.end + 2.5), xr = along(w, 1, WIRE.end + 2.5);
       return (xr - xl > 8 ? [0.3, 0.7] : [0.5]).map((u) => ({ x: xl + u * (xr - xl), y: W.pinY }));
     });
     const peds = [1, -1].map((s) => {
@@ -1882,7 +1908,7 @@
       if (W) g.wires.forEach((w, i) => {   // each wire: its channel (the upper half here), its strip's pocket under it, and the holes for its pins
         const y = w.dp(p);
         d = Math.max(d, -(Math.hypot(y, h - W.hc) - W.D / 2));
-        d = Math.max(d, -Math.max(Math.abs(y) - groW, h - W.hc, WIRE.end - WIRE.fit - dIn));
+        d = Math.max(d, -Math.max(Math.abs(y) - groW, h - W.hc, WIRE.end - WIRE.fit - dIn, runs[i][0] - WIRE.fit - x, x - runs[i][1] - WIRE.fit));
         for (const q of wpins[i]) d = Math.max(d, -Math.max(Math.hypot(x - q.x, y - q.y) - WIRE.pin.r - WIRE.pin.gap, h - W.hc - WIRE.pin.h - 0.3, W.hc - 1 - h));
       });
       else d = smax(d, -Math.max(Math.abs(p[1]) - groW, h - bandH), 1);
@@ -1933,7 +1959,7 @@
     sk.fit = { scale: 1, requested: 1, shrunk: false, angle: fp.angle, w, d: dd, h, xyRatio: fp.ratio, zRatio: h / (P.bedZ - 1), fits: fp.ratio <= 1 && h <= P.bedZ - 1 };
     if (W) {   // a strip for each wire the plate reaches; a wire it doesn't (the front one past a short front reach) is named
       sk.strips = []; sk.wiresMissing = [];
-      g.wires.forEach((w, i) => { const st = wireStrip(P, g, w, wpins[i]); if (st) sk.strips.push(st); else sk.wiresMissing.push(w.name); });
+      g.wires.forEach((w, i) => { const st = wireStrip(P, g, w, wpins[i], runs[i]); if (st) sk.strips.push(st); else sk.wiresMissing.push(w.name); });
     }
     return sk;
   }
@@ -1941,11 +1967,11 @@
   // half of its channel and two pins on top. It fills its pocket under the cap (less the glue gap) and prints standing on
   // its flat back side (the plane hw behind the wire's, away from the face), its curve flat on the plate: no supports.
   // null if the plate doesn't reach the wire.
-  function wireStrip(P, g, w, wpins) {
+  function wireStrip(P, g, w, wpins, run) {
     const W = g.wire, k = g.form, toSkull = g.toSkull;
     const f = (p) => {   // band frame
       const [x, s, h] = toSkull(p), dIn = -k.sdf(x, s), y = w.dp(p);
-      let d = Math.max(Math.abs(y) - W.hw, h - W.hc, g.bottomAt(dIn) - h, WIRE.end - dIn);
+      let d = Math.max(Math.abs(y) - W.hw, h - W.hc, g.bottomAt(dIn) - h, WIRE.end - dIn, run[0] - x, x - run[1]);
       d = Math.max(d, -(Math.hypot(y, h - W.hc) - W.D / 2));
       for (const q of wpins) {   // chamfered at the tip, so it finds its hole
         const rq = Math.hypot(x - q.x, y - q.y);
@@ -2582,7 +2608,7 @@
   // stay in millimetres either way, because that is what Bambu Studio asks for.
   // The skull cap's part of the print notes: cap = { report, fit } for its mesh.
   function skullNotes(P, cap, len) {
-    const s = cap.report.size, g = cap.report.volume / 1000 * 1.24, wire = capWire(P), strips = cap.strips || [], two = P.capBand === 'wires';
+    const s = cap.report.size, g = cap.report.volume / 1000 * 1.24, wire = capWire(P), strips = cap.strips || [];
     const which = (st) => (st.wire ? `the ${st.wire} wire’s strip` : 'the wire strip'), dims = (st) => st.report.size.map((x) => len(x)).join(' × ');
     return [
       '',
@@ -2590,10 +2616,10 @@
       `- ${s.map((x) => len(x)).join(' × ')}, about ${Math.round(g * 0.55)}–${Math.round(g * 0.7)} g. It prints rim-down on its own plate: the outside (the bone) prints clean, the inside rests on tree supports, which come out easily through the open underside.`,
       ...(wire ? [
         `- ${strips.length > 1 ? 'Wire strips' : 'Wire strip'} (${strips.map((st) => `${which(st)}, ${dims(st)}`).join('; ')}): ${strips.length > 1 ? 'they print' : 'it prints'} standing on ${strips.length > 1 ? 'their' : 'its'} flat side, as in the STL, with no supports. Use a brim so ${strips.length > 1 ? 'they stay' : 'it stays'} put. Clear any support out of the pockets under the cap before gluing.`,
-        `- ${two ? 'The wires: put the headband on and check they sit where you set them; bend them to your head first. Turn the cap over and lay each wire in its channel across the underside' : 'The wire: bend it to your head first. Turn the cap over and lay the wire in the channel across its underside, under both antlers'} (made for ${(P.wireDia / 25.4).toFixed(3)} in / ${P.wireDia.toFixed(2)} mm wire), the same length out each side. Then glue ${strips.length > 1 ? 'each strip into its pocket' : 'the strip into the pocket'} on top, pins down into their holes: they sit off-centre toward the front, so ${strips.length > 1 ? 'each' : 'it'} only goes in one way. E6000 or epoxy in the pocket and along the channel; tape it tight while it cures. The cap overlaps ${strips.length > 1 ? 'the strips' : 'the strip'} all round, so no seam shows from outside.`,
+        `- The wires: put the headband on and check they sit where you set them (${len(P.wireFront + P.wireBack)} apart over the top, ${len(P.wireEarGap)} just above the ears); bend them to your head first. Turn the cap over and lay each wire in its channel across the underside (made for ${(P.wireDia / 25.4).toFixed(3)} in / ${P.wireDia.toFixed(2)} mm wire), the same length out each side. Then glue ${strips.length > 1 ? 'each strip into its pocket' : 'the strip into the pocket'} on top, pins down into their holes: they sit off-centre toward the front, so ${strips.length > 1 ? 'each' : 'it'} only goes in one way. E6000 or epoxy in the pocket and along the channel; tape it tight while it cures. The cap overlaps ${strips.length > 1 ? 'the strips' : 'the strip'} all round, so no seam shows from outside.`,
       ] : [`- Glue the headband into the groove under the cap (${len(P.hbWidth + P.clearance)} wide), centred, so the band runs under both pedicles. E6000 or epoxy; clamp or tape it while it cures.`]),
       '- Glue each antler onto its peg (CA or epoxy). Right and left are mirror images: check the flat of the D before the glue goes on.',
-      '- Four bobby-pin grooves at the edge (two at the front, two at the back): with the headband on, slide a bobby pin onto the edge at each groove, its top prong in the groove and its bottom prong into your hair.',
+      ...(P.capPins ? ['- Four bobby-pin grooves at the edge (two at the front, two at the back): with the headband on, slide a bobby pin onto the edge at each groove, its top prong in the groove and its bottom prong into your hair.'] : []),
       ...(P.capTie ? ['- Strap slots: thread a loop of ½ in elastic (about 14 in, sewn or knotted into a ring) through the two slots at the back and down round the back of your head, under the bump of your skull. Or a strip of cloth, tied there. It holds the cap down so the antlers can’t rock it forward or lift it.'] : []),
     ];
   }
@@ -2604,7 +2630,7 @@
     const s = report.size, fil = FILAMENTS[P.filament] || FILAMENTS.bone;
     const crown = P.style === 'crown';
     const mount = crown ? { closed: 'closed crown', openBack: 'crown open at the back', openFront: 'crown open at the front' }[P.ringBase]
-      : { tunnel: 'flared base with slide-on headband channel', clip: 'flared base with snap-on headband clip', flat: 'flared base for gluing', none: 'burr with a flat-cut base', skull: P.capBand === 'wires' ? 'on a skull cap clamped round a double-wire headband (five parts, glued)' : P.capBand === 'wire' ? 'on a skull cap clamped round a wire headband (four parts, glued)' : 'on a skull cap (three parts, glued)' }[P.mount];
+      : { tunnel: 'flared base with slide-on headband channel', clip: 'flared base with snap-on headband clip', flat: 'flared base for gluing', none: 'burr with a flat-cut base', skull: P.capBand === 'wires' ? 'on a skull cap clamped round a double-wire headband (five parts, glued)' : 'on a skull cap (three parts, glued)' }[P.mount];
     const grams = report.volume / 1000 * 1.24;
     const wood = P.filament === 'oak';
     return [

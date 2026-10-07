@@ -53,15 +53,18 @@ node tools/fit-test.js 0.15,0.2,0.25       # skull cap peg + antler sockets at t
   flares unevenly into the plate, with a D-shaped peg. Underneath: a channel the headband glues into (`hbWidth` across the top,
   where the cap sits); ribbon slots each side, behind the band (`capTie`) and in front (`capTieFront`), along the
   plate's edge, clear of the antler's collar (`slotsMissing` names any that don't fit, for the page);
-  four bobby-pin grooves in the top at the edge. On a wire headband (`capBand`: `'wire'`, one under the antlers, or
-  `'wires'`, a double-wire band; `wireDia`, `wireFront`, `wireBack`) each wire lies in a plane through the line where a
-  double band's ends join (`WIRE.join`; `spec.wires`: `dp`, `sAt`), in a round channel split at its centre: the cap keeps
+  four bobby-pin grooves in the top at the edge (`capPins`); slots and grooves are off by default. On a double-wire
+  headband (`capBand: 'wires'`, the Yellowjackets page's default; `wireDia`, `wireFront`, `wireBack`, `wireEarGap`) each
+  wire lies in a plane from where it crosses the top down to the tape line just above the ear (`WIRE.lean`;
+  `spec.wires`: `J`, `n`, `dp`, `sAt`), in a round channel split at its centre: the cap keeps
   the top half, and a strip for each wire (`wireStrip`, `sk.strips`; `capWire`) holds the bottom half and glues up into a
   pocket the cap surrounds on all sides (the seam is only underneath), with pins on its front side into holes in the
-  pocket. Strips print standing on their flat back side. A wire the plate misses is in `sk.wiresMissing`. Not mirror-symmetric (each side its own teeth and width, the point a
-  little off the middle); plate coordinates are mapped onto a torus round the ear-to-ear axis (`fromSkull`/`toSkull`),
-  so it follows the head's own curve front to back. The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
-  group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down, lowered onto its lowest point.
+  pocket, each strip one run from the middle out to the edge. Strips print standing on their flat back side. A wire the
+  plate misses is in `sk.wiresMissing`. Not mirror-symmetric (each side its own teeth and width, the point a
+  little off the middle); plate coordinates are mapped onto the head itself (`fromSkull`/`toSkull`: across along
+  its oval, front to back round the ear-to-ear axis; lengths kept both ways at every height), so it can reach well down
+  the sides (`capWidth`, 40 mm past the antlers by default). The edge curls just off the head. Its size and shape come from the `cap*` settings (the 'Skull cap'
+  group, `only: 'skull'`: shown only when the cap is the base style). It prints rim-down, lowered onto its few lowest rim points.
   The antlers get a round flared base with a D-shaped socket (`mountSpec`). `skullSpec` gives the pedicle frames
   the page uses to place the antlers. Pegs and sockets never scale (`PEG`); the socket's gap is half the Peg fit (`pegFit`, 0.2 mm, tested on the P2S). It is meshed as a `fields` group. Under the
   cap the wear view's bust takes that head (`bustFit`), as it takes a crown's.

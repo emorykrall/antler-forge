@@ -486,7 +486,7 @@ const EDITION = /*@edition*/'storybook'/*@/edition*/, YJ = EDITION === 'yellowja
 const STORE = YJ ? 'antler-forge-yj-design-v1' : 'antler-forge-design-v3';
 
 /* ------------------------------------------------------------ state */
-let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull', hbWidth: 24 }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on the skull cap over a band almost an inch wide
+let P = YJ ? Object.assign(C.presetParams('trial'), { mount: 'skull', hbWidth: 24, capBand: 'wires' }) : C.presetParams('whitetail');   // the Yellowjackets page opens on the Trial crown, on the skull cap over a double-wire band
 try { const s = localStorage.getItem(STORE); if (s) P = C.resolveParams(JSON.parse(s)); } catch (e) {}
 if ((C.PRESETS[P.preset] || {}).set !== (YJ ? 'campfire' : undefined) && C.PRESETS[P.preset]) P = C.presetParams(YJ ? 'trial' : 'whitetail', P);   // the other edition's species
 if (YJ) P.style = 'headband';   // the Yellowjackets edition makes headband antlers only
@@ -606,8 +606,8 @@ function applyStyle() {
     const { it, wrap } = inputs[k];
     const scanning = P.headSource === 'scan', cap = P.style !== 'crown' && P.mount === 'skull';
     wrap.hidden = (!!(it.only && it.only !== P.style) && !(k === 'headCirc' && cap)) || (k === 'ringGap' && P.ringBase === 'closed')
-      || ((k === 'capTie' || k === 'capTieFront' || k === 'pegFit') && !cap)   // the skull cap's own settings: head size (its curve), the ribbons, the pegs' fit
-      || (k === 'wireDia' && !(cap && P.capBand !== 'band')) || ((k === 'wireFront' || k === 'wireBack') && !(cap && P.capBand === 'wires'))
+      || ((k === 'capTie' || k === 'capTieFront' || k === 'capPins' || k === 'pegFit') && !cap)   // the skull cap's own settings: head size (its curve), the ribbons, the pegs' fit
+      || (k === 'wireDia' && !(cap && P.capBand !== 'band')) || ((k === 'wireFront' || k === 'wireBack' || k === 'wireEarGap') && !(cap && P.capBand === 'wires'))
       || ((k === 'hbWidth' || k === 'hbThick') && cap && P.capBand !== 'band')   // a wire (or two), or a flat band
       || ((k === 'headArcFB' || k === 'headArcEE') && (!P.headMeasured || scanning))
       || ((k === 'headCirc' || k === 'headMeasured') && scanning);
@@ -782,7 +782,7 @@ function ribbonGeometry(pts, normals, width) {   // a flat strip along pts, lyin
   return geo;
 }
 function bandObject() {
-  const cz = bandZ(P), wire = onWire(P), key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, wire && [P.capBand, P.wireDia, P.wireFront, P.wireBack, P.headCirc, P.capSpacing], cz, EDITION].join('|');
+  const cz = bandZ(P), wire = onWire(P), key = [P.hbRadius, P.hbWidth, P.hbThick, P.bandAngle, P.mount, wire && [P.capBand, P.wireDia, P.wireFront, P.wireBack, P.wireEarGap, P.headCirc, P.capSpacing], cz, EDITION].join('|');
   if (!bandCache || bandCache.key !== key) {
     const Rb = P.hbRadius, centre = new THREE.Vector3(0, 0, cz);
     // on its own curve this far from the top; under the skull cap it's bent to the head all the way (glued in the cap's groove)
