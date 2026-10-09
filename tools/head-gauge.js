@@ -7,7 +7,7 @@
 // The arches' numbers are the model's arcs over the top, so with the circumference alone (typical proportions, the page's
 // over-the-top box unticked) they say what those two measurements would have to be.
 // Usage: node tools/head-gauge.js [design.json | circumference[,frontToBack,earToEar] (mm, or with an "in" suffix)]
-//          [--fit comfort allowance mm] [outDir, default dist/head-gauge]
+//          [--fit comfort allowance mm] [--band width,thickness mm, default 4,3] [outDir, default dist/head-gauge]
 // e.g.   node tools/head-gauge.js 22in,10.5in,10in      node tools/head-gauge.js 22in
 const fs = require('fs');
 const path = require('path');
@@ -15,6 +15,7 @@ const Core = require('../src/antler-core.js');
 
 const argv = process.argv.slice(2), fitAt = argv.indexOf('--fit');
 const fit = fitAt >= 0 ? Number(argv.splice(fitAt, 2)[1]) : null;
+const bandAt = argv.indexOf('--band'), [W, T] = bandAt >= 0 ? argv.splice(bandAt, 2)[1].split(',').map(Number) : [4, 3];   // band width and thickness
 const [src, outArg] = argv;
 const mm = (s) => (/in$/i.test(s) ? parseFloat(s) * 25.4 : parseFloat(s));
 let given = {};
@@ -24,7 +25,7 @@ const P = Core.resolveParams(Object.assign({ headMeasured: true }, given, { styl
 const out = path.resolve(outArg || path.join(__dirname, '..', 'dist', 'head-gauge'));
 
 const g = Core.ringSpec(P), r = g.head.r, seat = g.C[2];   // the head (allowance included) and the tape line's height
-const W = 4, T = 3, TAB = [16, 8];   // band width and thickness, the label tab
+const TAB = [16, 8];   // the label tab
 const inch = (v) => String(Math.round((v / 25.4) * 10) / 10);
 const d = P.ringFit / (2 * Math.PI), arcFB = Core.capArc(r[1] - d, r[2] - d), arcEE = Core.capArc(r[0] - d, r[2] - d);   // the model's arcs, allowance off
 
