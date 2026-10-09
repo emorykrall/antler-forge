@@ -4,9 +4,11 @@
 // front. The two arches are the head over the top, front to back and ear to ear, from tape line to tape line: lay each
 // over your head with the ring on; it should touch the top and reach the ring at both ends. Raised numbers on each tab
 // give the measurement (inches) it was drawn from. Two STLs, each one plate: the ring, and the two arches.
-// Usage: node tools/head-gauge.js [design.json | circumference,frontToBack,earToEar (mm, or with an "in" suffix)]
+// The arches' numbers are the model's arcs over the top, so with the circumference alone (typical proportions, the page's
+// over-the-top box unticked) they say what those two measurements would have to be.
+// Usage: node tools/head-gauge.js [design.json | circumference[,frontToBack,earToEar] (mm, or with an "in" suffix)]
 //          [--fit comfort allowance mm] [outDir, default dist/head-gauge]
-// e.g.   node tools/head-gauge.js 22in,10.5in,10in
+// e.g.   node tools/head-gauge.js 22in,10.5in,10in      node tools/head-gauge.js 22in
 const fs = require('fs');
 const path = require('path');
 const Core = require('../src/antler-core.js');
@@ -17,13 +19,14 @@ const [src, outArg] = argv;
 const mm = (s) => (/in$/i.test(s) ? parseFloat(s) * 25.4 : parseFloat(s));
 let given = {};
 if (src && /\.json$/i.test(src)) { const raw = JSON.parse(fs.readFileSync(src, 'utf8')); given = raw.params || raw; }
-else if (src) { const [c, fb, ee] = src.split(',').map(mm); given = { headCirc: c, headArcFB: fb, headArcEE: ee }; }
-const P = Core.resolveParams(Object.assign({}, given, { style: 'crown', headSource: 'tape', headMeasured: true, ringTilt: 0 }, fit != null ? { ringFit: fit } : {}));
+else if (src) { const [c, fb, ee] = src.split(',').map(mm); given = fb ? { headCirc: c, headArcFB: fb, headArcEE: ee, headMeasured: true } : { headCirc: c, headMeasured: false }; }
+const P = Core.resolveParams(Object.assign({ headMeasured: true }, given, { style: 'crown', headSource: 'tape', ringTilt: 0 }, fit != null ? { ringFit: fit } : {}));
 const out = path.resolve(outArg || path.join(__dirname, '..', 'dist', 'head-gauge'));
 
 const g = Core.ringSpec(P), r = g.head.r, seat = g.C[2];   // the head (allowance included) and the tape line's height
 const W = 4, T = 3, TAB = [16, 8];   // band width and thickness, the label tab
 const inch = (v) => String(Math.round((v / 25.4) * 10) / 10);
+const d = P.ringFit / (2 * Math.PI), arcFB = Core.capArc(r[1] - d, r[2] - d), arcEE = Core.capArc(r[0] - d, r[2] - d);   // the model's arcs, allowance off
 
 const part = (f, bb) => ({   // a part the mesher takes as one field (as the skull cap is)
   params: P, kind: 'skull', scale: 1, branches: [], fields: [{ f, bb }], mount: { type: 'cap' },
@@ -82,7 +85,7 @@ const arch = (A, label) => {
   return { top: ty + TAB[1] / 2, w: ax + W, sk: piece((x, y) => Math.min(Math.max(b(x, y + seat), -y), t(x, y)), textDist(label, 0, ty, 4.4),
     [-ax - W - 2, -2, -1, ax + W + 2, ty + TAB[1] / 2 + 2, T + 2]) };
 };
-const fb = arch(r[1], inch(P.headArcFB)), ee = arch(r[0], inch(P.headArcEE));
+const fb = arch(r[1], inch(arcFB)), ee = arch(r[0], inch(arcEE));
 
 fs.mkdirSync(out, { recursive: true });
 const write = (name, parts) => {
@@ -103,7 +106,7 @@ const write = (name, parts) => {
   console.log(`${f}  ${(hi[0] - lo[0]).toFixed(0)} × ${(hi[1] - lo[1]).toFixed(0)} mm on the bed, ${(vol / 1000).toFixed(1)} cm³ (about ${Math.round((vol / 1000) * 1.24)} g PLA)`);
 };
 const ins = (v) => `${inch(v)} in (${v.toFixed(0)} mm)`;
-console.log(`Head from the tape: ${ins(P.headCirc)} round, ${ins(P.headArcFB)} front to back, ${ins(P.headArcEE)} ear to ear, +${P.ringFit} mm comfort`);
-console.log(`  modelled ${(2 * (g.ib - P.ringFit / (2 * Math.PI))).toFixed(0)} mm wide × ${(2 * (g.ia - P.ringFit / (2 * Math.PI))).toFixed(0)} mm long at the tape line (width ${(100 * g.ib / g.ia).toFixed(0)}% of length), top ${(r[2] - seat).toFixed(0)} mm above it`);
+console.log(`Head from the tape: ${ins(P.headCirc)} round, ${ins(arcFB)} front to back, ${ins(arcEE)} ear to ear${P.headMeasured ? '' : ' (typical proportions)'}, +${P.ringFit} mm comfort`);
+console.log(`  modelled ${(2 * (g.ib - d)).toFixed(0)} mm wide × ${(2 * (g.ia - d)).toFixed(0)} mm long at the tape line (width ${(100 * g.ib / g.ia).toFixed(0)}% of length), top ${(r[2] - seat).toFixed(0)} mm above it`);
 write('head-gauge-ring.stl', [[ring, 0, 0, false, 'ring']]);
 write('head-gauge-arches.stl', [[fb.sk, 0, -fb.top - 3, false, 'front-to-back arch'], [ee.sk, 0, ee.top + 3, true, 'ear-to-ear arch']]);
