@@ -1909,9 +1909,14 @@ function arRefreshPair() {
   if (!AR.root || !shown) return;
   if (AR.pair) AR.root.remove(AR.pair);
   const cf = P.style === 'crown' ? crownFit(P) : null, f = cf ? cf.f : [1, 1, 1];   // the head that hides the back of a crown takes its shape
+  // A tape-measured crown's tape line goes where the faun's own is (its brow), not its head's centre: a taller dome puts
+  // the centre further below the tape line, and the crown would float above the real head, wider than it is up there.
+  let dz = 0;
+  if (cf && !cf.scan) { const g = C.ringSpec(P); dz = g.C[2] * (92 / g.head.r[2] - 1); }
   if (cf && cf.scan) { const r = C.ringSpec(P).head.r; AR.occ.scale.set(r[0], r[1], r[2]); AR.occ.position.set(0, 0, 0); }
-  else { const b = cf ? { f, y: 0 } : bustFit(P); AR.occ.scale.set(72 * b.f[0], 90 * b.f[1], 90 * b.f[2]); AR.occ.position.set(0, -6 * b.f[1] + b.y, 0); }   // under the skull cap, the head it's fitted to
+  else { const b = cf ? { f, y: 0 } : bustFit(P); AR.occ.scale.set(72 * b.f[0], 90 * b.f[1], 90 * b.f[2]); AR.occ.position.set(0, -6 * b.f[1] + b.y, dz); }   // under the skull cap, the head it's fitted to
   AR.pair = antlerPair(C.buildSkeleton(P));
+  AR.pair.position.z = dz;
   AR.root.add(AR.pair);
   arRender();
 }
